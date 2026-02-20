@@ -1,4 +1,4 @@
-"""Crypto-specific data intelligence — Tier 1, 2, and 3 on-chain & market metrics."""
+"""Crypto-specific data intelligence — on-chain & market metrics."""
 
 import logging
 import time
@@ -121,7 +121,7 @@ class CorrelationMatrix:
 @dataclass
 class CryptoIntelligence:
     """Combined crypto intelligence report."""
-    # Tier 1
+    # Core
     fear_greed: FearGreedIndex | None = None
     dominance: DominanceData | None = None
     btc_funding: FundingRate | None = None
@@ -129,12 +129,12 @@ class CryptoIntelligence:
     btc_open_interest: OpenInterestData | None = None
     eth_open_interest: OpenInterestData | None = None
 
-    # Tier 2
+    # Advanced
     stablecoin_supply: StablecoinSupply | None = None
     hash_rate: HashRateData | None = None
     liquidation_estimate: dict | None = None
 
-    # Tier 3
+    # Ecosystem
     defi: DefiSnapshot | None = None
     gas: GasData | None = None
     whale_activity: WhaleActivity | None = None
@@ -144,7 +144,7 @@ class CryptoIntelligence:
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Tier 1: Core Metrics (Free APIs, no keys required)
+# Core Metrics (Free APIs, no keys required)
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
@@ -351,7 +351,7 @@ def fetch_open_interest(symbol: str = "BTCUSDT") -> OpenInterestData | None:
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Tier 2: Advanced Metrics
+# Advanced Metrics
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
@@ -504,7 +504,7 @@ def estimate_liquidation_levels(symbol: str = "BTCUSDT") -> dict | None:
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# Tier 3: Ecosystem Intelligence
+# Ecosystem Intelligence
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
@@ -774,13 +774,13 @@ class CryptoDataCollector:
         collector = CryptoDataCollector()
         intel = collector.collect_all()
 
-        # Or collect specific tiers
-        intel = collector.collect_tier1()
+        # Or collect specific categories
+        intel = collector.collect_core()
     """
 
-    def collect_tier1(self) -> CryptoIntelligence:
-        """Collect Tier 1 data: Fear & Greed, Dominance, Funding, OI."""
-        logger.info("Collecting crypto Tier 1 data...")
+    def collect_core(self) -> CryptoIntelligence:
+        """Collect core data: Fear & Greed, Dominance, Funding, OI."""
+        logger.info("Collecting crypto core data...")
         intel = CryptoIntelligence(timestamp=datetime.now().isoformat())
 
         intel.fear_greed = fetch_fear_greed()
@@ -790,14 +790,14 @@ class CryptoDataCollector:
         intel.btc_open_interest = fetch_open_interest("BTCUSDT")
         intel.eth_open_interest = fetch_open_interest("ETHUSDT")
 
-        logger.info("Tier 1 complete: F&G=%s, BTC dom=%.1f%%",
+        logger.info("Core metrics complete: F&G=%s, BTC dom=%.1f%%",
                      intel.fear_greed.value if intel.fear_greed else "N/A",
                      intel.dominance.btc_dominance if intel.dominance else 0)
         return intel
 
     def collect_tier2(self, intel: CryptoIntelligence | None = None) -> CryptoIntelligence:
-        """Collect Tier 2 data: Stablecoin supply, Hash rate, Liquidation estimates."""
-        logger.info("Collecting crypto Tier 2 data...")
+        """Collect advanced data: Stablecoin supply, Hash rate, Liquidation estimates."""
+        logger.info("Collecting crypto advanced data...")
         if intel is None:
             intel = CryptoIntelligence(timestamp=datetime.now().isoformat())
 
@@ -805,7 +805,7 @@ class CryptoDataCollector:
         intel.hash_rate = fetch_hash_rate()
         intel.liquidation_estimate = estimate_liquidation_levels("BTCUSDT")
 
-        logger.info("Tier 2 complete: stablecoin cap=$%.0fB, hash rate=%s TH/s",
+        logger.info("Advanced metrics complete: stablecoin cap=$%.0fB, hash rate=%s TH/s",
                      (intel.stablecoin_supply.total_stablecoin_cap / 1e9) if intel.stablecoin_supply else 0,
                      intel.hash_rate.hash_rate if intel.hash_rate else "N/A")
         return intel
@@ -814,8 +814,8 @@ class CryptoDataCollector:
         self, intel: CryptoIntelligence | None = None,
         price_data: dict[str, pd.DataFrame] | None = None,
     ) -> CryptoIntelligence:
-        """Collect Tier 3 data: DeFi, Gas, Whales, Correlations."""
-        logger.info("Collecting crypto Tier 3 data...")
+        """Collect ecosystem data: DeFi, Gas, Whales, Correlations."""
+        logger.info("Collecting crypto ecosystem data...")
         if intel is None:
             intel = CryptoIntelligence(timestamp=datetime.now().isoformat())
 
@@ -826,14 +826,14 @@ class CryptoDataCollector:
         if price_data:
             intel.correlations = compute_correlations(price_data)
 
-        logger.info("Tier 3 complete: DeFi TVL=$%.0fB, gas=%.3f gwei",
+        logger.info("Ecosystem metrics complete: DeFi TVL=$%.0fB, gas=%.3f gwei",
                      (intel.defi.total_tvl / 1e9) if intel.defi else 0,
                      intel.gas.gas_price_gwei if intel.gas else 0)
         return intel
 
     def collect_all(self, price_data: dict[str, pd.DataFrame] | None = None) -> CryptoIntelligence:
         """Collect all tiers of crypto intelligence."""
-        intel = self.collect_tier1()
+        intel = self.collect_core()
         self.collect_tier2(intel)
         self.collect_tier3(intel, price_data)
         return intel
@@ -877,8 +877,8 @@ class CryptoDataCollector:
         """Format a human-readable crypto intelligence summary."""
         lines = ["## Crypto Intelligence Report", ""]
 
-        # Tier 1
-        lines.append("### Tier 1: Core Metrics")
+        # Core
+        lines.append("### Core Metrics")
         if intel.fear_greed:
             fg = intel.fear_greed
             trend = ""
@@ -911,9 +911,9 @@ class CryptoDataCollector:
             oi = intel.eth_open_interest
             lines.append(f"- **ETH Open Interest:** ${oi.open_interest_usd / 1e9:,.2f}B ({oi.change_24h_pct:+.1f}% 24h)")
 
-        # Tier 2
+        # Advanced
         lines.append("")
-        lines.append("### Tier 2: Advanced Metrics")
+        lines.append("### Advanced Metrics")
         if intel.stablecoin_supply:
             s = intel.stablecoin_supply
             lines.append(f"- **Stablecoin Supply:** ${s.total_stablecoin_cap / 1e9:,.1f}B (USDT dominance: {s.usdt_dominance:.1f}%)")
@@ -926,9 +926,9 @@ class CryptoDataCollector:
             liq = intel.liquidation_estimate
             lines.append(f"- **Liquidation Risk:** {liq.get('risk_level', 'unknown')} | Bias: {liq.get('bias', 'unknown')}")
 
-        # Tier 3
+        # Ecosystem
         lines.append("")
-        lines.append("### Tier 3: Ecosystem Intelligence")
+        lines.append("### Ecosystem Intelligence")
         if intel.defi:
             d = intel.defi
             lines.append(f"- **DeFi TVL:** ${d.total_tvl / 1e9:,.1f}B | ETH TVL: ${d.eth_tvl / 1e9:,.1f}B")

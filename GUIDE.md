@@ -52,7 +52,7 @@ IBKR_CLIENT_ID=1
 CAPITAL_API_KEY=your_api_key
 CAPITAL_IDENTIFIER=your_email
 CAPITAL_PASSWORD=your_password
-CAPITAL_DEMO=true          # Must be "true" for Tier 1
+CAPITAL_DEMO=true          # Must be "true". Demo mode enforced.
 
 # News APIs (optional, free tiers)
 ALPHA_VANTAGE_KEY=your_key  # alphavantage.co — 25 requests/day
@@ -358,9 +358,9 @@ The "fear gauge" of the stock market. Measures expected S&P 500 volatility.
 
 ## Crypto Intelligence
 
-The agent collects crypto-specific data in three tiers. All APIs are free and require no API keys.
+The agent collects crypto-specific data across multiple categories. All APIs are free and require no API keys.
 
-### Tier 1: Core Metrics
+### Core Metrics
 
 **Fear & Greed Index** (alternative.me)
 - Scale: 0 (Extreme Fear) to 100 (Extreme Greed)
@@ -384,7 +384,7 @@ The agent collects crypto-specific data in three tiers. All APIs are free and re
 - Rising OI + Falling Price = Short sellers piling in
 - Sudden OI drop = Forced liquidations, volatility spike
 
-### Tier 2: Advanced Metrics
+### Advanced Metrics
 
 **Stablecoin Supply** (CoinGecko)
 - USDT + USDC total market cap = "dry powder" ready to buy crypto
@@ -402,7 +402,7 @@ The agent collects crypto-specific data in three tiers. All APIs are free and re
 - Cascading liquidations cause violent 5-20% moves in seconds
 - Agent estimates liquidation clusters based on funding rate bias
 
-### Tier 3: Ecosystem Intelligence
+### Ecosystem Intelligence
 
 **DeFi TVL** (DefiLlama)
 - Total Value Locked across all DeFi protocols (lending, trading, staking)
@@ -667,7 +667,7 @@ ai-trading-agent/
 │   ├── ai_analyst.py           # Gemini AI integration
 │   ├── after_hours.py          # After-hours strategies (gaps, crypto 24/7, pre-market)
 │   ├── backtester.py           # Historical backtest engine
-│   ├── crypto_data.py          # Crypto intelligence (Tier 1-3)
+│   ├── crypto_data.py          # Crypto intelligence
 │   ├── stock_extras.py         # Stock intelligence (earnings, breadth, etc.)
 │   ├── resilience.py           # Circuit breaker + retry with backoff
 │   ├── alerts.py               # Telegram + Discord notifications

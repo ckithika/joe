@@ -1,4 +1,4 @@
-"""Tier 1 Research Agent — Streamlit Monitoring Dashboard."""
+"""AI Trading Agent — Streamlit Dashboard."""
 
 import json
 import logging
@@ -12,7 +12,7 @@ import pytz
 import streamlit as st
 import yaml
 
-st.set_page_config(page_title="Tier 1 Research Agent", page_icon="📊", layout="wide")
+st.set_page_config(page_title="AI Trading Agent", page_icon="📊", layout="wide")
 
 DATA_DIR = Path("data/paper")
 REPORTS_DIR = Path("data/reports")
@@ -45,7 +45,17 @@ def load_config() -> dict:
     return {}
 
 
+def load_preferences() -> dict:
+    path = CONFIG_DIR / "preferences.yaml"
+    if path.exists():
+        return yaml.safe_load(path.read_text()) or {}
+    return {}
+
+
 config = load_config()
+prefs = load_preferences()
+modules = prefs.get("modules", {"stocks": True, "crypto": True, "after_hours": True})
+
 performance = load_json(DATA_DIR / "performance.json")
 regime_data = load_json(DATA_DIR / "regime.json")
 risk_data = load_json(DATA_DIR / "risk_assessment.json")
@@ -62,8 +72,6 @@ behavior_log_path = DATA_DIR / "behavior_log.json"
 regime_daily_log = load_json(DATA_DIR / "regime_daily_log.json")
 if not isinstance(regime_daily_log, list):
     regime_daily_log = []
-
-# Load new data sources
 today_findings = load_json(FINDINGS_DIR / f"{date.today()}.json")
 if not isinstance(today_findings, dict):
     today_findings = {}
@@ -75,15 +83,26 @@ if not isinstance(api_health, list):
     api_health = []
 
 
-# ── Header ───────────────────────────────────────────────────────
+# ── Sidebar Navigation ──────────────────────────────────────────
 
 
-st.title("📊 Tier 1 Research Agent")
+st.sidebar.title("📊 AI Trading Agent")
+
 timestamp = regime_data.get("timestamp", "No data yet") if isinstance(regime_data, dict) else "No data yet"
-st.caption(f"Last updated: {timestamp}")
+st.sidebar.caption(f"Last updated: {timestamp}")
 
+# Build navigation based on enabled modules
+nav_options = ["Overview", "Stocks"]
+if modules.get("crypto", False):
+    nav_options.append("Crypto")
+nav_options.extend(["Portfolio", "Performance", "System"])
 
-# ── Section 1: Market Session Timers ─────────────────────────────
+page = st.sidebar.radio("Navigate", nav_options, label_visibility="collapsed")
+
+st.sidebar.divider()
+
+# Market session status in sidebar
+sessions = config.get("market_sessions", {})
 
 
 def get_session_status(session_config: dict) -> dict:
@@ -93,16 +112,15 @@ def get_session_status(session_config: dict) -> dict:
     now = datetime.now(tz)
 
     if session_config.get("always_open"):
-        return {"status": "24/7", "color": "green", "note": session_config.get("note", "")}
+        return {"status": "24/7", "icon": "🟢", "note": session_config.get("note", "")}
 
     days = session_config.get("days", [0, 1, 2, 3, 4])
     if now.weekday() not in days:
-        return {"status": "CLOSED", "color": "red", "note": "Weekend"}
+        return {"status": "CLOSED", "icon": "🔴", "note": "Weekend"}
 
-    # Check holidays
     holidays = config.get("holidays_2026", [])
     if now.strftime("%Y-%m-%d") in holidays:
-        return {"status": "CLOSED", "color": "red", "note": "Holiday"}
+        return {"status": "CLOSED", "icon": "🔴", "note": "Holiday"}
 
     regular_open = session_config.get("regular_open", "09:30")
     regular_close = session_config.get("regular_close", "16:00")
@@ -114,18 +132,12 @@ def get_session_status(session_config: dict) -> dict:
     open_time = now.replace(hour=open_h, minute=open_m, second=0, microsecond=0)
     close_time = now.replace(hour=close_h, minute=close_m, second=0, microsecond=0)
 
-    # Regular session
     if open_time <= now <= close_time:
         remaining = close_time - now
         hours, rem = divmod(int(remaining.total_seconds()), 3600)
         minutes = rem // 60
-        return {
-            "status": "OPEN",
-            "color": "green",
-            "note": f"Closes in {hours}h {minutes}m",
-        }
+        return {"status": "OPEN", "icon": "🟢", "note": f"Closes in {hours}h {minutes}m"}
 
-    # After-hours session
     if afterhours_close:
         ah_h, ah_m = map(int, afterhours_close.split(":"))
         ah_time = now.replace(hour=ah_h, minute=ah_m, second=0, microsecond=0)
@@ -133,13 +145,8 @@ def get_session_status(session_config: dict) -> dict:
             remaining = ah_time - now
             hours, rem = divmod(int(remaining.total_seconds()), 3600)
             minutes = rem // 60
-            return {
-                "status": "AFTER-HOURS",
-                "color": "orange",
-                "note": f"Ends in {hours}h {minutes}m",
-            }
+            return {"status": "AFTER-HRS", "icon": "🟡", "note": f"Ends in {hours}h {minutes}m"}
 
-    # Pre-market session
     if premarket_open:
         pm_h, pm_m = map(int, premarket_open.split(":"))
         pm_time = now.replace(hour=pm_h, minute=pm_m, second=0, microsecond=0)
@@ -147,13 +154,8 @@ def get_session_status(session_config: dict) -> dict:
             remaining = open_time - now
             hours, rem = divmod(int(remaining.total_seconds()), 3600)
             minutes = rem // 60
-            return {
-                "status": "PRE-MARKET",
-                "color": "orange",
-                "note": f"Regular in {hours}h {minutes}m",
-            }
+            return {"status": "PRE-MKT", "icon": "🟡", "note": f"Regular in {hours}h {minutes}m"}
 
-    # Closed — calculate time to next open
     if now > close_time:
         next_open = open_time + timedelta(days=1)
     else:
@@ -161,240 +163,32 @@ def get_session_status(session_config: dict) -> dict:
     remaining = next_open - now
     hours, rem = divmod(int(remaining.total_seconds()), 3600)
     minutes = rem // 60
-    return {
-        "status": "CLOSED",
-        "color": "red",
-        "note": f"Opens in {hours}h {minutes}m",
-    }
+    return {"status": "CLOSED", "icon": "🔴", "note": f"Opens in {hours}h {minutes}m"}
 
 
-st.header("Market Sessions")
-sessions = config.get("market_sessions", {})
 if sessions:
-    cols = st.columns(len(sessions))
-    for i, (key, sess) in enumerate(sessions.items()):
+    st.sidebar.markdown("**Market Sessions**")
+    for key, sess in sessions.items():
+        # Skip crypto session if module disabled
+        if key == "crypto" and not modules.get("crypto", False):
+            continue
         status = get_session_status(sess)
-        with cols[i]:
-            color_map = {"green": "🟢", "orange": "🟡", "red": "🔴"}
-            icon = color_map.get(status["color"], "⚪")
-            st.metric(
-                label=sess.get("name", key),
-                value=f"{icon} {status['status']}",
-                delta=status["note"],
-            )
-else:
-    st.info("No market session config found. Add sessions to config/dashboard.yaml.")
+        st.sidebar.markdown(f"{status['icon']} **{sess.get('name', key)}** — {status['status']}")
+        if status["note"]:
+            st.sidebar.caption(f"  {status['note']}")
+
+st.sidebar.divider()
+
+# Module status
+st.sidebar.markdown("**Enabled Modules**")
+for mod, enabled in modules.items():
+    icon = "✅" if enabled else "⬜"
+    st.sidebar.markdown(f"{icon} {mod.replace('_', ' ').title()}")
+
+st.sidebar.caption("Configure: `python setup_wizard.py`")
 
 
-# ── Section 2: Regime & Risk ─────────────────────────────────────
-
-
-st.header("Regime & Risk")
-col_regime, col_risk = st.columns(2)
-
-with col_regime:
-    st.subheader("Market Regime")
-    if isinstance(regime_data, dict) and regime_data:
-        regime_name = regime_data.get("regime", "unknown").replace("_", " ").upper()
-        confidence = regime_data.get("confidence", 0)
-        st.markdown(f"### {regime_name}")
-        st.progress(confidence, text=f"Confidence: {confidence:.0%}")
-        st.markdown(
-            f"**ADX:** {regime_data.get('adx', 0):.1f} · "
-            f"**VIX:** {regime_data.get('vix', 0):.1f} · "
-            f"**Breadth:** {regime_data.get('breadth', 0):.0f}%"
-        )
-        strategies = regime_data.get("active_strategies", [])
-        if strategies:
-            st.markdown(
-                f"**Active:** {', '.join(s.replace('_', ' ').title() for s in strategies)}"
-            )
-        size_mod = regime_data.get("position_size_modifier", 1.0)
-        st.markdown(f"**Position sizing:** {size_mod:.0%}")
-
-        # VIX sparkline
-        vix_hist = regime_data.get("vix_history", [])
-        if vix_hist and len(vix_hist) > 2:
-            fig = go.Figure(go.Scatter(y=vix_hist, mode="lines", name="VIX", line=dict(color="red", width=1)))
-            fig.update_layout(height=100, margin=dict(l=0, r=0, t=15, b=0), title="VIX (30d)", title_font_size=10, showlegend=False, yaxis=dict(showticklabels=False), xaxis=dict(showticklabels=False))
-            st.plotly_chart(fig, use_container_width=True)
-
-        # ADX sparkline
-        adx_hist = regime_data.get("adx_history", [])
-        if adx_hist and len(adx_hist) > 2:
-            fig = go.Figure(go.Scatter(y=adx_hist, mode="lines", name="ADX", line=dict(color="blue", width=1)))
-            fig.update_layout(height=100, margin=dict(l=0, r=0, t=15, b=0), title="ADX (30d)", title_font_size=10, showlegend=False, yaxis=dict(showticklabels=False), xaxis=dict(showticklabels=False))
-            st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("No regime data. Run the agent first.")
-
-with col_risk:
-    st.subheader("Risk Grade")
-    if isinstance(risk_data, dict) and risk_data:
-        composite = risk_data.get("composite_score", 0)
-        level = risk_data.get("risk_level", "unknown").upper()
-        st.markdown(f"### {composite:.1f}/10 — {level}")
-        st.progress(min(composite / 10, 1.0))
-
-        dims = risk_data.get("dimensions", {})
-        if dims:
-            dim_df = pd.DataFrame(
-                [{"Dimension": k.title(), "Score": v} for k, v in dims.items()]
-            )
-            fig = px.bar(
-                dim_df,
-                x="Dimension",
-                y="Score",
-                color="Score",
-                color_continuous_scale=["green", "yellow", "red"],
-                range_y=[0, 10],
-                height=250,
-            )
-            fig.update_layout(showlegend=False, margin=dict(t=10, b=10))
-            st.plotly_chart(fig, use_container_width=True)
-
-        alerts = risk_data.get("alerts", [])
-        max_alerts = config.get("max_alerts_displayed", 5)
-        for alert in alerts[:max_alerts]:
-            sev = alert.get("severity", "info").upper()
-            st.markdown(f"**[{sev}]** {alert.get('message', '')}")
-    else:
-        st.info("No risk data. Run the agent first.")
-
-
-# ── Section 3: Paper Portfolio ───────────────────────────────────
-
-
-st.header("Paper Portfolio")
-
-if isinstance(performance, dict) and performance:
-    balance = performance.get("virtual_balance", 500)
-    starting = performance.get("starting_balance", 500)
-    pnl = balance - starting
-
-    m1, m2, m3, m4, m5 = st.columns(5)
-    m1.metric("Balance", f"${balance:.2f}", f"{pnl:+.2f}")
-    m2.metric("Win Rate", f"{performance.get('win_rate', 0) * 100:.1f}%")
-    m3.metric("Profit Factor", f"{performance.get('profit_factor', 0):.2f}")
-    m4.metric("Sharpe", f"{performance.get('sharpe_ratio', 0):.2f}")
-    m5.metric(
-        "Open Positions",
-        f"{performance.get('open_positions', len(positions_data))}/3",
-    )
-
-    # Equity curve from trade history
-    if not trades_df.empty and "pnl" in trades_df.columns:
-        max_trades = config.get("equity_curve_trades", 100)
-        recent_trades = trades_df.tail(max_trades).copy()
-        recent_trades["cumulative_pnl"] = recent_trades["pnl"].astype(float).cumsum() + starting
-        recent_trades["trade_num"] = range(1, len(recent_trades) + 1)
-
-        fig = px.line(
-            recent_trades,
-            x="trade_num",
-            y="cumulative_pnl",
-            title="Equity Curve",
-            labels={"trade_num": "Trade #", "cumulative_pnl": "Balance ($)"},
-        )
-        fig.add_hline(y=starting, line_dash="dash", line_color="gray", annotation_text="Starting Balance")
-        fig.update_layout(height=300, margin=dict(t=40, b=20))
-        st.plotly_chart(fig, use_container_width=True)
-
-    # Open positions table
-    if positions_data:
-        st.subheader("Open Positions")
-        pos_rows = []
-        for pos in positions_data:
-            pnl_val = pos.get("unrealized_pnl", 0)
-            trail = f"${pos['trailing_stop']:.4f}" if pos.get("trailing_stop", 0) > 0 else "—"
-            pos_rows.append(
-                {
-                    "Ticker": pos["ticker"],
-                    "Direction": pos["direction"],
-                    "Strategy": pos.get("strategy", ""),
-                    "Entry": f"${pos['entry_price']:.2f}",
-                    "P&L": f"${pnl_val:+.2f}",
-                    "Day": f"{pos.get('days_held', 0)}/{pos.get('max_hold_days', 10)}",
-                    "SL": f"${pos['stop_loss']:.4f}",
-                    "TP": f"${pos['take_profit']:.4f}",
-                    "Trail": trail,
-                }
-            )
-        st.dataframe(pd.DataFrame(pos_rows), use_container_width=True, hide_index=True)
-
-    # Performance summary
-    st.markdown(
-        f"**Expectancy:** ${performance.get('expectancy', 0):.2f}/trade · "
-        f"**Avg R:** {performance.get('avg_r_multiple', 0):.2f} · "
-        f"**Max Drawdown:** {performance.get('max_drawdown_pct', 0):.1f}% · "
-        f"**Total Trades:** {performance.get('total_trades', 0)}"
-    )
-else:
-    st.info("No performance data. Run the agent first.")
-
-
-# ── Section 4: Today's Signals ───────────────────────────────────
-
-
-st.header("Today's Signals")
-
-signals = today_report.get("signals", [])
-max_signals = config.get("max_signals_displayed", 5)
-
-if signals:
-    available_slots = 3 - len(positions_data)
-    st.caption(f"{available_slots} slot{'s' if available_slots != 1 else ''} available")
-
-    for sig in signals[:max_signals]:
-        action = sig.get("action", "skip")
-        direction = sig.get("direction", "")
-        ticker = sig.get("ticker", "")
-        score = sig.get("score", 0)
-        signal_type = sig.get("signal", "NEUTRAL")
-
-        # Risk grade info
-        risk_grade = sig.get("risk_grade")
-        risk_level = sig.get("risk_level", "")
-        risk_tag = f" · Risk: {risk_grade:.1f} {risk_level.upper()}" if risk_grade is not None else ""
-
-        with st.expander(
-            f"#{sig.get('rank', '?')}  {ticker}  —  Score: {score:.2f}  [{signal_type}]{risk_tag}",
-            expanded=(action == "enter_now"),
-        ):
-            st.markdown(f"**Strategy:** {sig.get('strategy_label', sig.get('strategy', ''))}")
-            st.markdown(f"**Setup:** {sig.get('setup', '')}")
-
-            if action == "enter_now":
-                st.markdown(
-                    f"**Plan:** {direction} @ ${sig.get('entry_price', 0):.2f} · "
-                    f"SL: ${sig.get('stop_loss', 0):.2f} · "
-                    f"TP: ${sig.get('take_profit', 0):.2f}"
-                )
-                st.markdown(f"**R:R** = 1:{sig.get('risk_reward', 0):.1f}")
-
-                if risk_grade is not None:
-                    st.markdown(f"**Risk Grade:** {risk_grade:.1f}/10 — {risk_level.upper()}")
-
-                # Decision buttons
-                col_enter, col_watch, col_skip = st.columns(3)
-                btn_key = f"btn_{ticker}_{date.today()}"
-
-                if col_enter.button("ENTER", key=f"{btn_key}_enter", type="primary"):
-                    _log_decision(ticker, "entry", sig.get("strategy", ""), "Entered from dashboard")
-                    st.success(f"Logged ENTER for {ticker}")
-
-                if col_watch.button("WATCHLIST", key=f"{btn_key}_watch"):
-                    _log_decision(ticker, "watchlist", sig.get("strategy", ""), "Added to watchlist")
-                    st.info(f"Logged WATCHLIST for {ticker}")
-
-                if col_skip.button("SKIP", key=f"{btn_key}_skip"):
-                    _log_decision(ticker, "skip", sig.get("strategy", ""), "Skipped from dashboard")
-                    st.warning(f"Logged SKIP for {ticker}")
-
-            elif action == "watchlist":
-                st.markdown("**Watching** — not yet triggered")
-else:
-    st.info("No signals for today. Run the agent to generate today's report.")
+# ── Helper ───────────────────────────────────────────────────────
 
 
 def _log_decision(ticker: str, action: str, strategy: str, reason: str):
@@ -416,328 +210,846 @@ def _log_decision(ticker: str, action: str, strategy: str, reason: str):
     behavior_log_path.write_text(json.dumps(log, indent=2))
 
 
-# ── Section 5: Crypto Intelligence ───────────────────────────────
+# ═════════════════════════════════════════════════════════════════
+# PAGES
+# ═════════════════════════════════════════════════════════════════
 
 
-crypto_intel = today_findings.get("crypto_intelligence", {})
-if crypto_intel:
-    st.header("Crypto Intelligence")
+if page == "Overview":
+    st.title("Overview")
+    st.caption(
+        "Your learning dashboard — see what the market is doing today, understand the strategies "
+        "the agent uses, and track how paper trades perform over time."
+    )
 
-    col_fg, col_dom, col_fund, col_oi = st.columns(4)
+    # ── Regime & Risk side by side ───────────────────────────────
+    col_regime, col_risk = st.columns(2)
 
-    # Fear & Greed
-    fg = crypto_intel.get("fear_greed", {})
-    if fg:
-        fg_val = fg.get("value", 0)
-        fg_class = fg.get("classification", "N/A")
-        col_fg.metric("Fear & Greed", f"{fg_val}/100", fg_class)
+    with col_regime:
+        st.subheader("Market Regime")
+        if isinstance(regime_data, dict) and regime_data:
+            regime_name = regime_data.get("regime", "unknown").replace("_", " ").upper()
+            confidence = regime_data.get("confidence", 0)
+            st.markdown(f"### {regime_name}")
+            st.progress(confidence, text=f"Confidence: {confidence:.0%}")
 
-        # Sparkline of 7-day history
-        fg_hist = fg.get("history_7d", [])
-        if fg_hist and len(fg_hist) > 1:
-            fig = go.Figure(go.Scatter(y=[fg_val] + fg_hist, mode="lines+markers",
-                                       line=dict(color="orange", width=2), marker=dict(size=4)))
-            fig.update_layout(height=80, margin=dict(l=0, r=0, t=5, b=0),
-                              showlegend=False, yaxis=dict(range=[0, 100], showticklabels=False),
-                              xaxis=dict(showticklabels=False))
-            col_fg.plotly_chart(fig, use_container_width=True)
+            r1, r2, r3 = st.columns(3)
+            r1.metric("ADX", f"{regime_data.get('adx', 0):.1f}")
+            r2.metric("VIX", f"{regime_data.get('vix', 0):.1f}")
+            r3.metric("Size Mod", f"{regime_data.get('position_size_modifier', 1.0):.0%}")
 
-    # Dominance
-    dom = crypto_intel.get("dominance", {})
-    if dom:
-        col_dom.metric("BTC Dominance", f"{dom.get('btc_dominance', 0):.1f}%")
-        col_dom.metric("ETH Dominance", f"{dom.get('eth_dominance', 0):.1f}%")
-        total_cap = dom.get("total_market_cap", 0)
-        if total_cap:
-            col_dom.caption(f"Total: ${total_cap / 1e12:.2f}T")
+            strategies = regime_data.get("active_strategies", [])
+            if strategies:
+                st.markdown(f"**Active:** {', '.join(s.replace('_', ' ').title() for s in strategies)}")
 
-    # Funding Rates
-    btc_f = crypto_intel.get("btc_funding", {})
-    eth_f = crypto_intel.get("eth_funding", {})
-    if btc_f:
-        rate = btc_f.get("rate", 0)
-        direction = btc_f.get("direction", "neutral")
-        col_fund.metric("BTC Funding", f"{rate:.4%}", direction.replace("_", " "))
-    if eth_f:
-        rate = eth_f.get("rate", 0)
-        direction = eth_f.get("direction", "neutral")
-        col_fund.metric("ETH Funding", f"{rate:.4%}", direction.replace("_", " "))
+            # VIX sparkline
+            vix_hist = regime_data.get("vix_history", [])
+            if vix_hist and len(vix_hist) > 2:
+                fig = go.Figure(go.Scatter(y=vix_hist, mode="lines", line=dict(color="red", width=1)))
+                fig.update_layout(height=80, margin=dict(l=0, r=0, t=10, b=0), showlegend=False,
+                                  yaxis=dict(showticklabels=False), xaxis=dict(showticklabels=False))
+                st.plotly_chart(fig, use_container_width=True)
+        else:
+            st.info("No regime data. Run the pipeline first.")
 
-    # Open Interest
-    btc_oi = crypto_intel.get("btc_open_interest", {})
-    eth_oi = crypto_intel.get("eth_open_interest", {})
-    if btc_oi:
-        oi_usd = btc_oi.get("open_interest_usd", 0)
-        col_oi.metric("BTC Open Interest", f"${oi_usd / 1e9:.2f}B",
-                      f"{btc_oi.get('change_24h_pct', 0):+.1f}% 24h")
-    if eth_oi:
-        oi_usd = eth_oi.get("open_interest_usd", 0)
-        col_oi.metric("ETH Open Interest", f"${oi_usd / 1e9:.2f}B",
-                      f"{eth_oi.get('change_24h_pct', 0):+.1f}% 24h")
+    with col_risk:
+        st.subheader("Risk Grade")
+        if isinstance(risk_data, dict) and risk_data:
+            composite = risk_data.get("composite_score", 0)
+            level = risk_data.get("risk_level", "unknown").upper()
+            st.markdown(f"### {composite:.1f}/10 — {level}")
+            st.progress(min(composite / 10, 1.0))
 
-    # Tier 2 & 3 in expandable section
-    with st.expander("Advanced Crypto Metrics (Tier 2 & 3)"):
-        t2_col1, t2_col2, t2_col3 = st.columns(3)
+            dims = risk_data.get("dimensions", {})
+            if dims:
+                dim_df = pd.DataFrame([{"Dimension": k.title(), "Score": v} for k, v in dims.items()])
+                fig = px.bar(dim_df, x="Dimension", y="Score", color="Score",
+                             color_continuous_scale=["green", "yellow", "red"], range_y=[0, 10], height=200)
+                fig.update_layout(showlegend=False, margin=dict(t=10, b=10))
+                st.plotly_chart(fig, use_container_width=True)
 
-        # Stablecoin Supply
-        stable = crypto_intel.get("stablecoin_supply", {})
-        if stable:
-            total_stable = stable.get("total_stablecoin_cap", 0)
-            t2_col1.metric("Stablecoin Supply", f"${total_stable / 1e9:.1f}B")
-            t2_col1.caption(f"USDT dominance: {stable.get('usdt_dominance', 0):.1f}%")
+            alerts = risk_data.get("alerts", [])
+            for alert in alerts[:3]:
+                sev = alert.get("severity", "info").upper()
+                st.markdown(f"**[{sev}]** {alert.get('message', '')}")
+        else:
+            st.info("No risk data. Run the pipeline first.")
 
-        # Hash Rate
-        hr = crypto_intel.get("hash_rate", {})
-        if hr:
-            t2_col2.metric("BTC Hash Rate", f"{hr.get('hash_rate', 0):,.1f} TH/s")
-            t2_col2.caption(f"Block: {hr.get('block_height', 0):,}")
+    # ── Portfolio snapshot ────────────────────────────────────────
+    st.divider()
+    st.subheader("Portfolio Snapshot")
 
-        # Liquidation
-        liq = crypto_intel.get("liquidation_estimate", {})
-        if liq:
-            t2_col3.metric("Liquidation Risk", liq.get("risk_level", "N/A").upper())
-            t2_col3.caption(f"Bias: {liq.get('bias', 'N/A')}")
+    if isinstance(performance, dict) and performance:
+        balance = performance.get("virtual_balance", 500)
+        starting = performance.get("starting_balance", 500)
+        pnl = balance - starting
 
-        # DeFi
-        defi = crypto_intel.get("defi", {})
-        if defi:
-            st.markdown(f"**DeFi TVL:** ${defi.get('total_tvl', 0) / 1e9:,.1f}B | "
-                        f"ETH TVL: ${defi.get('eth_tvl', 0) / 1e9:,.1f}B")
-            top_protocols = defi.get("top_protocols", [])
-            if top_protocols:
-                proto_rows = []
-                for p in top_protocols[:5]:
-                    proto_rows.append({
-                        "Protocol": p.get("name", ""),
-                        "TVL": f"${p.get('tvl', 0) / 1e9:.2f}B",
-                        "1d Change": f"{p.get('change_1d', 0):+.1f}%",
-                    })
-                st.dataframe(pd.DataFrame(proto_rows), use_container_width=True, hide_index=True)
+        m1, m2, m3, m4, m5 = st.columns(5)
+        m1.metric("Balance", f"${balance:.2f}", f"{pnl:+.2f}")
+        m2.metric("Win Rate", f"{performance.get('win_rate', 0) * 100:.1f}%")
+        m3.metric("Open", f"{len(positions_data)}/3")
+        m4.metric("Total Trades", f"{performance.get('total_trades', 0)}")
+        m5.metric("Profit Factor", f"{performance.get('profit_factor', 0):.2f}")
 
-        # Gas
-        gas = crypto_intel.get("gas", {})
-        if gas:
-            gas_price = gas.get("gas_price_gwei", 0)
-            fmt = ".1f" if gas_price >= 1 else ".3f"
-            st.markdown(f"**ETH Gas:** {gas_price:{fmt}} Gwei "
-                        f"(base: {gas.get('base_fee_gwei', 0):{fmt}}, "
-                        f"tip: {gas.get('priority_fee_gwei', 0):{fmt}})")
-
-        # Correlations
-        corr = crypto_intel.get("correlations", {})
-        if corr and corr.get("pairs"):
-            st.markdown(f"**Correlations ({corr.get('period_days', 30)}d):**")
-            for pair, val in sorted(corr["pairs"].items()):
-                strength = "strong" if abs(val) > 0.7 else "moderate" if abs(val) > 0.4 else "weak"
-                st.markdown(f"- {pair}: {val:+.3f} ({strength})")
-
-
-# ── Section 6: Stock Intelligence ────────────────────────────────
-
-
-stock_intel = today_findings.get("stock_intelligence", {})
-if stock_intel:
-    st.header("Stock Intelligence")
-
-    col_earn, col_breadth = st.columns(2)
-
-    # Earnings Calendar
-    earnings = stock_intel.get("upcoming_earnings", [])
-    with col_earn:
-        st.subheader("Upcoming Earnings")
-        if earnings:
-            ear_rows = []
-            for e in earnings[:8]:
-                timing = e.get("time", "")
-                timing_label = {"bmo": "Pre-Market", "amc": "After Close"}.get(timing, timing)
-                eps = f"${e.get('estimate_eps', 0):.2f}" if e.get("estimate_eps") else "N/A"
-                ear_rows.append({
-                    "Ticker": e.get("ticker", ""),
-                    "Date": e.get("date", ""),
-                    "Timing": timing_label,
-                    "Days": e.get("days_until", 0),
-                    "Est. EPS": eps,
+        if positions_data:
+            pos_rows = []
+            for pos in positions_data:
+                pnl_val = pos.get("unrealized_pnl", 0)
+                pos_rows.append({
+                    "Ticker": pos["ticker"],
+                    "Dir": pos["direction"],
+                    "Strategy": pos.get("strategy", ""),
+                    "Entry": f"${pos['entry_price']:.2f}",
+                    "P&L": f"${pnl_val:+.2f}",
+                    "Day": f"{pos.get('days_held', 0)}/{pos.get('max_hold_days', 10)}",
                 })
-            st.dataframe(pd.DataFrame(ear_rows), use_container_width=True, hide_index=True)
-        else:
-            st.caption("No upcoming earnings for watched tickers.")
+            st.dataframe(pd.DataFrame(pos_rows), use_container_width=True, hide_index=True)
+    else:
+        st.info("No performance data. Run the pipeline first.")
 
-    # Market Breadth
-    breadth = stock_intel.get("market_breadth", {})
-    with col_breadth:
-        st.subheader("Market Breadth")
-        if breadth:
-            b1, b2 = st.columns(2)
-            b1.metric("A/D Ratio", f"{breadth.get('advance_decline_ratio', 0):.2f}")
-            b2.metric("McClellan", f"{breadth.get('mcclellan_oscillator', 0):+.1f}")
-            b1.metric("Above 200 SMA", f"{breadth.get('pct_above_200sma', 0):.0f}%")
-            b2.metric("Above 50 SMA", f"{breadth.get('pct_above_50sma', 0):.0f}%")
-            st.markdown(f"New Highs: {breadth.get('new_highs', 0)} | New Lows: {breadth.get('new_lows', 0)}")
-        else:
-            st.caption("No breadth data available.")
+    # ── AI Summary ───────────────────────────────────────────────
+    ai_summary = today_findings.get("ai_summary")
+    if ai_summary:
+        st.divider()
+        st.subheader("AI Daily Summary")
+        st.markdown(ai_summary)
 
-    # Options Flow & Sector Performance in expandable
-    with st.expander("Options Flow & Sectors"):
-        opt_col, sec_col = st.columns(2)
+    # ── After-Hours ──────────────────────────────────────────────
+    if modules.get("after_hours", True):
+        after_hours = today_findings.get("after_hours", {})
+        if after_hours:
+            st.divider()
+            session = after_hours.get("session", "").replace("_", " ").title()
+            st.subheader(f"After-Hours ({session})")
 
-        options = stock_intel.get("options_flow", {})
-        if options:
-            with opt_col:
-                st.markdown("**Options Flow**")
-                st.metric("Put/Call Ratio", f"{options.get('put_call_ratio', 0):.2f}")
-                st.metric("VIX", f"{options.get('vix', 0):.1f}")
-                st.caption(f"Term: {options.get('vix_term_structure', 'N/A')} | Skew: {options.get('skew', 'N/A')}")
+            gaps = after_hours.get("earnings_gaps", [])
+            movers = after_hours.get("pre_market_movers", [])
+            crypto_night = after_hours.get("crypto_overnight", [])
 
+            if gaps:
+                st.markdown("**Earnings Gaps**")
+                for g in gaps[:5]:
+                    gap = g.get("gap_pct", 0)
+                    direction = "⬆️" if gap > 0 else "⬇️"
+                    st.markdown(f"  {direction} **{g.get('ticker', '')}**: {gap:+.1f}%")
+
+            if movers:
+                st.markdown("**Pre-Market Movers**")
+                mover_rows = []
+                for m in movers[:5]:
+                    mover_rows.append({
+                        "Ticker": m.get("ticker", ""),
+                        "Change": f"{m.get('gap_pct', m.get('change_pct', 0)):+.1f}%",
+                        "Vol Ratio": f"{m.get('volume_ratio', 0):.1f}x",
+                        "Catalyst": m.get("catalyst", ""),
+                    })
+                st.dataframe(pd.DataFrame(mover_rows), use_container_width=True, hide_index=True)
+
+            if crypto_night and modules.get("crypto", False):
+                st.markdown("**Crypto Overnight**")
+                for s in crypto_night[:3]:
+                    st.markdown(f"  {s.get('symbol', '')}: {s.get('signal_type', '').replace('_', ' ').title()}")
+
+            if not gaps and not movers and not crypto_night:
+                st.caption("No notable after-hours activity.")
+
+
+elif page == "Stocks":
+    st.title("📈 Stocks")
+
+    # ── Today's Stock Signals ────────────────────────────────────
+    st.subheader("Today's Signals")
+
+    all_signals = today_findings.get("signals", today_report.get("signals", []))
+    stock_signals = [s for s in all_signals if s.get("ticker", "") not in {"BTCUSD", "ETHUSD", "BTCUSDT", "ETHUSDT"}]
+
+    if stock_signals:
+        available_slots = 3 - len(positions_data)
+        st.caption(f"{available_slots} position slot{'s' if available_slots != 1 else ''} available")
+
+        for sig in stock_signals[:config.get("max_signals_displayed", 5)]:
+            action = sig.get("action", "skip")
+            ticker = sig.get("ticker", "")
+            score = sig.get("score", 0)
+            signal_type = sig.get("signal", "NEUTRAL")
+
+            with st.expander(
+                f"{'🟢' if action == 'enter_now' else '🟡' if action == 'watch' else '⚪'} "
+                f"{ticker} — {signal_type} (Score: {score:.2f})",
+                expanded=(action == "enter_now"),
+            ):
+                st.markdown(
+                    f"**Strategy:** {sig.get('strategy', '').replace('_', ' ').title()} · "
+                    f"**Direction:** {sig.get('direction', '')} · "
+                    f"**Action:** {action.replace('_', ' ').title()}"
+                )
+                entry_price = sig.get("entry_price", 0)
+                sl = sig.get("stop_loss", 0)
+                tp = sig.get("take_profit", 0)
+                if entry_price:
+                    st.markdown(f"**Entry:** ${entry_price:,.2f} · **SL:** ${sl:,.2f} · **TP:** ${tp:,.2f}")
+                    if sl and entry_price and tp:
+                        risk = abs(entry_price - sl)
+                        reward = abs(tp - entry_price)
+                        rr = reward / risk if risk > 0 else 0
+                        st.markdown(f"**R:R** = 1:{rr:.1f}")
+
+                # AI analysis if present
+                ai = sig.get("ai_analysis", {})
+                if ai:
+                    st.markdown(f"**AI:** {ai.get('recommendation', '')} (confidence: {ai.get('confidence', 0):.0%})")
+                    st.markdown(f"*Bull:* {ai.get('bull_case', '')}")
+                    st.markdown(f"*Bear:* {ai.get('bear_case', '')}")
+
+                # Decision buttons for actionable signals
+                if action == "enter_now":
+                    col_enter, col_watch, col_skip = st.columns(3)
+                    btn_key = f"btn_{ticker}_{date.today()}"
+                    if col_enter.button("ENTER", key=f"{btn_key}_enter", type="primary"):
+                        _log_decision(ticker, "entry", sig.get("strategy", ""), "Entered from dashboard")
+                        st.success(f"Logged ENTER for {ticker}")
+                    if col_watch.button("WATCHLIST", key=f"{btn_key}_watch"):
+                        _log_decision(ticker, "watchlist", sig.get("strategy", ""), "Added to watchlist")
+                        st.info(f"Logged WATCHLIST for {ticker}")
+                    if col_skip.button("SKIP", key=f"{btn_key}_skip"):
+                        _log_decision(ticker, "skip", sig.get("strategy", ""), "Skipped from dashboard")
+                        st.warning(f"Logged SKIP for {ticker}")
+    else:
+        st.info("No stock signals today. Run the pipeline to generate signals.")
+
+    st.divider()
+
+    # ── Stock Intelligence ───────────────────────────────────────
+    stock_intel = today_findings.get("stock_intelligence", {})
+
+    if stock_intel:
+        col_earn, col_breadth = st.columns(2)
+
+        # Earnings Calendar
+        earnings = stock_intel.get("upcoming_earnings", [])
+        with col_earn:
+            st.subheader("Earnings Calendar")
+            if earnings:
+                ear_rows = []
+                for e in earnings[:8]:
+                    timing = e.get("time", "")
+                    timing_label = {"bmo": "Pre-Market", "amc": "After Close"}.get(timing, timing)
+                    ear_rows.append({
+                        "Ticker": e.get("ticker", ""),
+                        "Date": e.get("date", ""),
+                        "Timing": timing_label,
+                        "Days": e.get("days_until", 0),
+                    })
+                st.dataframe(pd.DataFrame(ear_rows), use_container_width=True, hide_index=True)
+            else:
+                st.caption("No upcoming earnings for watched tickers.")
+
+        # Market Breadth
+        breadth = stock_intel.get("market_breadth", {})
+        with col_breadth:
+            st.subheader("Market Breadth")
+            if breadth:
+                b1, b2 = st.columns(2)
+                b1.metric("A/D Ratio", f"{breadth.get('advance_decline_ratio', 0):.2f}")
+                b2.metric("McClellan", f"{breadth.get('mcclellan_oscillator', 0):+.1f}")
+                b1.metric("Above 200 SMA", f"{breadth.get('pct_above_200sma', 0):.0f}%")
+                b2.metric("Above 50 SMA", f"{breadth.get('pct_above_50sma', 0):.0f}%")
+                st.markdown(f"New Highs: {breadth.get('new_highs', 0)} | New Lows: {breadth.get('new_lows', 0)}")
+            else:
+                st.caption("No breadth data available.")
+
+        # Sector Performance
         sectors = stock_intel.get("sector_performance", [])
         if sectors:
-            with sec_col:
-                st.markdown("**Sector Performance**")
-                sec_rows = []
-                for s in sectors[:8]:
-                    rs = s.get("relative_strength", 0)
-                    sec_rows.append({
-                        "Sector": s.get("sector", "").replace("_", " ").title(),
-                        "1d": f"{s.get('change_1d', 0):+.2f}%",
-                        "1w": f"{s.get('change_1w', 0):+.2f}%",
-                        "RS": f"{rs:+.2f}%",
-                    })
-                st.dataframe(pd.DataFrame(sec_rows), use_container_width=True, hide_index=True)
-
-    # Insider Trades
-    insiders = stock_intel.get("insider_trades", [])
-    if insiders:
-        with st.expander("Insider Trading Activity"):
-            buys = [t for t in insiders if t.get("transaction_type") == "buy"]
-            sells = [t for t in insiders if t.get("transaction_type") == "sell"]
-            st.markdown(f"**Buys:** {len(buys)} | **Sells:** {len(sells)}")
-            insider_rows = []
-            for t in insiders[:10]:
-                insider_rows.append({
-                    "Ticker": t.get("ticker", ""),
-                    "Name": t.get("insider_name", ""),
-                    "Type": t.get("transaction_type", "").upper(),
-                    "Shares": f"{t.get('shares', 0):,}",
-                    "Value": f"${t.get('value', 0):,.0f}",
-                    "Date": t.get("date", ""),
+            st.subheader("Sector Performance")
+            sec_rows = []
+            for s in sectors[:10]:
+                sec_rows.append({
+                    "Sector": s.get("sector", "").replace("_", " ").title(),
+                    "1D": f"{s.get('change_1d', 0):+.2f}%",
+                    "1W": f"{s.get('change_1w', 0):+.2f}%",
+                    "1M": f"{s.get('change_1m', 0):+.2f}%",
                 })
-            st.dataframe(pd.DataFrame(insider_rows), use_container_width=True, hide_index=True)
+            st.dataframe(pd.DataFrame(sec_rows), use_container_width=True, hide_index=True)
+
+        # Insider Trades
+        insiders = stock_intel.get("insider_trades", [])
+        if insiders:
+            with st.expander("Insider Trading Activity"):
+                buys = [t for t in insiders if t.get("transaction_type") == "buy"]
+                sells = [t for t in insiders if t.get("transaction_type") == "sell"]
+                st.markdown(f"**Buys:** {len(buys)} | **Sells:** {len(sells)}")
+                insider_rows = []
+                for t in insiders[:10]:
+                    insider_rows.append({
+                        "Ticker": t.get("ticker", ""),
+                        "Name": t.get("insider_name", ""),
+                        "Type": t.get("transaction_type", "").upper(),
+                        "Shares": f"{t.get('shares', 0):,}",
+                        "Value": f"${t.get('value', 0):,.0f}",
+                        "Date": t.get("date", ""),
+                    })
+                st.dataframe(pd.DataFrame(insider_rows), use_container_width=True, hide_index=True)
+    else:
+        st.info("No stock intelligence data. Run the pipeline with the stocks module enabled.")
 
 
-# ── Section 7: After-Hours Intelligence ──────────────────────────
+elif page == "Crypto":
+    st.title("🪙 Crypto")
+
+    crypto_intel = today_findings.get("crypto_intelligence", {})
+
+    if not crypto_intel:
+        st.info("No crypto data. Run the pipeline with the crypto module enabled.")
+    else:
+        # ── Fear & Greed + Dominance ─────────────────────────────
+        col_fg, col_dom = st.columns(2)
+
+        fg = crypto_intel.get("fear_greed", {})
+        with col_fg:
+            st.subheader("Fear & Greed Index")
+            if fg:
+                fg_val = fg.get("value", 0)
+                fg_class = fg.get("classification", "N/A")
+                if fg_val <= 25:
+                    color = "🔴"
+                elif fg_val <= 45:
+                    color = "🟠"
+                elif fg_val <= 55:
+                    color = "🟡"
+                else:
+                    color = "🟢"
+                st.markdown(f"### {color} {fg_val}/100 — {fg_class}")
+                st.progress(fg_val / 100)
+
+                fg_hist = fg.get("history_7d", [])
+                if fg_hist and len(fg_hist) > 1:
+                    vals = []
+                    for h in fg_hist[-7:]:
+                        vals.append(h.get("value", h) if isinstance(h, dict) else int(h))
+                    fig = go.Figure(go.Scatter(y=vals, mode="lines+markers",
+                                               line=dict(color="orange", width=2), marker=dict(size=4)))
+                    fig.update_layout(height=120, margin=dict(l=0, r=0, t=5, b=0),
+                                      showlegend=False, yaxis=dict(range=[0, 100]), xaxis=dict(showticklabels=False))
+                    st.plotly_chart(fig, use_container_width=True)
+                    st.caption("7-day history")
+            else:
+                st.caption("No fear & greed data.")
+
+        dom = crypto_intel.get("dominance", {})
+        with col_dom:
+            st.subheader("Market Dominance")
+            if dom:
+                d1, d2 = st.columns(2)
+                d1.metric("BTC", f"{dom.get('btc_dominance', 0):.1f}%")
+                d2.metric("ETH", f"{dom.get('eth_dominance', 0):.1f}%")
+                total_cap = dom.get("total_market_cap", 0)
+                if total_cap:
+                    st.metric("Total Market Cap", f"${total_cap / 1e12:.2f}T")
+            else:
+                st.caption("No dominance data.")
+
+        st.divider()
+
+        # ── Funding Rates & Open Interest ────────────────────────
+        st.subheader("Derivatives")
+        col_fund, col_oi = st.columns(2)
+
+        btc_f = crypto_intel.get("btc_funding", {})
+        eth_f = crypto_intel.get("eth_funding", {})
+        with col_fund:
+            st.markdown("**Funding Rates**")
+            if btc_f:
+                rate = btc_f.get("rate", 0)
+                direction = btc_f.get("direction", "neutral")
+                col_fund.metric("BTC Funding", f"{rate:.4%}", direction.replace("_", " "))
+            if eth_f:
+                rate = eth_f.get("rate", 0)
+                direction = eth_f.get("direction", "neutral")
+                col_fund.metric("ETH Funding", f"{rate:.4%}", direction.replace("_", " "))
+
+        btc_oi = crypto_intel.get("btc_open_interest", {})
+        eth_oi = crypto_intel.get("eth_open_interest", {})
+        with col_oi:
+            st.markdown("**Open Interest**")
+            if btc_oi:
+                oi_usd = btc_oi.get("open_interest_usd", 0)
+                col_oi.metric("BTC OI", f"${oi_usd / 1e9:.2f}B",
+                              f"{btc_oi.get('change_24h_pct', 0):+.1f}% 24h")
+            if eth_oi:
+                oi_usd = eth_oi.get("open_interest_usd", 0)
+                col_oi.metric("ETH OI", f"${oi_usd / 1e9:.2f}B",
+                              f"{eth_oi.get('change_24h_pct', 0):+.1f}% 24h")
+
+        st.divider()
+
+        # ── DeFi, Gas, Whale, Stablecoins ────────────────────────
+        col_defi, col_whale = st.columns(2)
+
+        defi = crypto_intel.get("defi", {})
+        gas = crypto_intel.get("gas", {})
+        with col_defi:
+            st.subheader("DeFi & Gas")
+            if defi:
+                st.metric("Total DeFi TVL", f"${defi.get('total_tvl', 0) / 1e9:.1f}B")
+                top_protocols = defi.get("top_protocols", [])
+                if top_protocols:
+                    proto_rows = []
+                    for p in top_protocols[:5]:
+                        proto_rows.append({
+                            "Protocol": p.get("name", ""),
+                            "TVL": f"${p.get('tvl', 0) / 1e9:.2f}B",
+                            "1d": f"{p.get('change_1d', p.get('change_24h', 0)):+.1f}%",
+                        })
+                    st.dataframe(pd.DataFrame(proto_rows), use_container_width=True, hide_index=True)
+            if gas:
+                gas_price = gas.get("gas_price_gwei", 0)
+                st.metric("ETH Gas", f"{gas_price:.2f} Gwei")
+
+        whale = crypto_intel.get("whale_activity", {})
+        with col_whale:
+            st.subheader("Whale Activity")
+            if whale:
+                txns = whale.get("large_txns_24h", 0)
+                flow = whale.get("net_exchange_flow", "unknown")
+                flow_icon = {"inflow": "🔴", "outflow": "🟢", "neutral": "🟡"}.get(flow, "⚪")
+                st.metric("Large Txns (24h)", f"{txns:,}")
+                st.markdown(f"**Net Exchange Flow:** {flow_icon} {flow.title()}")
+
+                liq = crypto_intel.get("liquidation_estimate", {})
+                if liq:
+                    st.metric("Liquidation Risk", liq.get("risk_level", "N/A").upper())
+                    st.caption(f"Bias: {liq.get('bias', 'N/A')}")
+            else:
+                st.caption("No whale data available.")
+
+        # Stablecoins & Correlations
+        stable = crypto_intel.get("stablecoin_supply", {})
+        corr = crypto_intel.get("correlations", {})
+        if stable or corr:
+            with st.expander("Stablecoins & Correlations"):
+                if stable:
+                    total_stable = stable.get("total_stablecoin_cap", 0)
+                    st.markdown(f"**Stablecoin Supply:** ${total_stable / 1e9:.1f}B (USDT dominance: {stable.get('usdt_dominance', 0):.1f}%)")
+                if corr and corr.get("pairs"):
+                    st.markdown(f"**Correlations ({corr.get('period_days', 30)}d):**")
+                    for pair, val in sorted(corr["pairs"].items()):
+                        strength = "strong" if abs(val) > 0.7 else "moderate" if abs(val) > 0.4 else "weak"
+                        st.markdown(f"- {pair}: {val:+.3f} ({strength})")
+
+        # Crypto signals from today's findings
+        all_signals = today_findings.get("signals", [])
+        crypto_signals = [s for s in all_signals if s.get("ticker", "") in {"BTCUSD", "ETHUSD", "BTCUSDT", "ETHUSDT"}]
+        if crypto_signals:
+            st.divider()
+            st.subheader("Crypto Signals")
+            for sig in crypto_signals:
+                action = sig.get("action", "skip")
+                ticker = sig.get("ticker", "")
+                action_icon = {"enter_now": "🟢", "watch": "🟡"}.get(action, "⚪")
+                st.markdown(
+                    f"{action_icon} **{ticker}** — {sig.get('signal', '')} (Score: {sig.get('score', 0):.2f}) · "
+                    f"{sig.get('strategy', '').replace('_', ' ').title()} · "
+                    f"Entry: ${sig.get('entry_price', 0):,.2f}"
+                )
 
 
-after_hours = today_findings.get("after_hours", {})
-if after_hours:
-    session = after_hours.get("session", "").replace("_", " ").title()
-    st.header(f"After-Hours ({session})")
+elif page == "Portfolio":
+    st.title("💼 Paper Trading Simulation")
+    st.caption(
+        "Track your $500 paper portfolio in real time. The agent recommends trades daily "
+        "using 5 strategies — this page shows how those recommendations perform so you can "
+        "evaluate results before committing real money."
+    )
 
-    # Earnings Gaps
-    gaps = after_hours.get("earnings_gaps", [])
-    if gaps:
-        st.subheader("Earnings Gap Signals")
-        for g in gaps:
-            gap_dir = "UP" if g.get("gap_direction") == "up" else "DOWN"
-            vol = "Confirmed" if g.get("volume_confirmation") else "Not confirmed"
-            with st.expander(f"{g.get('ticker', '')} — Gap {gap_dir} {abs(g.get('gap_pct', 0)):.1f}% ({g.get('gap_size', '')})"):
-                st.markdown(f"**Strategy:** {g.get('strategy', '').replace('_', ' ').title()} | **Direction:** {g.get('direction', '')}")
-                st.markdown(f"**Entry:** ${g.get('entry_price', 0):.2f} | **SL:** ${g.get('stop_loss', 0):.2f} | **TP:** ${g.get('take_profit', 0):.2f}")
-                st.markdown(f"**Confidence:** {g.get('confidence', 0):.0%} | **Volume:** {vol}")
-                st.markdown(f"_{g.get('reasoning', '')}_")
+    if isinstance(performance, dict) and performance:
+        balance = performance.get("virtual_balance", 500)
+        starting = performance.get("starting_balance", 500)
+        pnl = balance - starting
+        total_ret = ((balance - starting) / starting * 100) if starting else 0
+        total_trades = performance.get("total_trades", 0)
+        wins = performance.get("wins", 0)
+        losses = performance.get("losses", 0)
+        win_rate = performance.get("win_rate", 0)
 
-    # Crypto Overnight
-    crypto_night = after_hours.get("crypto_overnight", [])
-    if crypto_night:
-        st.subheader("Crypto Overnight Signals")
-        for s in crypto_night:
-            with st.expander(f"{s.get('symbol', '')} — {s.get('signal_type', '').replace('_', ' ').title()} ({s.get('strength', '')})"):
-                st.markdown(f"**{s.get('direction', '')}** @ ${s.get('current_price', 0):,.2f} | Change: {s.get('price_change_pct', 0):+.1f}%")
-                st.markdown(f"**Entry:** ${s.get('entry_price', 0):,.2f} | **SL:** ${s.get('stop_loss', 0):,.2f} | **TP:** ${s.get('take_profit', 0):,.2f}")
-                st.markdown(f"_{s.get('reasoning', '')}_")
+        # ── ROI & Key Metrics ─────────────────────────────────────
+        st.subheader("Return on Investment")
 
-    # Pre-Market Movers
-    movers = after_hours.get("premarket_movers", [])
-    if movers:
-        st.subheader("Pre-Market Movers")
-        mover_rows = []
-        for m in movers[:10]:
-            mover_rows.append({
-                "Ticker": m.get("ticker", ""),
-                "Gap": f"{m.get('gap_pct', 0):+.1f}%",
-                "Vol Ratio": f"{m.get('volume_ratio', 0):.1f}x",
-                "Catalyst": m.get("catalyst", ""),
-                "Action": m.get("action", "").replace("_", " ").title(),
-            })
-        st.dataframe(pd.DataFrame(mover_rows), use_container_width=True, hide_index=True)
+        m1, m2, m3, m4, m5 = st.columns(5)
+        m1.metric("Starting Capital", f"${starting:.2f}")
+        m2.metric("Current Balance", f"${balance:.2f}", f"{pnl:+.2f}")
+        m3.metric("ROI", f"{total_ret:+.2f}%")
+        m4.metric("Win Rate", f"{win_rate * 100:.1f}%")
+        m5.metric("Total Trades", f"{total_trades}")
 
-    if not (gaps or crypto_night or movers):
-        st.caption("No significant after-hours signals detected.")
+        # ROI context for learners
+        if total_trades > 0:
+            if total_ret > 0:
+                st.success(
+                    f"Your paper portfolio is up **${pnl:+.2f}** ({total_ret:+.2f}%) from the "
+                    f"${starting:.0f} starting balance after {total_trades} trades."
+                )
+            elif total_ret < 0:
+                st.warning(
+                    f"Your paper portfolio is down **${pnl:+.2f}** ({total_ret:+.2f}%). "
+                    f"This is normal during learning — review which strategies are losing below."
+                )
+            else:
+                st.info("Portfolio is flat so far. Trades are being executed — results will show soon.")
+
+        st.divider()
+
+        # ── Daily P&L Progression ─────────────────────────────────
+        st.subheader("Daily P&L Progression")
+        st.caption("How your balance changes day by day — the goal is a steady upward trend.")
+
+        if not trades_df.empty and "pnl" in trades_df.columns and "exit_date" in trades_df.columns:
+            daily_df = trades_df.copy()
+            daily_df["pnl"] = daily_df["pnl"].astype(float)
+            daily_df["exit_date"] = pd.to_datetime(daily_df["exit_date"], errors="coerce")
+            daily_df = daily_df.dropna(subset=["exit_date"])
+
+            if not daily_df.empty:
+                daily_pnl = daily_df.groupby(daily_df["exit_date"].dt.date).agg(
+                    day_pnl=("pnl", "sum"),
+                    trades=("pnl", "count"),
+                    wins=("pnl", lambda x: (x > 0).sum()),
+                ).reset_index()
+                daily_pnl.columns = ["Date", "Day P&L", "Trades", "Wins"]
+                daily_pnl = daily_pnl.sort_values("Date")
+                daily_pnl["Balance"] = daily_pnl["Day P&L"].cumsum() + starting
+                daily_pnl["Cumulative P&L"] = daily_pnl["Day P&L"].cumsum()
+                daily_pnl["ROI %"] = (daily_pnl["Balance"] - starting) / starting * 100
+                daily_pnl["Date"] = pd.to_datetime(daily_pnl["Date"])
+
+                # Balance over time chart
+                fig = go.Figure()
+                fig.add_trace(go.Scatter(
+                    x=daily_pnl["Date"], y=daily_pnl["Balance"],
+                    mode="lines+markers", name="Balance",
+                    line=dict(color="blue", width=2), marker=dict(size=5),
+                ))
+                fig.add_hline(y=starting, line_dash="dash", line_color="gray",
+                              annotation_text=f"Starting ${starting:.0f}")
+                fig.update_layout(
+                    height=300, margin=dict(t=30, b=20),
+                    title="Portfolio Balance Over Time",
+                    xaxis_title="Date", yaxis_title="Balance ($)",
+                    hovermode="x unified",
+                )
+                st.plotly_chart(fig, use_container_width=True)
+
+                # Daily P&L bar chart
+                colors = ["green" if v >= 0 else "red" for v in daily_pnl["Day P&L"]]
+                fig_daily = go.Figure(go.Bar(
+                    x=daily_pnl["Date"], y=daily_pnl["Day P&L"],
+                    marker_color=colors, name="Daily P&L",
+                ))
+                fig_daily.update_layout(
+                    height=200, margin=dict(t=30, b=20),
+                    title="Daily Gains / Losses",
+                    xaxis_title="Date", yaxis_title="P&L ($)",
+                )
+                st.plotly_chart(fig_daily, use_container_width=True)
+
+                # Daily summary table
+                with st.expander("Daily Breakdown"):
+                    display_daily = daily_pnl.copy()
+                    display_daily["Date"] = display_daily["Date"].dt.strftime("%Y-%m-%d")
+                    display_daily["Day P&L"] = display_daily["Day P&L"].apply(lambda x: f"${x:+.2f}")
+                    display_daily["Balance"] = display_daily["Balance"].apply(lambda x: f"${x:.2f}")
+                    display_daily["ROI %"] = display_daily["ROI %"].apply(lambda x: f"{x:+.2f}%")
+                    st.dataframe(
+                        display_daily[["Date", "Day P&L", "Balance", "ROI %", "Trades", "Wins"]].iloc[::-1],
+                        use_container_width=True, hide_index=True,
+                    )
+        else:
+            st.info("No completed trades yet. Daily P&L will appear after the first trade closes.")
+
+        st.divider()
+
+        # ── Strategy Accuracy ─────────────────────────────────────
+        st.subheader("Strategy Recommendation Accuracy")
+        st.caption(
+            "How often each strategy's 'enter now' recommendations resulted in a profit. "
+            "A strategy with >50% accuracy and positive P&L is doing its job."
+        )
+
+        if not trades_df.empty and "strategy" in trades_df.columns and "pnl" in trades_df.columns:
+            acc_df = trades_df.copy()
+            acc_df["pnl"] = acc_df["pnl"].astype(float)
+            acc_df["profitable"] = acc_df["pnl"] > 0
+
+            strat_acc = acc_df.groupby("strategy").agg(
+                total=("pnl", "count"),
+                wins=("profitable", "sum"),
+                total_pnl=("pnl", "sum"),
+                avg_pnl=("pnl", "mean"),
+            ).reset_index()
+            strat_acc["accuracy"] = (strat_acc["wins"] / strat_acc["total"] * 100).round(1)
+            strat_acc = strat_acc.sort_values("accuracy", ascending=False)
+
+            # Accuracy bar chart
+            fig_acc = go.Figure()
+            fig_acc.add_trace(go.Bar(
+                x=strat_acc["strategy"].str.replace("_", " ").str.title(),
+                y=strat_acc["accuracy"],
+                marker_color=["green" if a >= 50 else "orange" if a >= 40 else "red"
+                               for a in strat_acc["accuracy"]],
+                text=strat_acc["accuracy"].apply(lambda x: f"{x:.0f}%"),
+                textposition="auto",
+            ))
+            fig_acc.add_hline(y=50, line_dash="dash", line_color="gray",
+                              annotation_text="50% breakeven line")
+            fig_acc.update_layout(
+                height=250, margin=dict(t=30, b=20),
+                title="Win Rate by Strategy",
+                xaxis_title="Strategy", yaxis_title="Accuracy %",
+                yaxis=dict(range=[0, 100]),
+            )
+            st.plotly_chart(fig_acc, use_container_width=True)
+
+            # Strategy accuracy table
+            acc_rows = []
+            for _, row in strat_acc.iterrows():
+                verdict = "Profitable" if row["total_pnl"] > 0 else "Losing"
+                acc_rows.append({
+                    "Strategy": row["strategy"].replace("_", " ").title(),
+                    "Trades": int(row["total"]),
+                    "Wins": int(row["wins"]),
+                    "Accuracy": f"{row['accuracy']:.0f}%",
+                    "Total P&L": f"${row['total_pnl']:+.2f}",
+                    "Avg P&L": f"${row['avg_pnl']:+.2f}",
+                    "Verdict": verdict,
+                })
+            st.dataframe(pd.DataFrame(acc_rows), use_container_width=True, hide_index=True)
+        else:
+            st.info("No trades yet. Strategy accuracy will appear after trades are completed.")
+
+        st.divider()
+
+        # ── Open Positions ────────────────────────────────────────
+        st.subheader("Open Positions")
+        if positions_data:
+            pos_rows = []
+            for pos in positions_data:
+                pnl_val = pos.get("unrealized_pnl", 0)
+                trail = f"${pos['trailing_stop']:.4f}" if pos.get("trailing_stop", 0) > 0 else "—"
+                pos_rows.append({
+                    "Ticker": pos["ticker"],
+                    "Direction": pos["direction"],
+                    "Strategy": pos.get("strategy", ""),
+                    "Entry": f"${pos['entry_price']:.2f}",
+                    "P&L": f"${pnl_val:+.2f}",
+                    "Day": f"{pos.get('days_held', 0)}/{pos.get('max_hold_days', 10)}",
+                    "SL": f"${pos['stop_loss']:.4f}",
+                    "TP": f"${pos['take_profit']:.4f}",
+                    "Trail": trail,
+                })
+            st.dataframe(pd.DataFrame(pos_rows), use_container_width=True, hide_index=True)
+        else:
+            st.caption("No open positions.")
+
+        st.divider()
+
+        # ── Trade History ─────────────────────────────────────────
+        st.subheader("Recent Trades")
+        if not trades_df.empty:
+            display_cols = [c for c in ["ticker", "direction", "strategy", "entry_price", "exit_price",
+                                         "pnl", "exit_reason", "exit_date"] if c in trades_df.columns]
+            st.dataframe(trades_df[display_cols].tail(10).iloc[::-1], use_container_width=True, hide_index=True)
+        else:
+            st.caption("No trade history yet.")
+
+        st.markdown(
+            f"**Expectancy:** ${performance.get('expectancy', 0):.2f}/trade · "
+            f"**Avg R:** {performance.get('avg_r_multiple', 0):.2f} · "
+            f"**Max Drawdown:** {performance.get('max_drawdown_pct', 0):.1f}%"
+        )
+
+        st.divider()
+
+        # ── Go Live Readiness ─────────────────────────────────────
+        st.subheader("Go Live Readiness")
+        st.caption(
+            "Paper trade for at least 30 days before considering real money. "
+            "This checklist helps you evaluate whether the system is ready."
+        )
+
+        # Calculate readiness criteria
+        days_active = 0
+        if not trades_df.empty and "entry_date" in trades_df.columns:
+            dates = pd.to_datetime(trades_df["entry_date"], errors="coerce").dropna()
+            if not dates.empty:
+                days_active = (date.today() - dates.min().date()).days
+
+        checks = {
+            "30+ days of paper trading": days_active >= 30,
+            "20+ completed trades": total_trades >= 20,
+            "Win rate above 45%": win_rate > 0.45,
+            "Positive total P&L": pnl > 0,
+            "Max drawdown under 15%": performance.get("max_drawdown_pct", 100) < 15,
+            "Profit factor above 1.2": performance.get("profit_factor", 0) > 1.2,
+        }
+
+        passed = sum(checks.values())
+        total_checks = len(checks)
+
+        col_ready, col_progress = st.columns([2, 1])
+
+        with col_ready:
+            for label, ok in checks.items():
+                icon = "✅" if ok else "⬜"
+                st.markdown(f"{icon} {label}")
+
+        with col_progress:
+            pct = passed / total_checks
+            if pct >= 0.8:
+                st.success(f"**{passed}/{total_checks} passed**\n\nLooking good! Review results carefully before going live.")
+            elif pct >= 0.5:
+                st.warning(f"**{passed}/{total_checks} passed**\n\nGetting there — keep paper trading.")
+            else:
+                st.info(f"**{passed}/{total_checks} passed**\n\nStill early — let the simulation run longer.")
+
+            st.metric("Days Active", f"{days_active}/30")
+
+        # Learning tips
+        with st.expander("What to look for before going live"):
+            st.markdown("""
+**Consistency matters more than big wins:**
+- A steady equity curve with small gains is better than volatile swings
+- Watch for strategies that win often but lose big (low R:R)
+- Check that your max drawdown stays manageable
+
+**Key metrics to understand:**
+- **Win Rate** — % of trades that made money. Above 45% is good for most strategies
+- **Profit Factor** — gross profits / gross losses. Above 1.2 means you earn more than you lose
+- **Expectancy** — average $ per trade. Positive = the system makes money over time
+- **Max Drawdown** — largest peak-to-trough decline. Keep under 15% for safety
+- **Sharpe Ratio** — risk-adjusted return. Above 1.0 is acceptable, 2.0+ is excellent
+
+**When you're ready:**
+1. Start with a small real account (same $500)
+2. Use the same strategies the paper trader validated
+3. Never risk more than 2% per trade
+4. Keep running paper trading alongside real trading to compare
+""")
+
+    else:
+        st.info(
+            "No portfolio data yet. Run the pipeline to start paper trading with a $500 virtual balance. "
+            "The system will automatically enter and exit trades based on its strategy recommendations."
+        )
 
 
-# ── Section 8: AI Daily Summary ──────────────────────────────────
+elif page == "Performance":
+    st.title("📐 Performance & Analytics")
 
+    # ── Portfolio Analytics ───────────────────────────────────────
+    if portfolio_analytics:
+        st.subheader("Risk Metrics")
+        pa1, pa2, pa3, pa4 = st.columns(4)
+        pa1.metric("Sharpe Ratio", f"{portfolio_analytics.get('sharpe_ratio', 0):.2f}")
+        pa2.metric("Sortino Ratio", f"{portfolio_analytics.get('sortino_ratio', 0):.2f}")
+        pa3.metric("Calmar Ratio", f"{portfolio_analytics.get('calmar_ratio', 0):.2f}")
+        pa4.metric("Max Drawdown", f"{portfolio_analytics.get('max_drawdown_pct', 0):.1f}%")
 
-ai_summary = today_findings.get("ai_summary")
-if ai_summary:
-    st.header("AI Daily Summary")
-    st.markdown(ai_summary)
+        pa5, pa6, pa7, pa8 = st.columns(4)
+        pa5.metric("Current DD", f"{portfolio_analytics.get('current_drawdown_pct', 0):.1f}%")
+        pa6.metric("Avg Hold Days", f"{portfolio_analytics.get('avg_hold_days', 0):.1f}")
+        pa7.metric("Best Day", f"${portfolio_analytics.get('best_day_pnl', 0):+.2f}")
+        pa8.metric("Worst Day", f"${portfolio_analytics.get('worst_day_pnl', 0):+.2f}")
 
+        # Equity curve with drawdown
+        equity = portfolio_analytics.get("equity_curve", [])
+        if equity and len(equity) > 1:
+            eq_df = pd.DataFrame(equity)
+            eq_df["trade_num"] = range(1, len(eq_df) + 1)
 
-# ── Section 9: Performance & Behavior ────────────────────────────
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(x=eq_df["trade_num"], y=eq_df["balance"],
+                                      mode="lines", name="Balance", line=dict(color="blue", width=2)))
+            fig.add_trace(go.Scatter(x=eq_df["trade_num"], y=eq_df["peak"],
+                                      mode="lines", name="Peak", line=dict(color="gray", width=1, dash="dash")))
+            fig.update_layout(height=250, margin=dict(t=30, b=20), title="Equity Curve & Peak",
+                              xaxis_title="Trade #", yaxis_title="Balance ($)")
+            st.plotly_chart(fig, use_container_width=True)
 
+            fig_dd = go.Figure()
+            fig_dd.add_trace(go.Scatter(x=eq_df["trade_num"], y=eq_df["drawdown_pct"],
+                                         mode="lines", fill="tozeroy", name="Drawdown",
+                                         line=dict(color="red", width=1)))
+            fig_dd.update_layout(height=150, margin=dict(t=20, b=20), title="Drawdown %",
+                                 xaxis_title="Trade #", yaxis_title="DD %")
+            st.plotly_chart(fig_dd, use_container_width=True)
 
-st.header("Performance")
+        st.divider()
 
-if not trades_df.empty and "strategy" in trades_df.columns:
-    col_strat, col_exit = st.columns(2)
+        # Monthly returns
+        monthly = portfolio_analytics.get("monthly_returns", {})
+        if monthly:
+            st.subheader("Monthly Returns")
+            month_df = pd.DataFrame([{"Month": k, "P&L": v} for k, v in monthly.items()])
+            fig = px.bar(month_df, x="Month", y="P&L", color="P&L",
+                         color_continuous_scale=["red", "gray", "green"])
+            fig.update_layout(height=200, margin=dict(t=10, b=10))
+            st.plotly_chart(fig, use_container_width=True)
 
-    with col_strat:
+        # Direction stats
+        dir_stats = portfolio_analytics.get("direction_stats", {})
+        if dir_stats:
+            st.subheader("Long vs Short")
+            for dir_name, stats in dir_stats.items():
+                st.markdown(
+                    f"**{dir_name}**: {stats.get('total_trades', 0)} trades, "
+                    f"{stats.get('win_rate', 0):.0%} win rate, "
+                    f"${stats.get('total_pnl', 0):+.2f} total P&L"
+                )
+    else:
+        st.info("No analytics data. Run the pipeline first.")
+
+    st.divider()
+
+    # ── Strategy Performance ─────────────────────────────────────
+    if not trades_df.empty and "strategy" in trades_df.columns:
         st.subheader("Strategy Performance")
         strat_metrics = performance.get("strategy_metrics", {}) if isinstance(performance, dict) else {}
         if strat_metrics:
             rows = []
             for strat, m in strat_metrics.items():
-                rows.append(
-                    {
-                        "Strategy": strat.replace("_", " ").title(),
-                        "Trades": m.get("total_trades", 0),
-                        "Win Rate": f"{m.get('win_rate', 0) * 100:.0f}%",
-                        "P&L": f"${m.get('pnl', 0):+.2f}",
-                    }
-                )
+                rows.append({
+                    "Strategy": strat.replace("_", " ").title(),
+                    "Trades": m.get("total_trades", 0),
+                    "Win Rate": f"{m.get('win_rate', 0) * 100:.0f}%",
+                    "P&L": f"${m.get('pnl', 0):+.2f}",
+                })
             st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
-            # Strategy P&L chart
-            chart_data = pd.DataFrame(
-                [
-                    {"Strategy": k.replace("_", " ").title(), "P&L": v.get("pnl", 0)}
-                    for k, v in strat_metrics.items()
-                ]
-            )
+            chart_data = pd.DataFrame([
+                {"Strategy": k.replace("_", " ").title(), "P&L": v.get("pnl", 0)}
+                for k, v in strat_metrics.items()
+            ])
             fig = px.bar(chart_data, x="Strategy", y="P&L", color="P&L",
                          color_continuous_scale=["red", "gray", "green"])
             fig.update_layout(height=250, margin=dict(t=10, b=10))
             st.plotly_chart(fig, use_container_width=True)
 
-    with col_exit:
-        st.subheader("Exit Reasons")
+        # Exit reasons
         if "exit_reason" in trades_df.columns:
+            st.subheader("Exit Reasons")
             exit_counts = trades_df["exit_reason"].value_counts()
-            fig = px.pie(
-                values=exit_counts.values,
-                names=exit_counts.index,
-                title="",
-                height=300,
-            )
+            fig = px.pie(values=exit_counts.values, names=exit_counts.index, height=300)
             fig.update_layout(margin=dict(t=10, b=10))
             st.plotly_chart(fig, use_container_width=True)
 
-    # Behavioral summary
-    st.subheader("Behavioral Summary")
+    # ── Behavioral Summary ───────────────────────────────────────
     behavior_log = []
     if behavior_log_path.exists():
         behavior_log = json.loads(behavior_log_path.read_text())
 
     if behavior_log:
+        st.divider()
+        st.subheader("Behavioral Summary (7 days)")
         cutoff = (datetime.now() - timedelta(days=7)).strftime("%Y-%m-%d")
         recent = [e for e in behavior_log if e.get("date", "") >= cutoff]
         entries = len([e for e in recent if e.get("action") == "entry"])
@@ -748,112 +1060,77 @@ if not trades_df.empty and "strategy" in trades_df.columns:
         avg_discipline = sum(disciplines) / len(disciplines) if disciplines else 0
 
         bc1, bc2, bc3 = st.columns(3)
-        bc1.metric("Entries (7d)", entries)
+        bc1.metric("Entries", entries)
         bc2.metric("Plan Adherence", f"{adherence:.0%}")
         bc3.metric("Avg Discipline", f"{avg_discipline:.1f}/5" if avg_discipline > 0 else "N/A")
-else:
-    st.info("No trade history yet for performance charts.")
 
 
-# ── Section 10: Portfolio Analytics ──────────────────────────────
+elif page == "System":
+    st.title("⚙️ System")
 
+    # API Health
+    st.subheader("API Health")
+    if api_health:
+        if isinstance(api_health, list):
+            health_rows = []
+            for h in api_health:
+                state = h.get("state", "unknown")
+                icon = {"closed": "🟢", "open": "🔴", "half_open": "🟡"}.get(state, "⚪")
+                health_rows.append({
+                    "API": h.get("name", ""),
+                    "Status": f"{icon} {state.upper()}",
+                    "Calls": h.get("total_calls", 0),
+                    "Failures": h.get("failures", 0),
+                    "Fail Rate": f"{h.get('failure_rate', 0):.0%}",
+                })
+            st.dataframe(pd.DataFrame(health_rows), use_container_width=True, hide_index=True)
+        elif isinstance(api_health, dict):
+            for api, status in api_health.items():
+                if isinstance(status, dict):
+                    state = status.get("state", status.get("status", "unknown"))
+                    failures = status.get("failure_count", status.get("failures", 0))
+                    icon = "🟢" if state in ("closed", "ok", "healthy") else "🔴"
+                    st.markdown(f"{icon} **{api}:** {state}" + (f" ({failures} failures)" if failures else ""))
+                else:
+                    st.markdown(f"**{api}:** {status}")
+    else:
+        st.caption("No API health data. Run the pipeline first.")
 
-if portfolio_analytics:
-    st.header("Portfolio Analytics")
+    st.divider()
 
-    pa_col1, pa_col2, pa_col3, pa_col4 = st.columns(4)
-    pa_col1.metric("Sortino Ratio", f"{portfolio_analytics.get('sortino_ratio', 0):.2f}")
-    pa_col2.metric("Max Drawdown", f"{portfolio_analytics.get('max_drawdown_pct', 0):.1f}%")
-    pa_col3.metric("Calmar Ratio", f"{portfolio_analytics.get('calmar_ratio', 0):.2f}")
-    pa_col4.metric("Avg Hold", f"{portfolio_analytics.get('avg_hold_days', 0):.1f}d")
+    # Configuration overview
+    st.subheader("Configuration")
 
-    pa2_col1, pa2_col2, pa2_col3, pa2_col4 = st.columns(4)
-    pa2_col1.metric("Best Day", f"${portfolio_analytics.get('best_day_pnl', 0):+.2f}")
-    pa2_col2.metric("Worst Day", f"${portfolio_analytics.get('worst_day_pnl', 0):+.2f}")
-    pa2_col3.metric("Max Win Streak", f"{portfolio_analytics.get('max_consecutive_wins', 0)}")
-    pa2_col4.metric("Max Loss Streak", f"{portfolio_analytics.get('max_consecutive_losses', 0)}")
+    dep = prefs.get("deployment", {})
+    sched = prefs.get("schedule", {})
 
-    # Equity curve with drawdown
-    equity = portfolio_analytics.get("equity_curve", [])
-    if equity and len(equity) > 1:
-        eq_df = pd.DataFrame(equity)
-        eq_df["trade_num"] = range(1, len(eq_df) + 1)
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown("**Deployment**")
+        st.markdown(f"- Mode: `{dep.get('mode', 'local')}`")
+        st.markdown(f"- Push data: `{dep.get('push_data_after_run', False)}`")
+        st.markdown(f"- Telegram: `{prefs.get('telegram', {}).get('mode', 'polling')}`")
+        repo = dep.get("github_repo", "")
+        if repo:
+            st.markdown(f"- GitHub: `{repo}`")
 
-        fig = go.Figure()
-        fig.add_trace(go.Scatter(x=eq_df["trade_num"], y=eq_df["balance"],
-                                  mode="lines", name="Balance", line=dict(color="blue", width=2)))
-        fig.add_trace(go.Scatter(x=eq_df["trade_num"], y=eq_df["peak"],
-                                  mode="lines", name="Peak", line=dict(color="gray", width=1, dash="dash")))
-        fig.update_layout(height=250, margin=dict(t=30, b=20), title="Equity Curve & Peak",
-                          xaxis_title="Trade #", yaxis_title="Balance ($)")
-        st.plotly_chart(fig, use_container_width=True)
+    with c2:
+        st.markdown("**Schedule**")
+        st.markdown(f"- Timezone: `{sched.get('timezone', 'US/Eastern')}`")
+        st.markdown(f"- Morning: `{sched.get('morning_run', '09:00')}`")
+        st.markdown(f"- Afternoon: `{sched.get('afternoon_run', '15:00')}`")
+        if modules.get("crypto", False):
+            st.markdown(f"- Crypto AM: `{sched.get('crypto_morning', '08:00')}`")
+            st.markdown(f"- Crypto PM: `{sched.get('crypto_evening', '20:00')}`")
 
-        # Drawdown chart
-        fig_dd = go.Figure()
-        fig_dd.add_trace(go.Scatter(x=eq_df["trade_num"], y=eq_df["drawdown_pct"],
-                                     mode="lines", fill="tozeroy", name="Drawdown",
-                                     line=dict(color="red", width=1)))
-        fig_dd.update_layout(height=150, margin=dict(t=20, b=20), title="Drawdown %",
-                             xaxis_title="Trade #", yaxis_title="DD %")
-        st.plotly_chart(fig_dd, use_container_width=True)
+    st.divider()
 
-    # Monthly returns
-    monthly = portfolio_analytics.get("monthly_returns", {})
-    if monthly:
-        with st.expander("Monthly Returns"):
-            month_df = pd.DataFrame([{"Month": k, "P&L": v} for k, v in monthly.items()])
-            fig = px.bar(month_df, x="Month", y="P&L", color="P&L",
-                         color_continuous_scale=["red", "gray", "green"])
-            fig.update_layout(height=200, margin=dict(t=10, b=10))
-            st.plotly_chart(fig, use_container_width=True)
-
-    # Direction stats
-    dir_stats = portfolio_analytics.get("direction_stats", {})
-    if dir_stats:
-        with st.expander("Long vs Short Performance"):
-            for dir_name, stats in dir_stats.items():
-                st.markdown(
-                    f"**{dir_name}**: {stats.get('total_trades', 0)} trades, "
-                    f"{stats.get('win_rate', 0):.0%} win rate, "
-                    f"${stats.get('total_pnl', 0):+.2f} total P&L"
-                )
-
-
-# ── Section 11: API Health ───────────────────────────────────────
-
-
-if api_health:
-    with st.expander("API Health Status"):
-        health_rows = []
-        for h in api_health:
-            state = h.get("state", "unknown")
-            icon = {"closed": "🟢", "open": "🔴", "half_open": "🟡"}.get(state, "⚪")
-            health_rows.append({
-                "API": h.get("name", ""),
-                "Status": f"{icon} {state.upper()}",
-                "Calls": h.get("total_calls", 0),
-                "Failures": h.get("failures", 0),
-                "Fail Rate": f"{h.get('failure_rate', 0):.0%}",
-            })
-        st.dataframe(pd.DataFrame(health_rows), use_container_width=True, hide_index=True)
-
-
-# ── Tomorrow's Prep ──────────────────────────────────────────────
-
-
-tomorrow_items = today_report.get("tomorrow_prep", [])
-watchlist_signals = [s for s in signals if s.get("action") == "watchlist"]
-
-if tomorrow_items or watchlist_signals:
-    st.header("Tomorrow's Prep")
-
-    for item in tomorrow_items:
-        st.markdown(f"- {item}")
-
-    if watchlist_signals:
-        st.subheader("Watchlist")
-        for sig in watchlist_signals:
-            st.markdown(f"- **{sig['ticker']}** — {sig.get('strategy_label', '')} ({sig.get('setup', '')})")
+    # Regime history
+    if regime_daily_log:
+        st.subheader("Regime History")
+        reg_df = pd.DataFrame(regime_daily_log)
+        if "date" in reg_df.columns and "regime" in reg_df.columns:
+            st.dataframe(reg_df.tail(14).iloc[::-1], use_container_width=True, hide_index=True)
 
 
 # ── Auto-refresh ─────────────────────────────────────────────────
@@ -863,4 +1140,4 @@ try:
     from streamlit_autorefresh import st_autorefresh
     st_autorefresh(interval=refresh_seconds * 1000, key="data_refresh")
 except ImportError:
-    pass  # streamlit-autorefresh is optional
+    pass
