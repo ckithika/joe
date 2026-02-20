@@ -1,17 +1,17 @@
 {
   "BTCUSDT": {
-    "price": 67228.6,
-    "funding_rate": 5.365e-05,
-    "open_interest": 80685.208,
-    "open_interest_usd": 5424353574.5488,
-    "timestamp": "2026-02-20T08:12:49.920192"
+    "price": 66955.0,
+    "funding_rate": 1.302e-05,
+    "open_interest": 79728.806,
+    "open_interest_usd": 5338242205.73,
+    "timestamp": "2026-02-20T17:11:01.251537"
   },
   "ETHUSDT": {
-    "price": 1938.31,
-    "funding_rate": -4.637e-05,
-    "open_interest": 1770774.155,
-    "open_interest_usd": 3432309252.37805,
-    "timestamp": "2026-02-20T08:12:54.825873"
+    "price": 1936.62,
+    "funding_rate": -3.19e-05,
+    "open_interest": 1770602.502,
+    "open_interest_usd": 3428984217.42324,
+    "timestamp": "2026-02-20T17:11:04.360871"
   },
-  "last_updated": "2026-02-20T08:12:54.829293"
+  "last_updated": "2026-02-20T17:11:04.364145"
 }
