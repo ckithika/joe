@@ -2,11 +2,11 @@
   "starting_balance": 500.0,
   "current_balance": 500.0,
   "total_return_pct": 0.0,
-  "total_trades": 0,
+  "total_trades": 3,
   "win_rate": 0.0,
-  "profit_factor": 0.0,
+  "profit_factor": Infinity,
   "expectancy": 0.0,
-  "sharpe_ratio": 0.0,
+  "sharpe_ratio": 0,
   "sortino_ratio": 0.0,
   "max_drawdown_pct": 0.0,
   "max_drawdown_duration_days": 0,
@@ -14,18 +14,86 @@
   "calmar_ratio": 0.0,
   "avg_r_multiple": 0.0,
   "r_expectancy": 0.0,
-  "avg_hold_days": 0.0,
-  "avg_trades_per_week": 0.0,
+  "avg_hold_days": 9,
+  "avg_trades_per_week": 3.0,
   "best_day_pnl": 0.0,
   "worst_day_pnl": 0.0,
   "consecutive_wins": 0,
-  "consecutive_losses": 0,
+  "consecutive_losses": 3,
   "max_consecutive_wins": 0,
-  "max_consecutive_losses": 0,
-  "strategy_stats": [],
-  "equity_curve": [],
-  "monthly_returns": {},
-  "direction_stats": {},
-  "exit_reason_stats": {},
-  "timestamp": "2026-02-20T17:18:07.957173"
+  "max_consecutive_losses": 3,
+  "strategy_stats": [
+    {
+      "name": "breakout",
+      "total_trades": 2,
+      "wins": 0,
+      "losses": 2,
+      "win_rate": 0.0,
+      "total_pnl": 0.0,
+      "avg_pnl": 0.0,
+      "avg_win": 0,
+      "avg_loss": 0.0,
+      "profit_factor": Infinity,
+      "avg_hold_days": 9,
+      "best_trade": 0.0,
+      "worst_trade": 0.0,
+      "avg_r_multiple": 0.0
+    },
+    {
+      "name": "mean_reversion",
+      "total_trades": 1,
+      "wins": 0,
+      "losses": 1,
+      "win_rate": 0.0,
+      "total_pnl": 0.0,
+      "avg_pnl": 0.0,
+      "avg_win": 0,
+      "avg_loss": 0.0,
+      "profit_factor": Infinity,
+      "avg_hold_days": 9,
+      "best_trade": 0.0,
+      "worst_trade": 0.0,
+      "avg_r_multiple": 0.0
+    }
+  ],
+  "equity_curve": [
+    {
+      "date": "2026-02-20",
+      "balance": 500.0,
+      "drawdown_pct": 0.0,
+      "peak": 500.0
+    },
+    {
+      "date": "2026-02-20",
+      "balance": 500.0,
+      "drawdown_pct": 0.0,
+      "peak": 500.0
+    },
+    {
+      "date": "2026-02-20",
+      "balance": 500.0,
+      "drawdown_pct": 0.0,
+      "peak": 500.0
+    }
+  ],
+  "monthly_returns": {
+    "2026-02": 0.0
+  },
+  "direction_stats": {
+    "LONG": {
+      "total_trades": 3,
+      "wins": 0,
+      "win_rate": 0.0,
+      "total_pnl": 0.0,
+      "avg_pnl": 0.0
+    }
+  },
+  "exit_reason_stats": {
+    "expired": {
+      "count": 3,
+      "total_pnl": 0.0,
+      "avg_pnl": 0.0
+    }
+  },
+  "timestamp": "2026-02-20T17:22:20.711282"
 }

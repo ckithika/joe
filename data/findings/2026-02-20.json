@@ -1,11 +1,11 @@
 {
   "date": "2026-02-20",
-  "timestamp": "2026-02-20T17:18:07.952747",
+  "timestamp": "2026-02-20T17:22:20.706930",
   "regime": {
     "regime": "range_bound",
-    "confidence": 0.49,
-    "adx": 19.8,
-    "vix": 0.0,
+    "confidence": 0.41,
+    "adx": 16.3,
+    "vix": 20.8,
     "active_strategies": [
       "mean_reversion",
       "breakout"
@@ -15,139 +15,163 @@
   "defensive_mode": false,
   "signals": [
     {
-      "ticker": "MSFT",
-      "signal": "NEUTRAL",
-      "score": 0.097,
-      "strategy": "mean_reversion",
-      "action": "skip",
+      "ticker": "CDIO",
+      "signal": "BUY",
+      "score": 0.43,
+      "strategy": "breakout",
+      "action": "enter_now",
       "direction": "LONG",
-      "entry_price": 396.68,
-      "stop_loss": 379.0409,
-      "take_profit": 431.9582
+      "entry_price": 2.24,
+      "stop_loss": 1.7213,
+      "take_profit": 3.2775,
+      "ai_analysis": {
+        "recommendation": "reduce_size",
+        "bull_case": "The trade is supported by compelling technicals, specifically the surging volume which is 3.4 times the average, indicating strong conviction behind the move. A bullish MACD and strong RSI confirm the positive momentum, and the 2:1 reward-to-risk ratio is attractive.",
+        "bear_case": "The primary concern is the stated 'range_bound' market regime, where breakout strategies are prone to failure and can result in sharp reversals (false breakouts). The neutral sentiment also suggests a lack of a fundamental catalyst, meaning this price surge may be purely technical and unsustainable.",
+        "risk_factors": [
+          "Strategy Mismatch: Applying a breakout strategy in a range-bound market is a low-probability setup.",
+          "False Breakout: The price could push through the entry level only to quickly reverse, trapping long positions.",
+          "Lack of Catalyst: Without a news-driven reason for the surge, momentum can evaporate as quickly as it appeared."
+        ],
+        "confidence": 0.45
+      }
     },
     {
-      "ticker": "AMZN",
+      "ticker": "HCWC",
       "signal": "NEUTRAL",
-      "score": -0.09,
+      "score": 0.2325,
       "strategy": "mean_reversion",
-      "action": "skip",
+      "action": "watchlist",
       "direction": "LONG",
-      "entry_price": 204.94,
-      "stop_loss": 193.681,
-      "take_profit": 227.458
-    },
-    {
-      "ticker": "GOOGL",
-      "signal": "NEUTRAL",
-      "score": -0.09,
-      "strategy": "mean_reversion",
-      "action": "skip",
-      "direction": "LONG",
-      "entry_price": 304.705,
-      "stop_loss": 289.1076,
-      "take_profit": 335.8999
-    },
-    {
-      "ticker": "BTCUSD",
-      "signal": "NEUTRAL",
-      "score": -0.015,
-      "strategy": "mean_reversion",
-      "action": "skip",
-      "direction": "LONG",
-      "entry_price": 66919.775,
-      "stop_loss": 61860.8824,
-      "take_profit": 77037.5602
+      "entry_price": 0.2681,
+      "stop_loss": 0.2291,
+      "take_profit": 0.3462
     },
     {
       "ticker": "ETHUSD",
       "signal": "NEUTRAL",
-      "score": -0.015,
+      "score": 0.1835,
       "strategy": "mean_reversion",
-      "action": "skip",
+      "action": "watchlist",
       "direction": "LONG",
-      "entry_price": 1935.175,
-      "stop_loss": 1728.43,
-      "take_profit": 2348.665
+      "entry_price": 1934.06,
+      "stop_loss": 1727.315,
+      "take_profit": 2347.55
+    },
+    {
+      "ticker": "BTCUSD",
+      "signal": "NEUTRAL",
+      "score": 0.1673,
+      "strategy": "mean_reversion",
+      "action": "watchlist",
+      "direction": "LONG",
+      "entry_price": 66807.525,
+      "stop_loss": 61748.6324,
+      "take_profit": 76925.3102
+    },
+    {
+      "ticker": "ANPA",
+      "signal": "NEUTRAL",
+      "score": -0.165,
+      "strategy": "mean_reversion",
+      "action": "watchlist",
+      "direction": "LONG",
+      "entry_price": 11.19,
+      "stop_loss": -13.7969,
+      "take_profit": 61.1638
+    },
+    {
+      "ticker": "TNDM",
+      "signal": "NEUTRAL",
+      "score": 0.15,
+      "strategy": "mean_reversion",
+      "action": "watchlist",
+      "direction": "LONG",
+      "entry_price": 18.52,
+      "stop_loss": 16.8578,
+      "take_profit": 21.8444
+    },
+    {
+      "ticker": "EDHL",
+      "signal": "NEUTRAL",
+      "score": 0.15,
+      "strategy": "mean_reversion",
+      "action": "watchlist",
+      "direction": "LONG",
+      "entry_price": 3.38,
+      "stop_loss": 2.1942,
+      "take_profit": 5.7515
+    },
+    {
+      "ticker": "BJDX",
+      "signal": "NEUTRAL",
+      "score": 0.15,
+      "strategy": "mean_reversion",
+      "action": "watchlist",
+      "direction": "LONG",
+      "entry_price": 1.99,
+      "stop_loss": 1.3446,
+      "take_profit": 3.2808
+    },
+    {
+      "ticker": "MSFT",
+      "signal": "NEUTRAL",
+      "score": 0.135,
+      "strategy": "mean_reversion",
+      "action": "watchlist",
+      "direction": "LONG",
+      "entry_price": 396.15,
+      "stop_loss": 378.5109,
+      "take_profit": 431.4282
+    },
+    {
+      "ticker": "OPEG",
+      "signal": "NEUTRAL",
+      "score": 0.075,
+      "strategy": "mean_reversion",
+      "action": "watchlist",
+      "direction": "LONG",
+      "entry_price": 5.7,
+      "stop_loss": 4.2923,
+      "take_profit": 8.5154
     }
   ],
   "portfolio": {
     "virtual_balance": 500.0,
     "starting_balance": 500.0,
-    "total_trades": 0,
+    "total_trades": 3,
     "wins": 0,
     "losses": 0,
-    "expired": 0
+    "expired": 3,
+    "open_positions": 0,
+    "win_rate": 0.0,
+    "profit_factor": Infinity,
+    "expectancy": 0.0,
+    "sharpe_ratio": 0,
+    "avg_r_multiple": 0.0,
+    "strategy_metrics": {
+      "breakout": {
+        "total_trades": 2,
+        "wins": 0,
+        "pnl": 0.0,
+        "win_rate": 0.0
+      },
+      "mean_reversion": {
+        "total_trades": 1,
+        "wins": 0,
+        "pnl": 0.0,
+        "win_rate": 0.0
+      }
+    },
+    "last_updated": "2026-02-20T17:19:43.280968",
+    "max_drawdown_pct": 0
   },
-  "positions": [
-    {
-      "id": "PT-2026-02-20-001",
-      "ticker": "BATL",
-      "broker": "ibkr",
-      "direction": "LONG",
-      "entry_price": 4.13,
-      "entry_date": "2026-02-20",
-      "position_size": 6.8991,
-      "stop_loss": 3.0429,
-      "take_profit": 7.0289,
-      "strategy": "breakout",
-      "sector": "",
-      "max_hold_days": 7,
-      "days_held": 8,
-      "signal_score": 0.48,
-      "unrealized_pnl": 0.0,
-      "trailing_stop": 0.0,
-      "trailing_stop_atr": 0.0,
-      "highest_price": 5.47,
-      "lowest_price": 3.25
-    },
-    {
-      "id": "PT-2026-02-20-003",
-      "ticker": "JZ",
-      "broker": "ibkr",
-      "direction": "LONG",
-      "entry_price": 1.1,
-      "entry_date": "2026-02-20",
-      "position_size": 24.31,
-      "stop_loss": 0.7915,
-      "take_profit": 1.9227,
-      "strategy": "breakout",
-      "sector": "",
-      "max_hold_days": 7,
-      "days_held": 8,
-      "signal_score": 0.405,
-      "unrealized_pnl": 0.0,
-      "trailing_stop": 0.0,
-      "trailing_stop_atr": 0.0,
-      "highest_price": 1.26,
-      "lowest_price": 0.82
-    },
-    {
-      "id": "PT-2026-02-20-005",
-      "ticker": "CISS",
-      "broker": "ibkr",
-      "direction": "LONG",
-      "entry_price": 2.19,
-      "entry_date": "2026-02-20",
-      "position_size": 7.7532,
-      "stop_loss": 1.2227,
-      "take_profit": 4.1247,
-      "strategy": "mean_reversion",
-      "sector": "",
-      "max_hold_days": 5,
-      "days_held": 8,
-      "signal_score": 0.405,
-      "unrealized_pnl": 0.0,
-      "trailing_stop": 0.0,
-      "trailing_stop_atr": 0.0,
-      "highest_price": 2.75,
-      "lowest_price": 1.84
-    }
-  ],
+  "positions": [],
   "risk": {
-    "composite_score": 1.1,
+    "composite_score": 0.8,
     "risk_level": "RiskLevel.LOW"
   },
-  "ai_summary": "The market is leaning towards a range-bound regime, but with low conviction at 49%, suggesting a cautious approach is warranted. Today's top signals are all neutral, offering no high-conviction entries for mean-reversion strategies in major tech or crypto. Existing long positions in BATL, JZ, and CISS remain flat; monitor these closely for a potential exit as they have shown no momentum. The key data point to watch is the 'Extreme Fear' in the crypto market, which can often precede significant volatility. Given the lack of clear signals, the focus should be on risk management of current positions rather than seeking new entries.",
+  "ai_summary": "Today's market is in a low-confidence range-bound regime, suggesting that trends are unlikely to hold and price action may be choppy. The strongest signal is a BUY on CDIO, but its breakout strategy presents a conflict with the non-trending market, warranting caution. The portfolio is currently flat, so no position management is required. Given the 'Extreme Fear' in crypto markets, the key factor to watch is whether the CDIO signal can find any follow-through or if it will fail in this risk-off environment.",
   "crypto_intelligence": {
     "fear_greed": {
       "value": 7,
@@ -166,9 +190,9 @@
     "dominance": {
       "btc_dominance": 56.47,
       "eth_dominance": 9.87,
-      "total_market_cap": 2368645109312.96,
-      "btc_market_cap": 1337631237488.3203,
-      "eth_market_cap": 233720832993.48578
+      "total_market_cap": 2368220244438.85,
+      "btc_market_cap": 1337381402448.5627,
+      "eth_market_cap": 233677179965.68066
     },
     "btc_funding": {
       "symbol": "BTCUSDT",
@@ -186,61 +210,61 @@
     },
     "btc_open_interest": {
       "symbol": "BTCUSDT",
-      "open_interest": 79624.504,
-      "open_interest_usd": 5324004873.01,
-      "change_24h_pct": 1.38
+      "open_interest": 79973.372,
+      "open_interest_usd": 5331136940.24,
+      "change_24h_pct": 1.16
     },
     "eth_open_interest": {
       "symbol": "ETHUSDT",
-      "open_interest": 1772743.921,
-      "open_interest_usd": 3429461752.37,
-      "change_24h_pct": 0.327
+      "open_interest": 1774030.353,
+      "open_interest_usd": 3429768362.06,
+      "change_24h_pct": 0.401
     },
     "stablecoin_supply": {
-      "usdt_market_cap": 183696083841.5765,
+      "usdt_market_cap": 183687546441.48294,
       "usdc_market_cap": 73964523735.5301,
-      "total_stablecoin_cap": 257660607577.10663,
+      "total_stablecoin_cap": 257652070177.01306,
       "usdt_dominance": 71.3
     },
     "hash_rate": {
       "hash_rate": 0.97,
       "difficulty": 144398401518100,
       "block_height": 937545,
-      "timestamp": "2026-02-20T17:17:10.942383"
+      "timestamp": "2026-02-20T17:21:17.678971"
     },
     "liquidation_estimate": {
-      "current_price": 66864.0,
+      "current_price": 66650.5,
       "long_liquidation_zones": [
         {
           "leverage": "20x",
-          "price": 63520.8,
+          "price": 63317.97,
           "description": "5% below \u2014 20x longs liquidated"
         },
         {
           "leverage": "10x",
-          "price": 60177.6,
+          "price": 59985.45,
           "description": "10% below \u2014 10x longs liquidated"
         },
         {
           "leverage": "5x",
-          "price": 53491.2,
+          "price": 53320.4,
           "description": "20% below \u2014 5x longs liquidated"
         }
       ],
       "short_liquidation_zones": [
         {
           "leverage": "20x",
-          "price": 70207.2,
+          "price": 69983.03,
           "description": "5% above \u2014 20x shorts liquidated"
         },
         {
           "leverage": "10x",
-          "price": 73550.4,
+          "price": 73315.55,
           "description": "10% above \u2014 10x shorts liquidated"
         },
         {
           "leverage": "5x",
-          "price": 80236.8,
+          "price": 79980.6,
           "description": "20% above \u2014 5x shorts liquidated"
         }
       ],
@@ -248,7 +272,7 @@
       "risk_level": "low"
     },
     "defi": {
-      "total_tvl": 93988926573.31,
+      "total_tvl": 93864768011.19,
       "top_protocols": [
         {
           "name": "Binance CEX",
@@ -276,12 +300,12 @@
           "change_1d": 0.48
         }
       ],
-      "eth_tvl": 53042674452.85,
+      "eth_tvl": 52991908885.24,
       "stablecoin_tvl": 0
     },
     "gas": {
-      "gas_price_gwei": 0.1898,
-      "base_fee_gwei": 0.1895,
+      "gas_price_gwei": 0.1265,
+      "base_fee_gwei": 0.1263,
       "priority_fee_gwei": 0.0003
     },
     "whale_activity": {
@@ -295,365 +319,282 @@
         }
       ]
     },
-    "timestamp": "2026-02-20T17:17:00.540294"
+    "timestamp": "2026-02-20T17:21:06.768382"
   },
   "stock_intelligence": {
-    "timestamp": "2026-02-20T17:17:17.742425",
+    "timestamp": "2026-02-20T17:21:23.919929",
     "insider_trades": [
       {
-        "ticker": "MSFT",
-        "insider_name": "STANTON JOHN W",
-        "title": "2026-02-18",
+        "ticker": "CDIO",
+        "insider_name": "Fung Peter K",
+        "title": "2026-01-06",
         "transaction_type": "buy",
-        "shares": 83905,
-        "price": 397.35,
-        "value": 33339651.75,
-        "date": "2026-02-18"
+        "shares": 6308,
+        "price": 2.71,
+        "value": 17094.68,
+        "date": "2025-12-31"
       },
       {
-        "ticker": "MSFT",
-        "insider_name": "STANTON JOHN W",
-        "title": "2026-02-03",
+        "ticker": "CDIO",
+        "insider_name": "Betts Wendy J",
+        "title": "2026-01-06",
         "transaction_type": "buy",
-        "shares": 78905,
-        "price": 0,
-        "value": 0,
-        "date": "2026-01-30"
+        "shares": 6308,
+        "price": 2.71,
+        "value": 17094.68,
+        "date": "2025-12-31"
       },
       {
-        "ticker": "MSFT",
-        "insider_name": "Walmsley Emma N",
-        "title": "2026-02-03",
+        "ticker": "CDIO",
+        "insider_name": "Burton Paul Frederick",
+        "title": "2026-01-06",
         "transaction_type": "buy",
-        "shares": 1107,
-        "price": 0,
-        "value": 0,
-        "date": "2026-01-30"
+        "shares": 7259,
+        "price": 2.71,
+        "value": 19671.89,
+        "date": "2025-12-31"
       },
       {
-        "ticker": "MSFT",
-        "insider_name": "Rainey John D",
-        "title": "2026-02-03",
+        "ticker": "CDIO",
+        "insider_name": "Intrater James",
+        "title": "2026-01-06",
         "transaction_type": "buy",
-        "shares": 145,
-        "price": 0,
-        "value": 0,
-        "date": "2026-01-30"
-      },
-      {
-        "ticker": "MSFT",
-        "insider_name": "List Teri",
-        "title": "2026-02-03",
-        "transaction_type": "buy",
-        "shares": 145,
-        "price": 0,
-        "value": 0,
-        "date": "2026-01-30"
-      },
-      {
-        "ticker": "MSFT",
-        "insider_name": "Hoffman Reid",
-        "title": "2026-02-03",
-        "transaction_type": "buy",
-        "shares": 16661,
-        "price": 0,
-        "value": 0,
-        "date": "2026-01-30"
-      },
-      {
-        "ticker": "MSFT",
-        "insider_name": "Mason Mark",
-        "title": "2026-02-03",
-        "transaction_type": "buy",
-        "shares": 1675,
-        "price": 0,
-        "value": 0,
-        "date": "2026-01-30"
-      },
-      {
-        "ticker": "MSFT",
-        "insider_name": "MacGregor Catherine",
-        "title": "2026-02-03",
-        "transaction_type": "buy",
-        "shares": 1924,
-        "price": 0,
-        "value": 0,
-        "date": "2026-01-30"
-      },
-      {
-        "ticker": "MSFT",
-        "insider_name": "Johnston Hugh F",
-        "title": "2026-02-03",
-        "transaction_type": "buy",
-        "shares": 1878,
-        "price": 0,
-        "value": 0,
-        "date": "2026-01-30"
-      },
-      {
-        "ticker": "MSFT",
-        "insider_name": "SCHARF CHARLES W",
-        "title": "2026-02-03",
-        "transaction_type": "buy",
-        "shares": 44892,
-        "price": 0,
-        "value": 0,
-        "date": "2026-01-30"
-      },
-      {
-        "ticker": "AMZN",
-        "insider_name": "Herrington Douglas J",
-        "title": "2026-02-18",
-        "transaction_type": "sell",
-        "shares": 512109,
-        "price": 200.0807,
-        "value": 102463127.2,
-        "date": "2026-02-17"
-      },
-      {
-        "ticker": "AMZN",
-        "insider_name": "Herrington Douglas J",
-        "title": "2026-02-18",
-        "transaction_type": "sell",
-        "shares": 512841,
-        "price": 198.8538,
-        "value": 101980381.65,
-        "date": "2026-02-17"
-      },
-      {
-        "ticker": "AMZN",
-        "insider_name": "Herrington Douglas J",
-        "title": "2026-02-18",
-        "transaction_type": "sell",
-        "shares": 513979,
-        "price": 198.124,
-        "value": 101831575.4,
-        "date": "2026-02-17"
-      },
-      {
-        "ticker": "AMZN",
-        "insider_name": "Herrington Douglas J",
-        "title": "2026-02-18",
-        "transaction_type": "sell",
-        "shares": 516093,
-        "price": 196.7513,
-        "value": 101541968.67,
-        "date": "2026-02-17"
-      },
-      {
-        "ticker": "AMZN",
-        "insider_name": "Herrington Douglas J",
-        "title": "2026-02-18",
-        "transaction_type": "sell",
-        "shares": 66280,
-        "price": 0,
-        "value": 0,
-        "date": "2026-02-15"
-      },
-      {
-        "ticker": "AMZN",
-        "insider_name": "Herrington Douglas J",
-        "title": "2026-02-18",
-        "transaction_type": "sell",
-        "shares": 516893,
-        "price": 0,
-        "value": 0,
-        "date": "2026-02-15"
-      },
-      {
-        "ticker": "AMZN",
-        "insider_name": "GORELICK JAMIE S",
-        "title": "2026-02-18",
-        "transaction_type": "sell",
-        "shares": 2677,
-        "price": 0,
-        "value": 0,
-        "date": "2026-02-15"
-      },
-      {
-        "ticker": "AMZN",
-        "insider_name": "GORELICK JAMIE S",
-        "title": "2026-02-18",
-        "transaction_type": "sell",
-        "shares": 40794,
-        "price": 0,
-        "value": 0,
-        "date": "2026-02-15"
-      },
-      {
-        "ticker": "AMZN",
-        "insider_name": "WEEKS WENDELL P",
-        "title": "2026-02-18",
-        "transaction_type": "sell",
-        "shares": 3632,
-        "price": 0,
-        "value": 0,
-        "date": "2026-02-15"
-      },
-      {
-        "ticker": "AMZN",
-        "insider_name": "WEEKS WENDELL P",
-        "title": "2026-02-18",
-        "transaction_type": "sell",
-        "shares": 46216,
-        "price": 0,
-        "value": 0,
-        "date": "2026-02-15"
+        "shares": 7259,
+        "price": 2.71,
+        "value": 19671.89,
+        "date": "2025-12-31"
       }
     ],
     "sector_performance": [
       {
+        "sector": "CDIO",
+        "change_1d": 5.16,
+        "change_1w": 69.7,
+        "change_1m": 28.0,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "EDHL",
+        "change_1d": 18.6,
+        "change_1w": 21.15,
+        "change_1m": -25.38,
+        "relative_strength": 0.0
+      },
+      {
         "sector": "OIL_CRUDE",
-        "change_1d": -0.43,
-        "change_1w": 5.39,
-        "change_1m": 5.9,
+        "change_1d": -0.64,
+        "change_1w": 5.17,
+        "change_1m": 5.68,
         "relative_strength": 0.0
       },
       {
         "sector": "AMZN",
-        "change_1d": -0.05,
-        "change_1w": 2.87,
-        "change_1m": -11.6,
+        "change_1d": -0.07,
+        "change_1w": 2.85,
+        "change_1m": -11.62,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "GFAI",
+        "change_1d": -2.34,
+        "change_1w": 2.6,
+        "change_1m": -24.51,
         "relative_strength": 0.0
       },
       {
         "sector": "UK100",
-        "change_1d": 0.06,
-        "change_1w": 2.02,
-        "change_1m": 4.69,
+        "change_1d": 0.07,
+        "change_1w": 2.03,
+        "change_1m": 4.7,
         "relative_strength": 0.0
       },
       {
         "sector": "USDJPY",
-        "change_1d": 0.19,
-        "change_1w": 1.76,
-        "change_1m": 1.96,
+        "change_1d": 0.17,
+        "change_1w": 1.74,
+        "change_1m": 1.95,
         "relative_strength": 0.0
       },
       {
         "sector": "JPM",
-        "change_1d": 0.01,
-        "change_1w": 1.36,
-        "change_1m": 1.57,
-        "relative_strength": 0.0
-      },
-      {
-        "sector": "DE40",
-        "change_1d": 0.3,
-        "change_1w": 0.66,
-        "change_1m": 0.95,
-        "relative_strength": 0.0
-      },
-      {
-        "sector": "GOLD",
-        "change_1d": 1.07,
-        "change_1w": 0.43,
-        "change_1m": -2.53,
+        "change_1d": -0.05,
+        "change_1w": 1.31,
+        "change_1m": 1.51,
         "relative_strength": 0.0
       },
       {
         "sector": "CVX",
-        "change_1d": -0.53,
-        "change_1w": 0.34,
-        "change_1m": 10.42,
+        "change_1d": -0.09,
+        "change_1w": 0.79,
+        "change_1m": 10.91,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "DE40",
+        "change_1d": 0.26,
+        "change_1w": 0.62,
+        "change_1m": 0.91,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "GOLD",
+        "change_1d": 1.14,
+        "change_1w": 0.49,
+        "change_1m": -2.48,
         "relative_strength": 0.0
       },
       {
         "sector": "XOM",
-        "change_1d": -0.55,
-        "change_1w": 0.16,
-        "change_1m": 12.65,
+        "change_1d": -0.56,
+        "change_1w": 0.15,
+        "change_1m": 12.64,
         "relative_strength": 0.0
       },
       {
         "sector": "BAC",
-        "change_1d": -0.33,
-        "change_1w": 0.01,
-        "change_1m": 0.79,
+        "change_1d": -0.31,
+        "change_1w": 0.03,
+        "change_1m": 0.81,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "RCT",
+        "change_1d": -5.15,
+        "change_1w": 0.0,
+        "change_1m": -36.55,
         "relative_strength": 0.0
       },
       {
         "sector": "broad_market",
-        "change_1d": -0.33,
-        "change_1w": -0.02,
-        "change_1m": -2.02,
+        "change_1d": -0.41,
+        "change_1w": -0.09,
+        "change_1m": -2.09,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "small_cap",
+        "change_1d": 0.23,
+        "change_1w": -0.13,
+        "change_1m": 0.77,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "dividends",
+        "change_1d": 0.03,
+        "change_1w": -0.22,
+        "change_1m": 10.0,
         "relative_strength": 0.0
       },
       {
         "sector": "technology",
-        "change_1d": -0.58,
-        "change_1w": -0.37,
-        "change_1m": -5.14,
-        "relative_strength": 0.0
-      },
-      {
-        "sector": "NVDA",
-        "change_1d": -0.38,
-        "change_1w": -0.7,
-        "change_1m": 1.56,
+        "change_1d": -0.62,
+        "change_1w": -0.42,
+        "change_1m": -5.18,
         "relative_strength": 0.0
       },
       {
         "sector": "EURUSD",
-        "change_1d": -0.04,
-        "change_1w": -0.87,
+        "change_1d": -0.03,
+        "change_1w": -0.86,
         "change_1m": -2.15,
         "relative_strength": 0.0
       },
       {
+        "sector": "NVDA",
+        "change_1d": -0.55,
+        "change_1w": -0.87,
+        "change_1m": 1.39,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "broad_market",
+        "change_1d": -0.26,
+        "change_1w": -1.07,
+        "change_1m": 1.02,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "HCWC",
+        "change_1d": 2.33,
+        "change_1w": -1.07,
+        "change_1m": -6.13,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "broad_market",
+        "change_1d": -0.26,
+        "change_1w": -1.08,
+        "change_1m": 1.02,
+        "relative_strength": 0.0
+      },
+      {
         "sector": "AAPL",
-        "change_1d": -0.74,
-        "change_1w": -1.04,
-        "change_1m": 4.29,
+        "change_1d": -0.89,
+        "change_1w": -1.2,
+        "change_1m": 4.13,
         "relative_strength": 0.0
       },
       {
         "sector": "GBPUSD",
-        "change_1d": 0.12,
-        "change_1w": -1.25,
-        "change_1m": -2.53,
+        "change_1d": 0.1,
+        "change_1w": -1.27,
+        "change_1m": -2.55,
         "relative_strength": 0.0
       },
       {
         "sector": "META",
+        "change_1d": -0.66,
+        "change_1w": -1.37,
+        "change_1m": 4.03,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "dow_30",
         "change_1d": -0.53,
-        "change_1w": -1.25,
-        "change_1m": 4.16,
+        "change_1w": -1.39,
+        "change_1m": 1.96,
         "relative_strength": 0.0
       },
       {
         "sector": "GOOGL",
-        "change_1d": 0.1,
-        "change_1w": -1.42,
-        "change_1m": -7.58,
+        "change_1d": 0.11,
+        "change_1w": -1.41,
+        "change_1m": -7.57,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "technology",
+        "change_1d": -0.38,
+        "change_1w": -1.57,
+        "change_1m": -0.75,
         "relative_strength": 0.0
       },
       {
         "sector": "MSFT",
-        "change_1d": -0.43,
-        "change_1w": -1.44,
-        "change_1m": -11.13,
+        "change_1d": -0.57,
+        "change_1w": -1.57,
+        "change_1m": -11.25,
         "relative_strength": 0.0
       },
       {
         "sector": "ETHUSD",
-        "change_1d": -0.67,
-        "change_1w": -1.56,
-        "change_1m": -28.4,
+        "change_1d": -0.73,
+        "change_1w": -1.61,
+        "change_1m": -28.44,
         "relative_strength": 0.0
       },
       {
         "sector": "TSLA",
-        "change_1d": -0.7,
-        "change_1w": -1.87,
-        "change_1m": -5.73,
+        "change_1d": -0.67,
+        "change_1w": -1.85,
+        "change_1m": -5.7,
         "relative_strength": 0.0
       },
       {
         "sector": "BTCUSD",
-        "change_1d": -0.08,
-        "change_1w": -2.72,
-        "change_1m": -20.45,
+        "change_1d": -0.25,
+        "change_1w": -2.89,
+        "change_1m": -20.58,
         "relative_strength": 0.0
       },
       {
@@ -662,11 +603,185 @@
         "change_1w": -3.03,
         "change_1m": -2.69,
         "relative_strength": 0.0
+      },
+      {
+        "sector": "OPEG",
+        "change_1d": 1.6,
+        "change_1w": -4.84,
+        "change_1m": -49.47,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "OPEX",
+        "change_1d": 1.17,
+        "change_1w": -4.88,
+        "change_1m": -50.63,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "TNDM",
+        "change_1d": -2.22,
+        "change_1w": -5.8,
+        "change_1m": -9.61,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "MGRX",
+        "change_1d": -1.08,
+        "change_1w": -6.29,
+        "change_1m": -41.78,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "CDT",
+        "change_1d": -10.55,
+        "change_1w": -15.43,
+        "change_1m": -36.71,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "TROO",
+        "change_1d": -5.88,
+        "change_1w": -19.8,
+        "change_1m": -13.04,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "BHAT",
+        "change_1d": -8.54,
+        "change_1w": -26.81,
+        "change_1m": -60.8,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "BJDX",
+        "change_1d": -21.34,
+        "change_1w": -33.22,
+        "change_1m": -28.94,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "AIOS",
+        "change_1d": 3.05,
+        "change_1w": -68.97,
+        "change_1m": -57.94,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "ANPA",
+        "change_1d": -25.1,
+        "change_1w": -84.74,
+        "change_1m": -84.26,
+        "relative_strength": 0.0
       }
-    ]
+    ],
+    "options_flow": {
+      "put_call_ratio": 1.05,
+      "vix": 20.8,
+      "vix_term_structure": "contango",
+      "skew": "high_put_demand"
+    }
   },
   "after_hours": {
-    "timestamp": "2026-02-20T17:17:37.952959",
-    "session": "post_market"
+    "timestamp": "2026-02-20T17:21:35.951176",
+    "session": "post_market",
+    "premarket_movers": [
+      {
+        "ticker": "CDIO",
+        "previous_close": 2.13,
+        "premarket_price": 2.64,
+        "gap_pct": 23.94,
+        "premarket_volume": 9699700,
+        "avg_daily_volume": 2847194,
+        "volume_ratio": 3.41,
+        "catalyst": "news",
+        "action": "watch_long",
+        "reasoning": "CDIO gapping +23.9% pre-market with 3.4x avg volume. Large gap with volume confirmation \u2014 watch for continuation after first 30 min."
+      },
+      {
+        "ticker": "BJDX",
+        "previous_close": 2.53,
+        "premarket_price": 1.95,
+        "gap_pct": -22.92,
+        "premarket_volume": 168908,
+        "avg_daily_volume": 103883,
+        "volume_ratio": 1.63,
+        "catalyst": "news",
+        "action": "watch_short",
+        "reasoning": "BJDX gapping -22.9% pre-market with 1.6x avg volume. Large gap with volume confirmation \u2014 watch for continuation after first 30 min."
+      },
+      {
+        "ticker": "EDHL",
+        "previous_close": 2.85,
+        "premarket_price": 2.5,
+        "gap_pct": -12.28,
+        "premarket_volume": 53042,
+        "avg_daily_volume": 29056,
+        "volume_ratio": 1.83,
+        "catalyst": "news",
+        "action": "watch_short",
+        "reasoning": "EDHL gapping -12.3% pre-market with 1.8x avg volume. Large gap with volume confirmation \u2014 watch for continuation after first 30 min."
+      },
+      {
+        "ticker": "OPEX",
+        "previous_close": 7.71,
+        "premarket_price": 7.28,
+        "gap_pct": -5.58,
+        "premarket_volume": 497700,
+        "avg_daily_volume": 185495,
+        "volume_ratio": 2.68,
+        "catalyst": "unknown",
+        "action": "watch_short",
+        "reasoning": "OPEX gapping down -5.6% pre-market. Wait for open. If it stays below open after 30 min, gap-fill may not happen."
+      },
+      {
+        "ticker": "OPEG",
+        "previous_close": 5.61,
+        "premarket_price": 5.34,
+        "gap_pct": -4.81,
+        "premarket_volume": 32247,
+        "avg_daily_volume": 9680,
+        "volume_ratio": 3.33,
+        "catalyst": "unknown",
+        "action": "watch_short",
+        "reasoning": "OPEG gapping down -4.8% pre-market. Wait for open. If it stays below open after 30 min, gap-fill may not happen."
+      },
+      {
+        "ticker": "HCWC",
+        "previous_close": 0.262,
+        "premarket_price": 0.2739,
+        "gap_pct": 4.54,
+        "premarket_volume": 256775,
+        "avg_daily_volume": 150590,
+        "volume_ratio": 1.71,
+        "catalyst": "unknown",
+        "action": "watch_long",
+        "reasoning": "HCWC gapping up +4.5% pre-market. Wait for open. If it holds above open after 30 min, consider long."
+      },
+      {
+        "ticker": "BHAT",
+        "previous_close": 0.48,
+        "premarket_price": 0.4697,
+        "gap_pct": -2.15,
+        "premarket_volume": 251450,
+        "avg_daily_volume": 427115,
+        "volume_ratio": 0.59,
+        "catalyst": "unknown",
+        "action": "watch_short",
+        "reasoning": "BHAT gapping down -2.1% pre-market. Wait for open. If it stays below open after 30 min, gap-fill may not happen."
+      },
+      {
+        "ticker": "ANPA",
+        "previous_close": 14.94,
+        "premarket_price": 14.62,
+        "gap_pct": -2.14,
+        "premarket_volume": 42781,
+        "avg_daily_volume": 74177,
+        "volume_ratio": 0.58,
+        "catalyst": "unknown",
+        "action": "watch_short",
+        "reasoning": "ANPA gapping down -2.1% pre-market. Wait for open. If it stays below open after 30 min, gap-fill may not happen."
+      }
+    ]
   }
 }

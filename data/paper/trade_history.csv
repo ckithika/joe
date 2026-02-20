@@ -1,0 +1,4 @@
+id,ticker,broker,direction,entry_price,entry_date,exit_price,exit_date,exit_reason,position_size,pnl,pnl_pct,r_multiple,signal_score,days_held,strategy
+PT-2026-02-20-001,BATL,ibkr,LONG,4.13,2026-02-20,4.13,2026-02-20,expired,6.8991,0.0,0.0,0.0,0.48,9,breakout
+PT-2026-02-20-003,JZ,ibkr,LONG,1.1,2026-02-20,1.1,2026-02-20,expired,24.31,0.0,0.0,0.0,0.405,9,breakout
+PT-2026-02-20-005,CISS,ibkr,LONG,2.19,2026-02-20,2.19,2026-02-20,expired,7.7532,0.0,0.0,0.0,0.405,9,mean_reversion

@@ -1,18 +1,18 @@
 {
-  "composite_score": 1.1,
+  "composite_score": 0.8,
   "risk_level": "low",
   "dimensions": {
     "position": 0,
-    "portfolio": 2,
-    "market": 2,
+    "portfolio": 0,
+    "market": 3,
     "behavioral": 0,
     "strategy": 0
   },
   "alerts": [
     {
       "severity": "warning",
-      "message": "Regime confidence low (49%)"
+      "message": "Regime confidence low (41%)"
     }
   ],
-  "timestamp": "2026-02-20T17:17:00.538970"
+  "timestamp": "2026-02-20T17:21:06.766896"
 }
