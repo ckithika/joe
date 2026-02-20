@@ -95,7 +95,7 @@ st.sidebar.caption(f"Last updated: {timestamp}")
 nav_options = ["Overview", "Stocks"]
 if modules.get("crypto", False):
     nav_options.append("Crypto")
-nav_options.extend(["Portfolio", "Performance", "System"])
+nav_options.extend(["Portfolio", "Performance", "System", "Learn"])
 
 page = st.sidebar.radio("Navigate", nav_options, label_visibility="collapsed")
 
@@ -234,9 +234,28 @@ if page == "Overview":
             st.progress(confidence, text=f"Confidence: {confidence:.0%}")
 
             r1, r2, r3 = st.columns(3)
-            r1.metric("ADX", f"{regime_data.get('adx', 0):.1f}")
-            r2.metric("VIX", f"{regime_data.get('vix', 0):.1f}")
-            r3.metric("Size Mod", f"{regime_data.get('position_size_modifier', 1.0):.0%}")
+            adx_val = regime_data.get('adx', 0)
+            r1.metric("Trend Strength (ADX)", f"{adx_val:.1f}")
+            if adx_val < 20:
+                r1.caption(":red[No Trend]")
+            elif adx_val < 25:
+                r1.caption(":orange[Moderate]")
+            else:
+                r1.caption(":green[Strong Trend]")
+
+            vix_val = regime_data.get('vix', 0)
+            r2.metric("Market Fear (VIX)", f"{vix_val:.1f}")
+            if vix_val < 15:
+                r2.caption(":green[Calm]")
+            elif vix_val < 20:
+                r2.caption("Normal")
+            elif vix_val < 28:
+                r2.caption(":orange[Elevated]")
+            else:
+                r2.caption(":red[High Fear]")
+
+            r3.metric("Position Sizing", f"{regime_data.get('position_size_modifier', 1.0):.0%}")
+            r3.caption("How much the system risks per trade. Lower = cautious.")
 
             strategies = regime_data.get("active_strategies", [])
             if strategies:
@@ -259,6 +278,12 @@ if page == "Overview":
             level = risk_data.get("risk_level", "unknown").upper()
             st.markdown(f"### {composite:.1f}/10 — {level}")
             st.progress(min(composite / 10, 1.0))
+            if composite <= 3:
+                st.success("Low risk — favorable conditions for trading.")
+            elif composite <= 6:
+                st.warning("Moderate risk — proceed with smaller positions.")
+            else:
+                st.error("High risk — consider staying out or hedging.")
 
             dims = risk_data.get("dimensions", {})
             if dims:
@@ -286,10 +311,24 @@ if page == "Overview":
 
         m1, m2, m3, m4, m5 = st.columns(5)
         m1.metric("Balance", f"${balance:.2f}", f"{pnl:+.2f}")
-        m2.metric("Win Rate", f"{performance.get('win_rate', 0) * 100:.1f}%")
+        wr_val = performance.get('win_rate', 0) * 100
+        m2.metric("Win Rate", f"{wr_val:.1f}%")
+        if wr_val >= 55:
+            m2.caption(":green[Good]")
+        elif wr_val >= 45:
+            m2.caption(":orange[Acceptable]")
+        else:
+            m2.caption(":red[Needs Work]")
         m3.metric("Open", f"{len(positions_data)}/3")
         m4.metric("Total Trades", f"{performance.get('total_trades', 0)}")
-        m5.metric("Profit Factor", f"{performance.get('profit_factor', 0):.2f}")
+        pf_val = performance.get('profit_factor', 0)
+        m5.metric("Profit Factor", f"{pf_val:.2f}")
+        if pf_val >= 1.2:
+            m5.caption(":green[Good]")
+        elif pf_val >= 1.0:
+            m5.caption(":orange[Breakeven]")
+        else:
+            m5.caption(":red[Losing]")
 
         if positions_data:
             pos_rows = []
@@ -297,13 +336,14 @@ if page == "Overview":
                 pnl_val = pos.get("unrealized_pnl", 0)
                 pos_rows.append({
                     "Ticker": pos["ticker"],
-                    "Dir": pos["direction"],
+                    "Direction": pos["direction"],
                     "Strategy": pos.get("strategy", ""),
                     "Entry": f"${pos['entry_price']:.2f}",
                     "P&L": f"${pnl_val:+.2f}",
-                    "Day": f"{pos.get('days_held', 0)}/{pos.get('max_hold_days', 10)}",
+                    "Days Held": f"{pos.get('days_held', 0)}/{pos.get('max_hold_days', 10)}",
                 })
             st.dataframe(pd.DataFrame(pos_rows), use_container_width=True, hide_index=True)
+            st.caption("Days Held shows current / maximum days before auto-exit.")
     else:
         st.info("No performance data. Run the pipeline first.")
 
@@ -387,12 +427,13 @@ elif page == "Stocks":
                 sl = sig.get("stop_loss", 0)
                 tp = sig.get("take_profit", 0)
                 if entry_price:
-                    st.markdown(f"**Entry:** ${entry_price:,.2f} · **SL:** ${sl:,.2f} · **TP:** ${tp:,.2f}")
+                    st.markdown(f"**Entry:** ${entry_price:,.2f} · **Stop Loss:** ${sl:,.2f} · **Take Profit:** ${tp:,.2f}")
                     if sl and entry_price and tp:
                         risk = abs(entry_price - sl)
                         reward = abs(tp - entry_price)
                         rr = reward / risk if risk > 0 else 0
-                        st.markdown(f"**R:R** = 1:{rr:.1f}")
+                        st.markdown(f"**Risk : Reward** = 1:{rr:.1f}")
+                        st.caption(f"For every $1 risked, you could gain ${rr:.1f}.")
 
                 # AI analysis if present
                 ai = sig.get("ai_analysis", {})
@@ -450,10 +491,14 @@ elif page == "Stocks":
             st.subheader("Market Breadth")
             if breadth:
                 b1, b2 = st.columns(2)
-                b1.metric("A/D Ratio", f"{breadth.get('advance_decline_ratio', 0):.2f}")
-                b2.metric("McClellan", f"{breadth.get('mcclellan_oscillator', 0):+.1f}")
-                b1.metric("Above 200 SMA", f"{breadth.get('pct_above_200sma', 0):.0f}%")
-                b2.metric("Above 50 SMA", f"{breadth.get('pct_above_50sma', 0):.0f}%")
+                b1.metric("Advances vs Declines", f"{breadth.get('advance_decline_ratio', 0):.2f}")
+                b1.caption("Ratio of rising stocks to falling stocks. Above 1.0 = more stocks rising.")
+                b2.metric("Market Momentum (McClellan)", f"{breadth.get('mcclellan_oscillator', 0):+.1f}")
+                b2.caption("Positive = bullish breadth. Negative = bearish breadth.")
+                b1.metric("Long-Term Uptrend (200 SMA)", f"{breadth.get('pct_above_200sma', 0):.0f}%")
+                b1.caption("% of stocks above their 200-day moving average.")
+                b2.metric("Short-Term Uptrend (50 SMA)", f"{breadth.get('pct_above_50sma', 0):.0f}%")
+                b2.caption("% of stocks above their 50-day moving average.")
                 st.markdown(f"New Highs: {breadth.get('new_highs', 0)} | New Lows: {breadth.get('new_lows', 0)}")
             else:
                 st.caption("No breadth data available.")
@@ -521,6 +566,16 @@ elif page == "Crypto":
                     color = "🟢"
                 st.markdown(f"### {color} {fg_val}/100 — {fg_class}")
                 st.progress(fg_val / 100)
+                if fg_val <= 25:
+                    st.caption(":green[Extreme fear — potential buying opportunity.]")
+                elif fg_val <= 45:
+                    st.caption(":green[Fear — bargains may be emerging.]")
+                elif fg_val <= 55:
+                    st.caption("Neutral — market is undecided.")
+                elif fg_val <= 75:
+                    st.caption(":orange[Greed — be cautious with new entries.]")
+                else:
+                    st.caption(":red[Extreme greed — correction risk is elevated.]")
 
                 fg_hist = fg.get("history_7d", [])
                 if fg_hist and len(fg_hist) > 1:
@@ -559,6 +614,7 @@ elif page == "Crypto":
         eth_f = crypto_intel.get("eth_funding", {})
         with col_fund:
             st.markdown("**Funding Rates**")
+            st.caption("Positive = longs pay shorts (bullish crowding). Negative = shorts pay longs (bearish crowding).")
             if btc_f:
                 rate = btc_f.get("rate", 0)
                 direction = btc_f.get("direction", "neutral")
@@ -572,13 +628,14 @@ elif page == "Crypto":
         eth_oi = crypto_intel.get("eth_open_interest", {})
         with col_oi:
             st.markdown("**Open Interest**")
+            st.caption("Total value of outstanding futures contracts. Rising OI + rising price = strong trend.")
             if btc_oi:
                 oi_usd = btc_oi.get("open_interest_usd", 0)
-                col_oi.metric("BTC OI", f"${oi_usd / 1e9:.2f}B",
+                col_oi.metric("BTC Open Interest", f"${oi_usd / 1e9:.2f}B",
                               f"{btc_oi.get('change_24h_pct', 0):+.1f}% 24h")
             if eth_oi:
                 oi_usd = eth_oi.get("open_interest_usd", 0)
-                col_oi.metric("ETH OI", f"${oi_usd / 1e9:.2f}B",
+                col_oi.metric("ETH Open Interest", f"${oi_usd / 1e9:.2f}B",
                               f"{eth_oi.get('change_24h_pct', 0):+.1f}% 24h")
 
         st.divider()
@@ -591,7 +648,8 @@ elif page == "Crypto":
         with col_defi:
             st.subheader("DeFi & Gas")
             if defi:
-                st.metric("Total DeFi TVL", f"${defi.get('total_tvl', 0) / 1e9:.1f}B")
+                st.metric("DeFi Total Value Locked", f"${defi.get('total_tvl', 0) / 1e9:.1f}B")
+                st.caption("Total crypto deposited in DeFi protocols. Rising TVL = growing confidence.")
                 top_protocols = defi.get("top_protocols", [])
                 if top_protocols:
                     proto_rows = []
@@ -604,7 +662,13 @@ elif page == "Crypto":
                     st.dataframe(pd.DataFrame(proto_rows), use_container_width=True, hide_index=True)
             if gas:
                 gas_price = gas.get("gas_price_gwei", 0)
-                st.metric("ETH Gas", f"{gas_price:.2f} Gwei")
+                st.metric("ETH Network Fee", f"{gas_price:.2f} Gwei")
+                if gas_price < 20:
+                    st.caption(":green[Low fees] — good time for on-chain activity.")
+                elif gas_price < 50:
+                    st.caption(":orange[Moderate fees] — normal network usage.")
+                else:
+                    st.caption(":red[High fees] — heavy network congestion.")
 
         whale = crypto_intel.get("whale_activity", {})
         with col_whale:
@@ -613,8 +677,15 @@ elif page == "Crypto":
                 txns = whale.get("large_txns_24h", 0)
                 flow = whale.get("net_exchange_flow", "unknown")
                 flow_icon = {"inflow": "🔴", "outflow": "🟢", "neutral": "🟡"}.get(flow, "⚪")
-                st.metric("Large Txns (24h)", f"{txns:,}")
+                st.metric("Whale Transactions (24h)", f"{txns:,}")
+                st.caption("Large transfers (>$100K) by major holders in the last 24 hours.")
                 st.markdown(f"**Net Exchange Flow:** {flow_icon} {flow.title()}")
+                if flow == "outflow":
+                    st.caption(":green[Outflow is bullish] — whales moving crypto off exchanges (holding, not selling).")
+                elif flow == "inflow":
+                    st.caption(":red[Inflow is bearish] — whales moving crypto to exchanges (preparing to sell).")
+                else:
+                    st.caption("Neutral — no clear directional signal from whale activity.")
 
                 liq = crypto_intel.get("liquidation_estimate", {})
                 if liq:
@@ -841,12 +912,13 @@ elif page == "Portfolio":
                     "Strategy": pos.get("strategy", ""),
                     "Entry": f"${pos['entry_price']:.2f}",
                     "P&L": f"${pnl_val:+.2f}",
-                    "Day": f"{pos.get('days_held', 0)}/{pos.get('max_hold_days', 10)}",
-                    "SL": f"${pos['stop_loss']:.4f}",
-                    "TP": f"${pos['take_profit']:.4f}",
-                    "Trail": trail,
+                    "Days Held": f"{pos.get('days_held', 0)}/{pos.get('max_hold_days', 10)}",
+                    "Stop Loss": f"${pos['stop_loss']:.4f}",
+                    "Take Profit": f"${pos['take_profit']:.4f}",
+                    "Trailing Stop": trail,
                 })
             st.dataframe(pd.DataFrame(pos_rows), use_container_width=True, hide_index=True)
+            st.caption("Stop Loss = auto-exit if price drops to this level. Take Profit = auto-exit at target. Trailing Stop = a stop that follows the price up.")
         else:
             st.caption("No open positions.")
 
@@ -862,10 +934,11 @@ elif page == "Portfolio":
             st.caption("No trade history yet.")
 
         st.markdown(
-            f"**Expectancy:** ${performance.get('expectancy', 0):.2f}/trade · "
-            f"**Avg R:** {performance.get('avg_r_multiple', 0):.2f} · "
+            f"**Avg Profit Per Trade (Expectancy):** ${performance.get('expectancy', 0):.2f} · "
+            f"**Avg Risk Multiple (Avg R):** {performance.get('avg_r_multiple', 0):.2f} · "
             f"**Max Drawdown:** {performance.get('max_drawdown_pct', 0):.1f}%"
         )
+        st.caption("Expectancy = average $ gained per trade. Avg R = average gain relative to the risk taken. Max Drawdown = largest peak-to-trough drop.")
 
         st.divider()
 
@@ -949,13 +1022,54 @@ elif page == "Performance":
     if portfolio_analytics:
         st.subheader("Risk Metrics")
         pa1, pa2, pa3, pa4 = st.columns(4)
-        pa1.metric("Sharpe Ratio", f"{portfolio_analytics.get('sharpe_ratio', 0):.2f}")
-        pa2.metric("Sortino Ratio", f"{portfolio_analytics.get('sortino_ratio', 0):.2f}")
-        pa3.metric("Calmar Ratio", f"{portfolio_analytics.get('calmar_ratio', 0):.2f}")
-        pa4.metric("Max Drawdown", f"{portfolio_analytics.get('max_drawdown_pct', 0):.1f}%")
+        sharpe_val = portfolio_analytics.get('sharpe_ratio', 0)
+        pa1.metric("Sharpe Ratio", f"{sharpe_val:.2f}")
+        if sharpe_val >= 2.0:
+            pa1.caption(":green[Excellent]")
+        elif sharpe_val >= 1.5:
+            pa1.caption(":green[Good]")
+        elif sharpe_val >= 1.0:
+            pa1.caption(":orange[Acceptable]")
+        else:
+            pa1.caption(":red[Poor]")
+
+        sortino_val = portfolio_analytics.get('sortino_ratio', 0)
+        pa2.metric("Sortino Ratio", f"{sortino_val:.2f}")
+        if sortino_val >= 2.0:
+            pa2.caption(":green[Excellent]")
+        elif sortino_val >= 1.5:
+            pa2.caption(":green[Good]")
+        elif sortino_val >= 1.0:
+            pa2.caption(":orange[Acceptable]")
+        else:
+            pa2.caption(":red[Poor]")
+
+        calmar_val = portfolio_analytics.get('calmar_ratio', 0)
+        pa3.metric("Calmar Ratio", f"{calmar_val:.2f}")
+        if calmar_val >= 1.0:
+            pa3.caption(":green[Good]")
+        elif calmar_val >= 0.5:
+            pa3.caption(":orange[Acceptable]")
+        else:
+            pa3.caption(":red[Poor]")
+
+        max_dd_val = portfolio_analytics.get('max_drawdown_pct', 0)
+        pa4.metric("Max Drawdown", f"{max_dd_val:.1f}%")
+        if max_dd_val < 10:
+            pa4.caption(":green[Safe]")
+        elif max_dd_val < 15:
+            pa4.caption(":orange[Moderate]")
+        elif max_dd_val < 25:
+            pa4.caption(":red[Elevated]")
+        else:
+            pa4.caption(":red[Severe]")
+
+        st.caption("Sharpe = return per unit of total risk. Sortino = return per unit of downside risk (ignores upside volatility). "
+                   "Calmar = annual return / max drawdown. Max Drawdown = largest peak-to-trough decline.")
 
         pa5, pa6, pa7, pa8 = st.columns(4)
-        pa5.metric("Current DD", f"{portfolio_analytics.get('current_drawdown_pct', 0):.1f}%")
+        pa5.metric("Current Drawdown", f"{portfolio_analytics.get('current_drawdown_pct', 0):.1f}%")
+        pa5.caption("How far below the portfolio's peak balance you currently are.")
         pa6.metric("Avg Hold Days", f"{portfolio_analytics.get('avg_hold_days', 0):.1f}")
         pa7.metric("Best Day", f"${portfolio_analytics.get('best_day_pnl', 0):+.2f}")
         pa8.metric("Worst Day", f"${portfolio_analytics.get('worst_day_pnl', 0):+.2f}")
@@ -1062,7 +1176,8 @@ elif page == "Performance":
         bc1, bc2, bc3 = st.columns(3)
         bc1.metric("Entries", entries)
         bc2.metric("Plan Adherence", f"{adherence:.0%}")
-        bc3.metric("Avg Discipline", f"{avg_discipline:.1f}/5" if avg_discipline > 0 else "N/A")
+        bc3.metric("Discipline Rating", f"{avg_discipline:.1f}/5" if avg_discipline > 0 else "N/A")
+        st.caption("Plan Adherence = % of trades that followed the system's rules. Discipline Rating = how consistently you stick to the plan (5 = perfect).")
 
 
 elif page == "System":
@@ -1131,6 +1246,151 @@ elif page == "System":
         reg_df = pd.DataFrame(regime_daily_log)
         if "date" in reg_df.columns and "regime" in reg_df.columns:
             st.dataframe(reg_df.tail(14).iloc[::-1], use_container_width=True, hide_index=True)
+
+
+elif page == "Learn":
+    st.title("📖 Learn")
+    st.caption("Understand every metric, strategy, and signal on this dashboard.")
+
+    learn_tab1, learn_tab2, learn_tab3, learn_tab4 = st.tabs([
+        "How to Read This Dashboard", "Glossary", "Strategy Guide", "Key Metrics Cheat Sheet",
+    ])
+
+    # ── Tab 1: How to Read This Dashboard ─────────────────────────
+    with learn_tab1:
+        st.subheader("How to Read This Dashboard")
+        st.markdown("""
+**Overview** — Your home page. Shows the current market regime (trending, volatile, or calm),
+the system's risk assessment, and a snapshot of your paper portfolio. Start here each morning
+to understand the overall environment before looking at individual trades.
+
+**Stocks** — Today's stock signals generated by the agent. Each signal shows the ticker,
+recommended action (enter, watch, or skip), entry/exit prices, and an AI analysis with
+bull and bear cases. Market breadth and sector performance give context on the broader market.
+
+**Crypto** — The crypto equivalent of the Stocks page. Includes the Fear & Greed Index,
+Bitcoin/Ethereum derivatives data (funding rates, open interest), DeFi health, whale activity,
+and any crypto-specific signals.
+
+**Portfolio** — Your paper trading simulation. Tracks a $500 virtual balance across all trades.
+Shows daily P&L progression, strategy accuracy, open positions, and a "Go Live Readiness"
+checklist for when you're considering real money.
+
+**Performance** — Deep analytics on how the system performs. Risk-adjusted ratios (Sharpe,
+Sortino, Calmar), equity curves, drawdown analysis, strategy breakdowns, and behavioral
+metrics that track your trading discipline.
+
+**System** — Technical health: API status, configuration, deployment settings, and regime
+history. Check here if data looks stale or something seems wrong.
+""")
+
+    # ── Tab 2: Glossary ───────────────────────────────────────────
+    with learn_tab2:
+        st.subheader("Glossary")
+        search = st.text_input("Search terms...", key="glossary_search")
+
+        glossary = [
+            ("ADX (Average Directional Index)", "Measures trend strength on a 0-100 scale. Below 20 = no trend. Above 25 = strong trend. Does not indicate direction."),
+            ("A/D Ratio (Advance/Decline)", "The ratio of stocks going up vs down. Above 1.0 means more stocks are rising than falling."),
+            ("Calmar Ratio", "Annual return divided by maximum drawdown. Above 1.0 is good — it means your returns outweigh your worst losses."),
+            ("Drawdown", "The decline from a portfolio's peak to its lowest point. A 10% drawdown means you dropped 10% from your highest balance."),
+            ("Expectancy", "The average dollar amount you gain (or lose) per trade. Positive expectancy means the system is profitable over time."),
+            ("Fear & Greed Index", "A 0-100 gauge of crypto market sentiment. Low values (extreme fear) often signal buying opportunities; high values (extreme greed) signal caution."),
+            ("Funding Rate", "A periodic fee paid between long and short futures traders. Positive = longs pay shorts (market is bullish-crowded). Negative = shorts pay longs."),
+            ("Gwei", "A unit of Ethereum gas price. Low Gwei (<20) means cheap transactions; high Gwei (>50) means network congestion."),
+            ("Max Drawdown", "The largest peak-to-trough decline in your portfolio's history. Lower is better — under 15% is safe."),
+            ("McClellan Oscillator", "A breadth indicator showing market momentum. Positive = bullish breadth, negative = bearish breadth."),
+            ("Open Interest (OI)", "Total value of outstanding futures contracts. Rising OI with rising price signals a strong trend."),
+            ("Profit Factor", "Gross profits divided by gross losses. Above 1.0 = profitable. Above 1.2 = good. Below 1.0 = losing money."),
+            ("R:R (Risk to Reward)", "The ratio of potential loss to potential gain. A 1:3 R:R means for every $1 risked, you could gain $3."),
+            ("Regime", "The current market environment classification (e.g., trending, volatile, calm). The system adapts its strategies based on the regime."),
+            ("ROI (Return on Investment)", "The percentage gain or loss on your starting capital. A 10% ROI on $500 means you've made $50."),
+            ("Sharpe Ratio", "Risk-adjusted return — how much return you get per unit of total risk. Above 1.0 is acceptable, above 2.0 is excellent."),
+            ("SMA (Simple Moving Average)", "The average price over a period. '200 SMA' is the 200-day average — stocks above it are in a long-term uptrend."),
+            ("Sortino Ratio", "Like Sharpe, but only counts downside risk. A high Sortino means good returns without big losses."),
+            ("Stop Loss (SL)", "A preset price where a losing trade automatically exits to limit damage. If you buy at $100 with a $95 SL, you lose max $5."),
+            ("Take Profit (TP)", "A preset price where a winning trade automatically exits to lock in gains."),
+            ("Trailing Stop", "A stop loss that moves up as the price rises, locking in progressively more profit while still protecting against reversals."),
+            ("TVL (Total Value Locked)", "The total amount of crypto deposited in DeFi protocols. Rising TVL signals growing confidence in DeFi."),
+            ("VIX (Volatility Index)", "Wall Street's 'fear gauge.' Ranges 10-80. Below 15 = calm markets. Above 28 = high fear and expected volatility."),
+            ("Whale", "A large holder or entity that can move markets with a single transaction. Whale tracking monitors their activity for clues."),
+            ("Win Rate", "The percentage of trades that make money. Above 45% is good for most strategies when combined with good R:R."),
+        ]
+
+        filtered = glossary
+        if search:
+            search_lower = search.lower()
+            filtered = [(t, d) for t, d in glossary if search_lower in t.lower() or search_lower in d.lower()]
+
+        if filtered:
+            for term, description in filtered:
+                st.markdown(f"**{term}**")
+                st.caption(description)
+        else:
+            st.info("No matching terms found.")
+
+    # ── Tab 3: Strategy Guide ─────────────────────────────────────
+    with learn_tab3:
+        st.subheader("Strategy Guide")
+
+        st.markdown("#### Mean Reversion")
+        st.markdown("**What it does:** Buys stocks that have dropped too far, too fast, expecting them to bounce back to their average price.")
+        st.markdown("**When it works best:** Calm, range-bound markets (low ADX). Struggles in strong trends.")
+        st.markdown("**Risk profile:** Moderate. Wins often but can lose big if the drop continues.")
+        st.caption("Key signal: RSI below 30 (oversold) or price far below its moving average.")
+
+        st.divider()
+
+        st.markdown("#### Momentum / Trend Following")
+        st.markdown("**What it does:** Buys stocks already going up, riding the trend until it weakens.")
+        st.markdown("**When it works best:** Strong trending markets (high ADX). Struggles when markets chop sideways.")
+        st.markdown("**Risk profile:** Lower win rate but big winners. Losses are small and frequent; wins are large and less frequent.")
+        st.caption("Key signal: Price above moving averages + increasing ADX.")
+
+        st.divider()
+
+        st.markdown("#### Breakout")
+        st.markdown("**What it does:** Enters when price breaks through a key resistance level with high volume.")
+        st.markdown("**When it works best:** After periods of consolidation (tight price ranges). Works in any market regime.")
+        st.markdown("**Risk profile:** Many false breakouts (low win rate) but profitable breakouts move fast and far.")
+        st.caption("Key signal: Price above resistance + volume spike.")
+
+        st.divider()
+
+        st.markdown("#### VWAP")
+        st.markdown("**What it does:** Uses Volume-Weighted Average Price as a reference. Buys below VWAP (undervalued today) and sells above.")
+        st.markdown("**When it works best:** Intraday or short-term trades. Effective when institutions are active.")
+        st.markdown("**Risk profile:** Low — tight stop losses with clearly defined entry/exit levels.")
+        st.caption("Key signal: Price crossing VWAP with confirming volume.")
+
+        st.divider()
+
+        st.markdown("#### Crypto Momentum")
+        st.markdown("**What it does:** Applies momentum/trend following specifically to BTC and ETH using crypto-specific indicators (funding rates, open interest, whale flows).")
+        st.markdown("**When it works best:** When crypto market fear/greed is not at extremes and derivatives data confirms the trend.")
+        st.markdown("**Risk profile:** Higher volatility than stock strategies. Crypto moves 2-3x more than stocks on average.")
+        st.caption("Key signal: Positive funding + rising open interest + outflow from exchanges.")
+
+    # ── Tab 4: Key Metrics Cheat Sheet ────────────────────────────
+    with learn_tab4:
+        st.subheader("Key Metrics Cheat Sheet")
+        st.caption("Quick reference for all the numbers on this dashboard.")
+
+        cheat_data = [
+            {"Metric": "Win Rate", "Bad": "< 40%", "OK": "40-50%", "Good": "50-60%", "Excellent": "> 60%"},
+            {"Metric": "Profit Factor", "Bad": "< 1.0", "OK": "1.0-1.2", "Good": "1.2-1.8", "Excellent": "> 1.8"},
+            {"Metric": "Sharpe Ratio", "Bad": "< 1.0", "OK": "1.0-1.5", "Good": "1.5-2.0", "Excellent": "> 2.0"},
+            {"Metric": "Sortino Ratio", "Bad": "< 1.0", "OK": "1.0-1.5", "Good": "1.5-2.0", "Excellent": "> 2.0"},
+            {"Metric": "Calmar Ratio", "Bad": "< 0.5", "OK": "0.5-1.0", "Good": "1.0-2.0", "Excellent": "> 2.0"},
+            {"Metric": "Max Drawdown", "Bad": "> 25%", "OK": "15-25%", "Good": "10-15%", "Excellent": "< 10%"},
+            {"Metric": "Expectancy", "Bad": "< $0", "OK": "$0-$1", "Good": "$1-$5", "Excellent": "> $5"},
+            {"Metric": "Risk : Reward", "Bad": "< 1:1", "OK": "1:1-1:1.5", "Good": "1:1.5-1:3", "Excellent": "> 1:3"},
+            {"Metric": "ADX", "Bad": "< 15", "OK": "15-20", "Good": "20-30", "Excellent": "> 30"},
+            {"Metric": "VIX", "Bad": "> 28", "OK": "20-28", "Good": "15-20", "Excellent": "< 15"},
+            {"Metric": "Plan Adherence", "Bad": "< 60%", "OK": "60-80%", "Good": "80-90%", "Excellent": "> 90%"},
+            {"Metric": "Fear & Greed", "Bad": "> 75 (extreme greed)", "OK": "55-75", "Good": "25-55", "Excellent": "< 25 (buying opp)"},
+        ]
+        st.dataframe(pd.DataFrame(cheat_data), use_container_width=True, hide_index=True)
 
 
 # ── Auto-refresh ─────────────────────────────────────────────────
