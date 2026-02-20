@@ -1,0 +1,14 @@
+ibkr:
+  etfs: [VOO, QQQ, SCHD, SPY, IWM, DIA]
+  stocks: []  # populated dynamically from scanner
+  scan_presets:
+    - TOP_PERC_GAIN
+    - TOP_VOLUME
+    - HOT_BY_VOLUME
+
+capital:
+  indices: [US500, US100, UK100, DE40]
+  forex: [EURUSD, GBPUSD, USDJPY]
+  crypto: [BTCUSD, ETHUSD]
+  commodities: [GOLD, OIL_CRUDE]
+  stocks: [AAPL, NVDA, TSLA, MSFT, AMZN, META, GOOGL, JPM, GS, BAC, XOM, CVX]

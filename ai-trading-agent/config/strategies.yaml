@@ -1,0 +1,100 @@
+# Market Regime Detection
+regime:
+  benchmark: SPY
+  secondary: QQQ
+  volatility: VIX
+
+  thresholds:
+    adx_trending: 25
+    adx_ranging: 20
+    vix_high: 28
+    vix_normal: 22
+    atr_expansion: 1.3
+
+# Strategy Profiles
+strategies:
+  trend_following:
+    enabled: true
+    active_regimes: [trending_up, trending_down]
+    entry:
+      rsi_range: [40, 55]
+      require_ema_bounce: true
+      require_macd_positive: true
+      volume_on_pullback: below_average
+    exit:
+      stop_loss_method: swing_low
+      stop_loss_atr_fallback: 1.5
+      take_profit_atr: 3.0
+      trailing_stop_atr: 2.0
+      trend_break_exit: close_below_50sma
+    max_hold_days: 10
+
+  mean_reversion:
+    enabled: true
+    active_regimes: [range_bound, trending_up]
+    entry:
+      rsi_threshold: 38
+      require_bb_touch: false
+      require_above_200sma: false
+      confirmation: bullish_candle
+    exit:
+      stop_loss_method: below_support
+      stop_loss_atr_fallback: 1.5
+      take_profit: middle_bb
+      thesis_fail_days: 2
+    max_hold_days: 5
+    skip_regimes: [trending_down, high_volatility]
+
+  breakout:
+    enabled: true
+    active_regimes: [range_bound, trending_up, trending_down]
+    setup:
+      bb_squeeze_percentile: 10
+      volume_declining: true
+    entry:
+      require_volume_surge: 1.5
+      require_strong_close: true
+    exit:
+      stop_loss: opposite_squeeze_boundary
+      stop_loss_atr_fallback: 1.5
+      take_profit: measured_move
+      false_breakout_exit: 1
+    max_hold_days: 7
+
+  momentum:
+    enabled: true
+    active_regimes: [trending_up]
+    entry:
+      new_high_period: 20
+      rsi_range: [60, 75]
+      volume_surge: 2.0
+      require_relative_strength: true
+      macd_histogram: increasing
+    exit:
+      trailing_stop_atr: 2.0
+      relative_strength_exit: 2
+    max_hold_days: 10
+    skip_regimes: [trending_down, range_bound, high_volatility]
+
+  defensive:
+    trigger:
+      vix_above: 28
+      max_drawdown_pct: -8.0
+      regime: [high_volatility, trending_down]
+    actions:
+      new_entries: false
+      tighten_stops_to_atr: 1.0
+      reduce_position_size: 0.5
+    resume_when:
+      vix_below: 22
+      regime_confidence_above: 0.6
+    exception:
+      allow_extreme_signals: true
+      extreme_position_size: 0.5
+
+# Position Size Modifiers by Regime
+position_sizing:
+  trending_up: 1.0
+  trending_down: 0.5
+  range_bound: 0.75
+  high_volatility: 0.5

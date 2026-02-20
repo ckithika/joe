@@ -1,0 +1,14 @@
+weights:
+  technical: 0.60
+  sentiment: 0.25
+  volume: 0.15
+
+thresholds:
+  strong_buy: 0.5
+  buy: 0.25
+  neutral_low: -0.15
+  neutral_high: 0.15
+  sell: -0.25
+  strong_sell: -0.5
+
+max_results: 25

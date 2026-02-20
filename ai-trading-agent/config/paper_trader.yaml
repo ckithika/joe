@@ -1,0 +1,21 @@
+paper_trader:
+  enabled: true
+  starting_balance: 500.00
+  risk_per_trade_pct: 2.0
+  max_concurrent_positions: 3
+  max_hold_days: 10
+
+  entry_signals:
+    - STRONG_BUY
+    - STRONG_SELL
+
+  stop_loss:
+    method: atr
+    atr_multiplier: 1.5
+
+  take_profit:
+    method: atr
+    atr_multiplier: 3.0
+
+  pdt_simulation: true
+  auto_enter: true

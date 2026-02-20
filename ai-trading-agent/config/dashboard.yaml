@@ -1,0 +1,48 @@
+dashboard:
+  host: localhost
+  port: 8501
+  auto_refresh_seconds: 60
+
+  market_sessions:
+    us_stocks:
+      name: "US Market"
+      timezone: "US/Eastern"
+      premarket_open: "04:00"
+      regular_open: "09:30"
+      regular_close: "16:00"
+      afterhours_close: "20:00"
+      days: [0, 1, 2, 3, 4]
+    london:
+      name: "London"
+      timezone: "Europe/London"
+      regular_open: "08:00"
+      regular_close: "16:30"
+      days: [0, 1, 2, 3, 4]
+    crypto:
+      name: "Crypto"
+      timezone: "UTC"
+      always_open: true
+      note: "CME futures close Sun 5PM - Mon 5PM ET gap"
+    capital_cfds:
+      name: "Capital.com CFDs"
+      timezone: "US/Eastern"
+      note: "US500/US100 trade ~23h/day Mon-Fri"
+      days: [0, 1, 2, 3, 4]
+
+  holidays_2026:
+    - "2026-01-01"
+    - "2026-01-19"
+    - "2026-02-16"
+    - "2026-04-03"
+    - "2026-05-25"
+    - "2026-06-19"
+    - "2026-07-03"
+    - "2026-09-07"
+    - "2026-11-26"
+    - "2026-12-25"
+
+  max_signals_displayed: 5
+  max_alerts_displayed: 5
+  equity_curve_trades: 100
+  log_decisions: true
+  decision_log_file: "data/paper/behavior_log.json"

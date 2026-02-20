@@ -1,0 +1,11 @@
+[
+  {
+    "date": "2026-02-20",
+    "regime": "range_bound",
+    "confidence": 0.49,
+    "adx": 19.8,
+    "vix": 0.0,
+    "breadth": 50.0,
+    "spy_trend": "below_all_sma"
+  }
+]

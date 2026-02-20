@@ -1,0 +1,672 @@
+{
+  "date": "2026-02-20",
+  "timestamp": "2026-02-20T08:13:09.546248",
+  "regime": {
+    "regime": "range_bound",
+    "confidence": 0.49,
+    "adx": 19.8,
+    "vix": 0.0,
+    "active_strategies": [
+      "mean_reversion",
+      "breakout"
+    ],
+    "position_size_modifier": 0.75
+  },
+  "defensive_mode": false,
+  "signals": [
+    {
+      "ticker": "ETHUSD",
+      "signal": "NEUTRAL",
+      "score": 0.182,
+      "strategy": "mean_reversion",
+      "action": "skip",
+      "direction": "LONG",
+      "entry_price": 1939.665,
+      "stop_loss": 1734.8218,
+      "take_profit": 2349.3515
+    },
+    {
+      "ticker": "BTCUSD",
+      "signal": "NEUTRAL",
+      "score": 0.1648,
+      "strategy": "mean_reversion",
+      "action": "skip",
+      "direction": "LONG",
+      "entry_price": 67199.25,
+      "stop_loss": 62282.4878,
+      "take_profit": 77032.7745
+    },
+    {
+      "ticker": "MSFT",
+      "signal": "NEUTRAL",
+      "score": 0.135,
+      "strategy": "mean_reversion",
+      "action": "skip",
+      "direction": "LONG",
+      "entry_price": 398.755,
+      "stop_loss": 381.4952,
+      "take_profit": 433.2746
+    },
+    {
+      "ticker": "GBPUSD",
+      "signal": "NEUTRAL",
+      "score": -0.1058,
+      "strategy": "mean_reversion",
+      "action": "skip",
+      "direction": "LONG",
+      "entry_price": 1.3441,
+      "stop_loss": 1.3326,
+      "take_profit": 1.3671
+    },
+    {
+      "ticker": "GOOGL",
+      "signal": "NEUTRAL",
+      "score": 0.0613,
+      "strategy": "mean_reversion",
+      "action": "skip",
+      "direction": "LONG",
+      "entry_price": 305.1,
+      "stop_loss": 289.9499,
+      "take_profit": 335.4002
+    }
+  ],
+  "portfolio": {
+    "virtual_balance": 500.0,
+    "starting_balance": 500.0,
+    "total_trades": 0,
+    "wins": 0,
+    "losses": 0,
+    "expired": 0
+  },
+  "positions": [
+    {
+      "id": "PT-2026-02-20-001",
+      "ticker": "BATL",
+      "broker": "ibkr",
+      "direction": "LONG",
+      "entry_price": 4.13,
+      "entry_date": "2026-02-20",
+      "position_size": 6.8991,
+      "stop_loss": 3.0429,
+      "take_profit": 7.0289,
+      "strategy": "breakout",
+      "sector": "",
+      "max_hold_days": 7,
+      "days_held": 5,
+      "signal_score": 0.48,
+      "unrealized_pnl": 0.0,
+      "trailing_stop": 0.0,
+      "trailing_stop_atr": 0.0,
+      "highest_price": 5.47,
+      "lowest_price": 3.25
+    },
+    {
+      "id": "PT-2026-02-20-003",
+      "ticker": "JZ",
+      "broker": "ibkr",
+      "direction": "LONG",
+      "entry_price": 1.1,
+      "entry_date": "2026-02-20",
+      "position_size": 24.31,
+      "stop_loss": 0.7915,
+      "take_profit": 1.9227,
+      "strategy": "breakout",
+      "sector": "",
+      "max_hold_days": 7,
+      "days_held": 5,
+      "signal_score": 0.405,
+      "unrealized_pnl": 0.0,
+      "trailing_stop": 0.0,
+      "trailing_stop_atr": 0.0,
+      "highest_price": 1.26,
+      "lowest_price": 0.82
+    },
+    {
+      "id": "PT-2026-02-20-005",
+      "ticker": "CISS",
+      "broker": "ibkr",
+      "direction": "LONG",
+      "entry_price": 2.19,
+      "entry_date": "2026-02-20",
+      "position_size": 7.7532,
+      "stop_loss": 1.2227,
+      "take_profit": 4.1247,
+      "strategy": "mean_reversion",
+      "sector": "",
+      "max_hold_days": 5,
+      "days_held": 5,
+      "signal_score": 0.405,
+      "unrealized_pnl": 0.0,
+      "trailing_stop": 0.0,
+      "trailing_stop_atr": 0.0,
+      "highest_price": 2.75,
+      "lowest_price": 1.84
+    }
+  ],
+  "risk": {
+    "composite_score": 1.1,
+    "risk_level": "RiskLevel.LOW"
+  },
+  "ai_summary": "The market regime is an uncertain range-bound state, aligning with today's weak, neutral signals which all suggest mean-reversion strategies. While ETHUSD and BTCUSD are the top-ranked signals, their low conviction scores advise against initiating new trades today. The primary action is position management: focus on closing the CISS long position as it has reached its maximum 5-day holding period. The key element to monitor is the \"Extreme Fear\" sentiment in crypto, which could precede a sharp move, contrasting with our system's neutral readings.",
+  "crypto_intelligence": {
+    "fear_greed": {
+      "value": 7,
+      "classification": "Extreme Fear",
+      "timestamp": "1771545600",
+      "history_7d": [
+        9,
+        8,
+        10,
+        12,
+        8,
+        9,
+        9
+      ]
+    },
+    "dominance": {
+      "btc_dominance": 56.51,
+      "eth_dominance": 9.84,
+      "total_market_cap": 2377490269082.6963,
+      "btc_market_cap": 1343606329807.6208,
+      "eth_market_cap": 233914598582.33832
+    },
+    "btc_funding": {
+      "symbol": "BTCUSDT",
+      "rate": 5.365e-05,
+      "annualized": 5.87,
+      "next_funding_time": 1771545600000,
+      "direction": "neutral"
+    },
+    "eth_funding": {
+      "symbol": "ETHUSDT",
+      "rate": -4.637e-05,
+      "annualized": -5.08,
+      "next_funding_time": 1771545600000,
+      "direction": "neutral"
+    },
+    "btc_open_interest": {
+      "symbol": "BTCUSDT",
+      "open_interest": 80688.283,
+      "open_interest_usd": 5423317702.94,
+      "change_24h_pct": 0.688
+    },
+    "eth_open_interest": {
+      "symbol": "ETHUSDT",
+      "open_interest": 1770684.078,
+      "open_interest_usd": 3430027541.18,
+      "change_24h_pct": -1.637
+    },
+    "stablecoin_supply": {
+      "usdt_market_cap": 183660261569.47528,
+      "usdc_market_cap": 73839662127.6407,
+      "total_stablecoin_cap": 257499923697.11597,
+      "usdt_dominance": 71.3
+    },
+    "hash_rate": {
+      "hash_rate": 1.08,
+      "difficulty": 144398401518100,
+      "block_height": 937495,
+      "timestamp": "2026-02-20T08:12:17.485017"
+    },
+    "liquidation_estimate": {
+      "current_price": 67213.3,
+      "long_liquidation_zones": [
+        {
+          "leverage": "20x",
+          "price": 63852.64,
+          "description": "5% below \u2014 20x longs liquidated"
+        },
+        {
+          "leverage": "10x",
+          "price": 60491.97,
+          "description": "10% below \u2014 10x longs liquidated"
+        },
+        {
+          "leverage": "5x",
+          "price": 53770.64,
+          "description": "20% below \u2014 5x longs liquidated"
+        }
+      ],
+      "short_liquidation_zones": [
+        {
+          "leverage": "20x",
+          "price": 70573.97,
+          "description": "5% above \u2014 20x shorts liquidated"
+        },
+        {
+          "leverage": "10x",
+          "price": 73934.63,
+          "description": "10% above \u2014 10x shorts liquidated"
+        },
+        {
+          "leverage": "5x",
+          "price": 80655.96,
+          "description": "20% above \u2014 5x shorts liquidated"
+        }
+      ],
+      "bias": "balanced",
+      "risk_level": "low"
+    },
+    "defi": {
+      "total_tvl": 95066255882.95,
+      "top_protocols": [
+        {
+          "name": "Binance CEX",
+          "tvl": 139060207848.52,
+          "change_1d": 0.13
+        },
+        {
+          "name": "Aave V3",
+          "tvl": 26308148500.39,
+          "change_1d": -0.75
+        },
+        {
+          "name": "Lido",
+          "tvl": 18510102768.88,
+          "change_1d": -0.52
+        },
+        {
+          "name": "OKX",
+          "tvl": 17580944365.37,
+          "change_1d": 0.36
+        },
+        {
+          "name": "Bitfinex",
+          "tvl": 17439185909.8,
+          "change_1d": -0.07
+        }
+      ],
+      "eth_tvl": 54126131760.29,
+      "stablecoin_tvl": 0
+    },
+    "gas": {
+      "gas_price_gwei": 0.0338,
+      "base_fee_gwei": 0.0338,
+      "priority_fee_gwei": 0.0
+    },
+    "whale_activity": {
+      "large_txns_24h": 4414,
+      "net_exchange_flow": "neutral",
+      "notable_txns": [
+        {
+          "estimated_daily_volume_usd": 5643906900.71,
+          "total_transactions_24h": 441403,
+          "avg_transaction_usd": 12786.29
+        }
+      ]
+    },
+    "timestamp": "2026-02-20T08:12:04.965089"
+  },
+  "stock_intelligence": {
+    "timestamp": "2026-02-20T08:12:24.552704",
+    "insider_trades": [
+      {
+        "ticker": "GOOGL",
+        "insider_name": "WALKER JOHN KENT",
+        "title": "2026-02-19",
+        "transaction_type": "sell",
+        "shares": 13227,
+        "price": 304.47,
+        "value": 4027224.69,
+        "date": "2026-02-17"
+      },
+      {
+        "ticker": "GOOGL",
+        "insider_name": "WALKER JOHN KENT",
+        "title": "2026-02-19",
+        "transaction_type": "sell",
+        "shares": 13827,
+        "price": 303.41,
+        "value": 4195250.07,
+        "date": "2026-02-17"
+      },
+      {
+        "ticker": "GOOGL",
+        "insider_name": "WALKER JOHN KENT",
+        "title": "2026-02-19",
+        "transaction_type": "sell",
+        "shares": 19229,
+        "price": 302.64,
+        "value": 5819464.56,
+        "date": "2026-02-17"
+      },
+      {
+        "ticker": "GOOGL",
+        "insider_name": "WALKER JOHN KENT",
+        "title": "2026-02-19",
+        "transaction_type": "sell",
+        "shares": 33870,
+        "price": 301.69,
+        "value": 10218240.3,
+        "date": "2026-02-17"
+      },
+      {
+        "ticker": "GOOGL",
+        "insider_name": "WALKER JOHN KENT",
+        "title": "2026-02-19",
+        "transaction_type": "sell",
+        "shares": 45401,
+        "price": 300.81,
+        "value": 13657074.81,
+        "date": "2026-02-17"
+      },
+      {
+        "ticker": "GOOGL",
+        "insider_name": "WALKER JOHN KENT",
+        "title": "2026-02-19",
+        "transaction_type": "sell",
+        "shares": 49601,
+        "price": 299.5,
+        "value": 14855499.5,
+        "date": "2026-02-17"
+      },
+      {
+        "ticker": "GOOGL",
+        "insider_name": "WALKER JOHN KENT",
+        "title": "2026-02-19",
+        "transaction_type": "sell",
+        "shares": 54001,
+        "price": 298.6,
+        "value": 16124698.6,
+        "date": "2026-02-17"
+      },
+      {
+        "ticker": "GOOGL",
+        "insider_name": "WALKER JOHN KENT",
+        "title": "2026-02-19",
+        "transaction_type": "sell",
+        "shares": 58901,
+        "price": 297.7,
+        "value": 17534827.7,
+        "date": "2026-02-17"
+      },
+      {
+        "ticker": "GOOGL",
+        "insider_name": "Pichai Sundar",
+        "title": "2026-02-06",
+        "transaction_type": "sell",
+        "shares": 2851024,
+        "price": 333.34,
+        "value": 950360340.16,
+        "date": "2026-02-06"
+      },
+      {
+        "ticker": "GOOGL",
+        "insider_name": "Pichai Sundar",
+        "title": "2026-02-06",
+        "transaction_type": "buy",
+        "shares": 3527979,
+        "price": 0,
+        "value": 0,
+        "date": "2026-02-06"
+      },
+      {
+        "ticker": "MSFT",
+        "insider_name": "STANTON JOHN W",
+        "title": "2026-02-18",
+        "transaction_type": "buy",
+        "shares": 83905,
+        "price": 397.35,
+        "value": 33339651.75,
+        "date": "2026-02-18"
+      },
+      {
+        "ticker": "MSFT",
+        "insider_name": "STANTON JOHN W",
+        "title": "2026-02-03",
+        "transaction_type": "buy",
+        "shares": 78905,
+        "price": 0,
+        "value": 0,
+        "date": "2026-01-30"
+      },
+      {
+        "ticker": "MSFT",
+        "insider_name": "Walmsley Emma N",
+        "title": "2026-02-03",
+        "transaction_type": "buy",
+        "shares": 1107,
+        "price": 0,
+        "value": 0,
+        "date": "2026-01-30"
+      },
+      {
+        "ticker": "MSFT",
+        "insider_name": "Rainey John D",
+        "title": "2026-02-03",
+        "transaction_type": "buy",
+        "shares": 145,
+        "price": 0,
+        "value": 0,
+        "date": "2026-01-30"
+      },
+      {
+        "ticker": "MSFT",
+        "insider_name": "List Teri",
+        "title": "2026-02-03",
+        "transaction_type": "buy",
+        "shares": 145,
+        "price": 0,
+        "value": 0,
+        "date": "2026-01-30"
+      },
+      {
+        "ticker": "MSFT",
+        "insider_name": "Hoffman Reid",
+        "title": "2026-02-03",
+        "transaction_type": "buy",
+        "shares": 16661,
+        "price": 0,
+        "value": 0,
+        "date": "2026-01-30"
+      },
+      {
+        "ticker": "MSFT",
+        "insider_name": "Mason Mark",
+        "title": "2026-02-03",
+        "transaction_type": "buy",
+        "shares": 1675,
+        "price": 0,
+        "value": 0,
+        "date": "2026-01-30"
+      },
+      {
+        "ticker": "MSFT",
+        "insider_name": "MacGregor Catherine",
+        "title": "2026-02-03",
+        "transaction_type": "buy",
+        "shares": 1924,
+        "price": 0,
+        "value": 0,
+        "date": "2026-01-30"
+      },
+      {
+        "ticker": "MSFT",
+        "insider_name": "Johnston Hugh F",
+        "title": "2026-02-03",
+        "transaction_type": "buy",
+        "shares": 1878,
+        "price": 0,
+        "value": 0,
+        "date": "2026-01-30"
+      },
+      {
+        "ticker": "MSFT",
+        "insider_name": "SCHARF CHARLES W",
+        "title": "2026-02-03",
+        "transaction_type": "buy",
+        "shares": 44892,
+        "price": 0,
+        "value": 0,
+        "date": "2026-01-30"
+      }
+    ],
+    "sector_performance": [
+      {
+        "sector": "OIL_CRUDE",
+        "change_1d": 0.49,
+        "change_1w": 6.36,
+        "change_1m": 6.89,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "AMZN",
+        "change_1d": 0.13,
+        "change_1w": 3.06,
+        "change_1m": -11.44,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "UK100",
+        "change_1d": -0.01,
+        "change_1w": 1.95,
+        "change_1m": 4.62,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "USDJPY",
+        "change_1d": 0.03,
+        "change_1w": 1.6,
+        "change_1m": 1.8,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "JPM",
+        "change_1d": 0.0,
+        "change_1w": 1.35,
+        "change_1m": 1.56,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "XOM",
+        "change_1d": 0.09,
+        "change_1w": 0.8,
+        "change_1m": 13.38,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "CVX",
+        "change_1d": -0.18,
+        "change_1w": 0.7,
+        "change_1m": 10.81,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "DE40",
+        "change_1d": 0.15,
+        "change_1w": 0.51,
+        "change_1m": 0.8,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "broad_market",
+        "change_1d": 0.16,
+        "change_1w": 0.48,
+        "change_1m": -1.53,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "BAC",
+        "change_1d": 0.01,
+        "change_1w": 0.35,
+        "change_1m": 1.13,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "technology",
+        "change_1d": 0.14,
+        "change_1w": 0.34,
+        "change_1m": -4.45,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "NVDA",
+        "change_1d": 0.28,
+        "change_1w": -0.04,
+        "change_1m": 2.24,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "AAPL",
+        "change_1d": 0.14,
+        "change_1w": -0.17,
+        "change_1m": 5.22,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "GOLD",
+        "change_1d": 0.29,
+        "change_1w": -0.36,
+        "change_1m": -3.29,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "META",
+        "change_1d": 0.26,
+        "change_1w": -0.47,
+        "change_1m": 4.99,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "MSFT",
+        "change_1d": 0.09,
+        "change_1w": -0.92,
+        "change_1m": -10.67,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "EURUSD",
+        "change_1d": -0.14,
+        "change_1w": -0.97,
+        "change_1m": -2.25,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "TSLA",
+        "change_1d": 0.09,
+        "change_1w": -1.1,
+        "change_1m": -4.98,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "GOOGL",
+        "change_1d": 0.23,
+        "change_1w": -1.29,
+        "change_1m": -7.46,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "ETHUSD",
+        "change_1d": -0.44,
+        "change_1w": -1.33,
+        "change_1m": -28.23,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "GBPUSD",
+        "change_1d": -0.14,
+        "change_1w": -1.51,
+        "change_1m": -2.79,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "BTCUSD",
+        "change_1d": 0.34,
+        "change_1w": -2.32,
+        "change_1m": -20.12,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "GS",
+        "change_1d": -1.86,
+        "change_1w": -3.03,
+        "change_1m": -2.69,
+        "relative_strength": 0.0
+      }
+    ]
+  },
+  "after_hours": {
+    "timestamp": "2026-02-20T08:12:35.389539",
+    "session": "pre_market"
+  }
+}

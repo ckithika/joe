@@ -1,0 +1,59 @@
+risk_profiler:
+  enabled: true
+
+  risk_weights:
+    position: 0.25
+    portfolio: 0.25
+    market: 0.20
+    behavioral: 0.15
+    strategy: 0.15
+
+  thresholds:
+    low: 2.0
+    moderate: 4.0
+    elevated: 6.0
+    high: 8.0
+    critical: 10.0
+
+  position:
+    max_risk_per_trade_pct: 2.0
+    min_risk_reward_ratio: 1.5
+    require_stop_loss: true
+    max_cfd_leverage: 5
+
+  portfolio:
+    max_concurrent_positions: 3
+    max_total_risk_pct: 6.0
+    max_sector_concentration: 2
+    correlation_threshold: 0.7
+    max_drawdown_limit: -8.0
+    drawdown_warning_buffer: 2.0
+
+  market:
+    vix_elevated: 20
+    vix_high: 25
+    vix_extreme: 30
+    regime_age_warning: 30
+    min_regime_confidence: 0.5
+
+  behavioral:
+    max_trades_per_day: 2
+    max_trades_per_week: 5
+    revenge_trade_window_hours: 24
+    fomo_threshold_pct: 3.0
+    min_plan_adherence: 0.7
+    win_streak_warning: 3
+    loss_streak_warning: 3
+
+  strategy:
+    min_sample_size: 5
+    min_win_rate: 0.4
+    min_profit_factor: 1.0
+    strategy_drawdown_limit: -5.0
+
+  hard_blocks:
+    - no_stop_loss
+    - risk_exceeds_max
+    - position_slots_full
+    - regime_mismatch
+    - cfd_overleveraged
