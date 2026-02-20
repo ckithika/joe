@@ -46,7 +46,7 @@ class ReportGenerator:
         lines.append("")
         lines.append("=" * 60)
         lines.append(f"  DAILY RESEARCH BRIEFING — {today}")
-        lines.append("  Agent: Tier 1 Research v0.1")
+        lines.append("  Agent: AI Trading Agent v0.1")
         lines.append("=" * 60)
 
         # Regime section
@@ -270,7 +270,7 @@ class ReportGenerator:
 
         md = []
         md.append(f"# Daily Research Briefing — {today}")
-        md.append(f"*Agent: Tier 1 Research v0.1*\n")
+        md.append(f"*Agent: AI Trading Agent v0.1*\n")
 
         # Regime
         md.append("## Market Regime")

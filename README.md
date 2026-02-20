@@ -1,6 +1,8 @@
-# AI Trading Agent — Tier 1 Research Agent
+# AI Trading Agent
 
-An AI-powered trading research agent that scans markets, scores instruments, matches strategies, manages a paper portfolio, and delivers insights via Telegram. Runs locally or on Google Cloud Run.
+A learn-by-doing trading education tool. An AI agent scans 100+ instruments daily, applies 5 real strategies, and manages a $500 paper portfolio — so you can study how markets work and validate strategies with zero risk before trading real money. Built for beginners who want to understand trading through hands-on simulation rather than theory alone.
+
+Insights are delivered via Telegram and a Streamlit dashboard. Runs locally or on Google Cloud Run.
 
 ```
 ┌─────────────┐    webhook     ┌──────────────────┐
@@ -24,19 +26,29 @@ An AI-powered trading research agent that scans markets, scores instruments, mat
 └─────────────┘
 ```
 
+## Who Is This For?
+
+- **New traders** who want to learn how markets work without risking real money
+- **Strategy learners** who want to see how trend following, mean reversion, breakout, momentum, and defensive strategies perform in different market conditions
+- **Anyone curious about trading** who wants daily AI-generated market analysis delivered to their phone
+
+The agent runs a $500 paper portfolio automatically. After 30 days of simulated results, the dashboard shows a "Go Live Readiness" checklist to help you decide if you're ready for real trading.
+
 ## Features
 
+- **Paper trading simulation** — $500 virtual portfolio with daily P&L tracking, ROI, and strategy accuracy
+- **Go Live Readiness** — 30-day evaluation checklist before committing real money
 - **Market regime detection** — SPY/VIX-based regime classification (trending, ranging, volatile)
 - **100+ instrument scanning** — stocks, ETFs, indices, forex, crypto, commodities
 - **5 trading strategies** — trend following, mean reversion, breakout, momentum, defensive
 - **Multi-layer risk profiling** — position, portfolio, market, behavioral, and strategy dimensions
-- **Paper trading** — virtual portfolio with automatic entry/exit and performance tracking
 - **AI analysis** — Gemini-powered daily summaries, trade analysis, and Q&A
 - **Crypto intelligence** — fear & greed, funding rates, whale activity, DeFi metrics
 - **Stock extras** — earnings calendar, sector performance, market breadth, insider activity
 - **After-hours analysis** — earnings gaps, pre-market movers, crypto overnight signals
 - **Telegram bot** — interactive menu with all data accessible from your phone
 - **AI Q&A** — ask questions about your portfolio and get Gemini-powered answers
+- **Streamlit dashboard** — visual portfolio tracking with daily gains, strategy accuracy, and learning tips
 - **Cloud deployment** — runs 24/7 on Cloud Run with scheduled pipeline executions
 - **Pipeline reminders** — Telegram notification 30 min before runs so you can run locally with IBKR
 - **Configurable modules** — enable/disable crypto, stocks extras, after-hours via preferences
