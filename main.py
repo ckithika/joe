@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""AI Trading Agent — Research Agent entry point."""
+"""Joe AI — your average Joe learning to trade."""
 
 import argparse
 import json
@@ -116,7 +116,7 @@ def run_pipeline(
 ):
     """Execute the full daily research pipeline."""
     logger.info("=" * 50)
-    logger.info("Starting AI Trading Agent — %s", datetime.now().strftime("%Y-%m-%d %H:%M"))
+    logger.info("Starting Joe AI — %s", datetime.now().strftime("%Y-%m-%d %H:%M"))
     logger.info("=" * 50)
 
     # Initialize components
@@ -831,7 +831,7 @@ def run_backtest(start_date: str | None, end_date: str | None, broker_filter: st
 
 
 def main():
-    parser = argparse.ArgumentParser(description="AI Trading Agent")
+    parser = argparse.ArgumentParser(description="Joe AI")
     parser.add_argument("--once", action="store_true", help="Run once and exit")
     parser.add_argument("--schedule", type=str, help="Schedule daily run (e.g., 06:30)")
     parser.add_argument("--dry-run", action="store_true", help="No API calls, use cached data")

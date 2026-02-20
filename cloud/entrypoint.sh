@@ -10,8 +10,8 @@ if [ "$DEPLOYMENT_MODE" = "cloud" ]; then
 
     # Configure git for push operations
     if [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REPO" ]; then
-        git config --global user.email "bot@trading-agent.local"
-        git config --global user.name "Trading Agent Bot"
+        git config --global user.email "bot@joeai.local"
+        git config --global user.name "Joe AI Bot"
         git config --global credential.helper store
         echo "https://x-access-token:${GITHUB_TOKEN}@github.com" > ~/.git-credentials
     fi

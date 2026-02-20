@@ -59,7 +59,7 @@ def run_wizard() -> dict:
 
     print()
     print("=" * 50)
-    print("  AI Trading Agent — Setup Wizard")
+    print("  Joe AI — Setup Wizard")
     print("=" * 50)
     print()
 

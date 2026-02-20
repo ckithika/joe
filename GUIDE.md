@@ -1,4 +1,4 @@
-# AI Trading Agent — Complete Guide
+# Joe AI — Complete Guide
 
 ## What This Is
 
