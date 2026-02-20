@@ -1,1 +1,23 @@
-[]
+[
+  {
+    "id": "CDIO-20260220-173000",
+    "ticker": "CDIO",
+    "broker": "ibkr",
+    "direction": "LONG",
+    "entry_price": 2.24,
+    "entry_date": "2026-02-20",
+    "position_size": 0.05,
+    "stop_loss": 1.72,
+    "take_profit": 3.28,
+    "strategy": "breakout",
+    "sector": "",
+    "max_hold_days": 7,
+    "days_held": 0,
+    "signal_score": 0.43,
+    "unrealized_pnl": 0.0,
+    "trailing_stop": 0.0,
+    "trailing_stop_atr": 0.0,
+    "highest_price": 2.24,
+    "lowest_price": 2.24
+  }
+]

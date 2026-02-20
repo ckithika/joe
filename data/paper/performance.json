@@ -5,7 +5,7 @@
   "wins": 0,
   "losses": 0,
   "expired": 3,
-  "open_positions": 0,
+  "open_positions": 1,
   "win_rate": 0.0,
   "profit_factor": Infinity,
   "expectancy": 0.0,
