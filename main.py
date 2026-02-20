@@ -14,6 +14,30 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Fast path: --remind needs no heavy imports
+if "--remind" in sys.argv:
+    def _send_pipeline_reminder():
+        import requests as req
+        bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
+        chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
+        if not bot_token or not chat_id:
+            print("Telegram not configured — cannot send reminder")
+            return
+        text = (
+            "\u23f0 <b>Pipeline Reminder</b>\n\n"
+            "The automated pipeline will run in ~30 minutes.\n\n"
+            "If you're at your laptop with TWS open, run locally for full IBKR data:\n"
+            "<code>python main.py --once --push</code>\n\n"
+            "Otherwise, the cloud job will run with Capital.com data only."
+        )
+        resp = req.post(
+            f"https://api.telegram.org/bot{bot_token}/sendMessage",
+            json={"chat_id": chat_id, "text": text, "parse_mode": "HTML"},
+        )
+        print(f"Reminder sent: {resp.status_code}")
+    _send_pipeline_reminder()
+    sys.exit(0)
+
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
 
