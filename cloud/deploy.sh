@@ -63,6 +63,9 @@ gcloud services enable \
     artifactregistry.googleapis.com \
     --project="$PROJECT_ID"
 
+echo "  Waiting for APIs to propagate..."
+sleep 15
+
 # Create Artifact Registry repo if it doesn't exist
 gcloud artifacts repositories describe trading-agent \
     --location="$REGION" --project="$PROJECT_ID" 2>/dev/null || \
@@ -128,6 +131,13 @@ SA_EMAIL="$(gcloud iam service-accounts list \
     --filter="displayName:Compute Engine default" \
     --format="value(email)" \
     --project="$PROJECT_ID")"
+
+# Grant Secret Manager access to the compute service account
+echo "  Granting Secret Manager access..."
+gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+    --member="serviceAccount:${SA_EMAIL}" \
+    --role="roles/secretmanager.secretAccessor" \
+    --quiet > /dev/null 2>&1
 
 gcloud run deploy "$SERVICE_NAME" \
     --image="${REGISTRY}/${IMAGE_NAME}:latest" \
@@ -214,7 +224,7 @@ gcloud run jobs create "$REMINDER_JOB_NAME" \
     --image="${REGISTRY}/${IMAGE_NAME}:latest" \
     --region="$REGION" \
     --project="$PROJECT_ID" \
-    --memory=256Mi \
+    --memory=512Mi \
     --task-timeout=60 \
     --set-env-vars="DEPLOYMENT_MODE=cloud,RUN_MODE=pipeline,LOG_LEVEL=INFO" \
     --set-secrets="\
@@ -225,7 +235,7 @@ TELEGRAM_CHAT_ID=telegram-chat-id:latest" \
 gcloud run jobs update "$REMINDER_JOB_NAME" \
     --image="${REGISTRY}/${IMAGE_NAME}:latest" \
     --region="$REGION" --project="$PROJECT_ID" \
-    --memory=256Mi \
+    --memory=512Mi \
     --task-timeout=60 \
     --set-env-vars="DEPLOYMENT_MODE=cloud,RUN_MODE=pipeline,LOG_LEVEL=INFO" \
     --set-secrets="\

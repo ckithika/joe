@@ -12,22 +12,11 @@ dashboard:
       regular_close: "16:00"
       afterhours_close: "20:00"
       days: [0, 1, 2, 3, 4]
-    london:
-      name: "London"
-      timezone: "Europe/London"
-      regular_open: "08:00"
-      regular_close: "16:30"
-      days: [0, 1, 2, 3, 4]
     crypto:
       name: "Crypto"
       timezone: "UTC"
       always_open: true
-      note: "CME futures close Sun 5PM - Mon 5PM ET gap"
-    capital_cfds:
-      name: "Capital.com CFDs"
-      timezone: "US/Eastern"
-      note: "US500/US100 trade ~23h/day Mon-Fri"
-      days: [0, 1, 2, 3, 4]
+      note: "24/7 — CME futures have a Sun-Mon gap"
 
   holidays_2026:
     - "2026-01-01"
