@@ -1,7 +1,7 @@
 #!/bin/bash
 set -e
 
-# ── AI Trading Agent — Full GCP Deployment ──────────────────────────────────
+# ── Joe AI — Full GCP Deployment ──────────────────────────────────────────────
 #
 # This script sets up everything from scratch:
 #   1. GCP project + APIs
@@ -43,7 +43,7 @@ REGISTRY="${REGION}-docker.pkg.dev/${PROJECT_ID}/trading-agent"
 
 echo ""
 echo "══════════════════════════════════════════════════"
-echo "  AI Trading Agent — Cloud Deployment"
+echo "  Joe AI — Cloud Deployment"
 echo "══════════════════════════════════════════════════"
 echo "  Project:  $PROJECT_ID"
 echo "  Region:   $REGION"

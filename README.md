@@ -1,4 +1,4 @@
-# AI Trading Agent
+# Joe AI
 
 A learn-by-doing trading education tool. An AI agent scans 100+ instruments daily, applies 5 real strategies, and manages a $500 paper portfolio — so you can study how markets work and validate strategies with zero risk before trading real money. Built for beginners who want to understand trading through hands-on simulation rather than theory alone.
 

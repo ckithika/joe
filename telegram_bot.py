@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Interactive Telegram bot for the AI Trading Agent."""
+"""Interactive Telegram bot for Joe AI."""
 
 import asyncio
 import csv
@@ -920,7 +920,7 @@ async def cmd_start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not authorized(update):
         return
     await update.message.reply_text(
-        "🤖 <b>AI Trading Agent</b>\n\nSelect a section:",
+        "🤖 <b>Joe AI</b>\n\nSelect a section:",
         parse_mode="HTML",
         reply_markup=main_menu_keyboard(),
     )
@@ -930,7 +930,7 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if not authorized(update):
         return
     await update.message.reply_text(
-        "🤖 <b>AI Trading Agent — Help</b>\n\n"
+        "🤖 <b>Joe AI — Help</b>\n\n"
         "<b>Commands:</b>\n"
         "/start — Main menu\n"
         "/menu — Main menu\n"
@@ -1020,7 +1020,7 @@ SUBMENU_TITLES = {
     "menu_portfolio": "💼 <b>Portfolio</b>\n\nSelect an item:",
     "menu_ask_ai": "🤖 <b>Ask AI</b>\n\nType your question and I'll answer using your portfolio data.\n\nExamples:\n• What is a Sharpe ratio?\n• How is my portfolio doing?\n• Explain the current market regime",
     "menu_system": "⚙️ <b>System</b>\n\nSelect an item:",
-    "back_main": "🤖 <b>AI Trading Agent</b>\n\nSelect a section:",
+    "back_main": "🤖 <b>Joe AI</b>\n\nSelect a section:",
 }
 
 

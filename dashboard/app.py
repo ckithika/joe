@@ -1,4 +1,4 @@
-"""AI Trading Agent — Streamlit Dashboard."""
+"""Joe AI — Streamlit Dashboard."""
 
 import json
 import logging
@@ -12,7 +12,7 @@ import pytz
 import streamlit as st
 import yaml
 
-st.set_page_config(page_title="AI Trading Agent", page_icon="📊", layout="wide")
+st.set_page_config(page_title="Joe AI", page_icon="📊", layout="wide")
 
 DATA_DIR = Path("data/paper")
 REPORTS_DIR = Path("data/reports")
@@ -86,7 +86,7 @@ if not isinstance(api_health, list):
 # ── Sidebar Navigation ──────────────────────────────────────────
 
 
-st.sidebar.title("📊 AI Trading Agent")
+st.sidebar.title("📊 Joe AI")
 
 timestamp = regime_data.get("timestamp", "No data yet") if isinstance(regime_data, dict) else "No data yet"
 st.sidebar.caption(f"Last updated: {timestamp}")
