@@ -17,10 +17,11 @@ logger = logging.getLogger(__name__)
 class StrategyEngine:
     """Matches scored instruments to strategy profiles based on regime."""
 
-    def __init__(self, config_path: str = "config/strategies.yaml"):
+    def __init__(self, config_path: str = "config/strategies.yaml", default_risk_pct: float = 0.02):
         self.config = self._load_config(config_path)
         self.strategies = self.config.get("strategies", {})
         self.position_sizing = self.config.get("position_sizing", {})
+        self.default_risk_pct = default_risk_pct
 
     def _load_config(self, path: str) -> dict:
         config_file = Path(path)
@@ -82,8 +83,9 @@ class StrategyEngine:
             reward_per_share = abs(take_profit - entry_price)
             rr_ratio = reward_per_share / risk_per_share if risk_per_share > 0 else 0
 
-            # Position sizing: 2% risk rule * regime modifier
-            risk_pct = 0.02
+            # Position sizing: per-strategy risk override or default * regime modifier
+            override = strategy_config.get("risk_per_trade_pct_override")
+            risk_pct = override / 100.0 if override else self.default_risk_pct
             size_mod = regime.position_size_modifier
             risk_amount = virtual_balance * risk_pct * size_mod
             position_size = risk_amount / risk_per_share if risk_per_share > 0 else 0
@@ -228,6 +230,21 @@ class StrategyEngine:
             if tech.macd_histogram > 0:
                 score += 1
 
+        elif name == "day_trade":
+            rsi_range = entry.get("rsi_range", [35, 65])
+            if rsi_range[0] <= tech.rsi <= rsi_range[1]:
+                score += 2
+            if tech.adx >= entry.get("min_adx", 15):
+                score += 1
+            vol_surge = entry.get("require_volume_surge", 1.3)
+            if tech.volume_ratio >= vol_surge:
+                score += 2
+            if entry.get("require_macd_histogram") and tech.macd_histogram != 0:
+                # MACD histogram confirms direction (non-zero = momentum)
+                score += 2
+            if entry.get("require_ema_alignment") and tech.ema_trend != 0:
+                score += 1
+
         return score
 
     def _make_label(self, strategy_name: str, tech) -> str:
@@ -236,6 +253,7 @@ class StrategyEngine:
             "mean_reversion": "Mean Reversion",
             "breakout": "Breakout",
             "momentum": "Momentum Continuation",
+            "day_trade": "Day Trade",
         }
         base = labels.get(strategy_name, strategy_name.replace("_", " ").title())
 
@@ -249,6 +267,8 @@ class StrategyEngine:
             return f"{base} — Range Break"
         elif strategy_name == "momentum":
             return f"{base} — New Highs"
+        elif strategy_name == "day_trade":
+            return f"{base} — Intraday Momentum"
         return base
 
     def check_defensive(self, regime: RegimeAssessment, performance: dict) -> bool:

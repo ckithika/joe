@@ -110,19 +110,19 @@ class RegimeDetector:
         # Determine regime
         if vix > vix_high or atr_expanding:
             regime = MarketRegime.HIGH_VOLATILITY
-            strategies = ["breakout"]
+            strategies = ["breakout", "day_trade"]
             size_mod = 0.5
         elif adx > adx_trending and above_20ema and golden_cross:
             regime = MarketRegime.TRENDING_UP
-            strategies = ["trend_following", "momentum"]
+            strategies = ["trend_following", "momentum", "day_trade"]
             size_mod = 1.0
         elif adx > adx_trending and not above_20ema and not golden_cross:
             regime = MarketRegime.TRENDING_DOWN
-            strategies = ["trend_following", "defensive"]
+            strategies = ["trend_following", "defensive", "day_trade"]
             size_mod = 0.5
         else:
             regime = MarketRegime.RANGE_BOUND
-            strategies = ["mean_reversion", "breakout"]
+            strategies = ["mean_reversion", "breakout", "day_trade"]
             size_mod = 0.75
 
         # Trend classification
@@ -198,7 +198,7 @@ class RegimeDetector:
             vix=0,
             breadth=50.0,
             regime_age_days=0,
-            active_strategies=["mean_reversion", "breakout"],
+            active_strategies=["mean_reversion", "breakout", "day_trade"],
             position_size_modifier=0.75,
         )
 

@@ -18,4 +18,5 @@ paper_trader:
     atr_multiplier: 3.0
 
   pdt_simulation: true
+  pdt_day_trade_limit: 5
   auto_enter: true

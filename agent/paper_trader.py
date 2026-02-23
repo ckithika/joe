@@ -370,8 +370,9 @@ class PaperTrader:
 
         # Count day trades in last 5 rolling business days
         day_trade_count = self._count_recent_day_trades(days=5)
-        if day_trade_count >= 3:
-            logger.warning("PDT limit: %d day trades in last 5 days (max 3)", day_trade_count)
+        pdt_limit = self.config.get("pdt_day_trade_limit", 3)
+        if day_trade_count >= pdt_limit:
+            logger.warning("PDT limit: %d day trades in last 5 days (max %d)", day_trade_count, pdt_limit)
             return True
         return False
 
