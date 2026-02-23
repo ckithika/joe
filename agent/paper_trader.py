@@ -240,7 +240,26 @@ class PaperTrader:
             bar = current_prices.get(pos.ticker)
             if not bar:
                 pos.days_held += 1
-                still_open.append(pos)
+                if pos.days_held >= pos.max_hold_days:
+                    pnl = 0.0  # No price data — flat close
+                    self._log_closed_trade(pos, pos.entry_price, "expired", pnl)
+                    closed.append(
+                        {
+                            "ticker": pos.ticker,
+                            "direction": pos.direction,
+                            "exit_price": pos.entry_price,
+                            "reason": "expired",
+                            "pnl": pnl,
+                            "days_held": pos.days_held,
+                            "strategy": pos.strategy,
+                        }
+                    )
+                    logger.info(
+                        "Paper trade expired (no price data): %s %s after %d days",
+                        pos.direction, pos.ticker, pos.days_held,
+                    )
+                else:
+                    still_open.append(pos)
                 continue
 
             pos.days_held += 1
@@ -334,8 +353,11 @@ class PaperTrader:
                     logger.debug("Trailing stop for %s updated to %.4f", pos.ticker, pos.trailing_stop)
 
     def _check_exit(self, pos: MockPosition, bar: dict) -> str:
+        # Check expiry first — avoids stale positions lingering forever
+        if pos.days_held >= pos.max_hold_days:
+            return "expired"
+
         if pos.direction == "LONG":
-            # Check trailing stop first (tighter than initial SL when active)
             if pos.trailing_stop > 0 and bar["low"] <= pos.trailing_stop:
                 return "trailing_stopped"
             if bar["low"] <= pos.stop_loss:
@@ -349,9 +371,6 @@ class PaperTrader:
                 return "stopped_out"
             if bar["low"] <= pos.take_profit:
                 return "target_hit"
-
-        if pos.days_held >= pos.max_hold_days:
-            return "expired"
 
         return "open"
 
