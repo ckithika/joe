@@ -4,8 +4,8 @@ weights:
   volume: 0.15
 
 thresholds:
-  strong_buy: 0.5
-  buy: 0.25
+  strong_buy: 0.45
+  buy: 0.35
   neutral_low: -0.15
   neutral_high: 0.15
   sell: -0.25

@@ -56,7 +56,7 @@ strategies:
       require_strong_close: true
     exit:
       stop_loss: opposite_squeeze_boundary
-      stop_loss_atr_fallback: 1.5
+      stop_loss_atr_fallback: 1.2
       take_profit: measured_move
       false_breakout_exit: 1
     max_hold_days: 7
@@ -86,16 +86,16 @@ strategies:
       min_adx: 15
       require_ema_alignment: true
     exit:
-      stop_loss_atr_fallback: 0.75
-      take_profit_atr: 1.5
+      stop_loss_atr_fallback: 1.0
+      take_profit_atr: 2.0
       trailing_stop_atr: 0.0
     max_hold_days: 1
-    risk_per_trade_pct_override: 10.0
+    risk_per_trade_pct_override: 5.0
 
   defensive:
     trigger:
       vix_above: 28
-      max_drawdown_pct: -8.0
+      max_drawdown_pct: -10.0
       regime: [high_volatility, trending_down]
     actions:
       new_entries: false
