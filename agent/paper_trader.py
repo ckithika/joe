@@ -386,7 +386,9 @@ class PaperTrader:
             for trade in csv.DictReader(f):
                 if trade.get("entry_date", "") >= cutoff:
                     if trade.get("entry_date") == trade.get("exit_date"):
-                        count += 1
+                        days_held = int(trade.get("days_held", 0))
+                        if days_held <= 1:
+                            count += 1
         return count
 
     # ── Persistence ─────────────────────────────────────────────
