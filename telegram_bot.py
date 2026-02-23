@@ -137,6 +137,116 @@ TICKER_NAMES = {
 }
 
 
+GUIDE_PAGES = [
+    (
+        "1/6 — What is Joe AI?",
+        "🤖 <b>What is Joe AI?</b>\n\n"
+        "Joe AI is a <b>paper trading agent</b> that learns to trade alongside you.\n\n"
+        "• Starts with <b>$500 virtual capital</b> — no real money at risk\n"
+        "• Scans US stocks, indices, forex, crypto, and commodities\n"
+        "• Uses AI analysis (Gemini) to grade every signal\n"
+        "• Manages positions with stop-losses and take-profits\n"
+        "• Sends you Telegram alerts for entries, exits, and daily briefings\n\n"
+        "Think of it as a research assistant that also keeps a paper portfolio "
+        "so you can see how its ideas actually perform.",
+    ),
+    (
+        "2/6 — 2-Prong Setup",
+        "🏗️ <b>2-Prong Setup</b>\n\n"
+        "<b>Local (your laptop)</b>\n"
+        "• Connects to IBKR TWS + Capital.com\n"
+        "• Full scanner data from both brokers\n"
+        "• Run manually: <code>python main.py --once</code>\n\n"
+        "<b>Cloud (automated)</b>\n"
+        "• Runs on Google Cloud Run (scheduled)\n"
+        "• Capital.com only (no IBKR in cloud)\n"
+        "• Pipeline runs daily; monitor checks positions every 5 min\n"
+        "• Telegram bot runs 24/7 for on-demand queries\n\n"
+        "Best results: run locally when you can, let the cloud handle "
+        "the rest automatically.",
+    ),
+    (
+        "3/6 — Reading Signals",
+        "📊 <b>Reading Signals</b>\n\n"
+        "<b>Signal Grades:</b>\n"
+        "• 🟢 <b>STRONG_BUY</b> — High-conviction setup (score ≥ 0.45)\n"
+        "• 🟡 <b>BUY</b> — Decent setup (score ≥ 0.35)\n"
+        "• ⚪ <b>NEUTRAL</b> — No clear edge\n"
+        "• 🔴 <b>SELL / STRONG_SELL</b> — Bearish signals\n\n"
+        "<b>Key Numbers:</b>\n"
+        "• <b>SL</b> (Stop Loss) — auto-exit if price drops here\n"
+        "• <b>TP</b> (Take Profit) — auto-exit at target\n"
+        "• <b>ATR</b> — Average True Range; measures volatility\n"
+        "• <b>P&L</b> — Profit and Loss on the position\n"
+        "• <b>R:R</b> — Risk-to-Reward ratio (higher = better)\n\n"
+        "Joe sizes positions so no single trade risks more than 5% of capital.",
+    ),
+    (
+        "4/6 — Running Locally",
+        "💻 <b>Running Locally</b>\n\n"
+        "<b>Daily pipeline:</b>\n"
+        "<code>./venv/bin/python3 main.py --once</code>\n"
+        "Scans markets, scores, opens/closes positions, sends briefing.\n\n"
+        "<b>Dry run (no trades):</b>\n"
+        "<code>./venv/bin/python3 main.py --once --dry-run</code>\n\n"
+        "<b>Intraday monitor:</b>\n"
+        "<code>./venv/bin/python3 monitor.py</code>\n"
+        "Loops every 5 min during market hours checking SL/TP exits.\n\n"
+        "<b>Push data to GitHub:</b>\n"
+        "<code>./venv/bin/python3 main.py --once --push</code>\n\n"
+        "<b>Dashboard:</b>\n"
+        "Open <code>dashboard/index.html</code> in your browser for charts.",
+    ),
+    (
+        "5/6 — Bot Commands",
+        "📱 <b>Bot Commands</b>\n\n"
+        "/start — Main menu\n"
+        "/menu — Main menu\n"
+        "/briefing — Regime + AI summary\n"
+        "/positions — Open positions\n"
+        "/regime — Market regime details\n"
+        "/guide — This walkthrough\n"
+        "/help — Command list\n\n"
+        "<b>Main menu sections:</b>\n"
+        "📊 Daily Briefing — regime, AI summary, risk, after-hours\n"
+        "📈 Stocks — signals, earnings, breadth, sectors, insiders\n"
+        "🪙 Crypto — fear/greed, BTC/ETH, DeFi, whales\n"
+        "💼 Portfolio — positions, performance, analytics, history\n"
+        "🤖 Ask AI — type any question\n"
+        "⚙️ System — API health, run pipeline",
+    ),
+    (
+        "6/6 — Key Concepts",
+        "📚 <b>Key Concepts</b>\n\n"
+        "<b>Regime</b> — Market state (Trending Up/Down, Range-Bound, "
+        "High Volatility). Determines which strategies are active.\n\n"
+        "<b>Defensive Mode</b> — Triggered by high VIX, drawdown past "
+        "-10%, or bad regime. Blocks new entries, tightens stops.\n\n"
+        "<b>R:R (Risk-to-Reward)</b> — Distance to TP vs distance to SL. "
+        "Joe targets at least 1.5:1.\n\n"
+        "<b>ATR</b> — Average True Range. Measures how much a stock moves "
+        "daily. Used to set SL/TP distances.\n\n"
+        "<b>VIX</b> — CBOE Volatility Index. Above 28 = elevated fear.\n\n"
+        "<b>Drawdown</b> — Peak-to-trough decline in portfolio value. "
+        "Joe enters defensive mode at -10%.",
+    ),
+]
+
+
+def guide_keyboard(page: int, total: int) -> InlineKeyboardMarkup:
+    """Navigation keyboard for guide pages."""
+    buttons = []
+    nav = []
+    if page > 0:
+        nav.append(InlineKeyboardButton("« Prev", callback_data=f"guide_page_{page - 1}"))
+    nav.append(InlineKeyboardButton(f"{page + 1}/{total}", callback_data="noop"))
+    if page < total - 1:
+        nav.append(InlineKeyboardButton("Next »", callback_data=f"guide_page_{page + 1}"))
+    buttons.append(nav)
+    buttons.append([InlineKeyboardButton("« Back to Menu", callback_data="back_main")])
+    return InlineKeyboardMarkup(buttons)
+
+
 def ticker_display(ticker: str) -> str:
     """Return 'TICKER - Company Name' or just 'TICKER' if unknown."""
     name = TICKER_NAMES.get(ticker)
@@ -850,6 +960,7 @@ def main_menu_keyboard() -> InlineKeyboardMarkup:
     buttons.extend([
         [InlineKeyboardButton("💼 Portfolio", callback_data="menu_portfolio")],
         [InlineKeyboardButton("🤖 Ask AI", callback_data="menu_ask_ai")],
+        [InlineKeyboardButton("📖 Guide", callback_data="menu_guide")],
         [InlineKeyboardButton("⚙️ System", callback_data="menu_system")],
     ])
     return InlineKeyboardMarkup(buttons)
@@ -937,6 +1048,7 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/briefing — Quick briefing (regime + AI summary)\n"
         "/positions — Open positions\n"
         "/regime — Market regime\n"
+        "/guide — Interactive walkthrough\n"
         "/help — This message\n\n"
         "Use the inline buttons to navigate sections.",
         parse_mode="HTML",
@@ -973,6 +1085,17 @@ async def cmd_regime(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         format_regime(),
         parse_mode="HTML",
         reply_markup=briefing_keyboard(),
+    )
+
+
+async def cmd_guide(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if not authorized(update):
+        return
+    title, body = GUIDE_PAGES[0]
+    await update.message.reply_text(
+        body,
+        parse_mode="HTML",
+        reply_markup=guide_keyboard(0, len(GUIDE_PAGES)),
     )
 
 
@@ -1032,6 +1155,31 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
 
     await query.answer()
     data = query.data
+
+    # Guide page navigation
+    if data.startswith("guide_page_"):
+        page = int(data.split("_")[-1])
+        if 0 <= page < len(GUIDE_PAGES):
+            title, body = GUIDE_PAGES[page]
+            await query.edit_message_text(
+                body,
+                parse_mode="HTML",
+                reply_markup=guide_keyboard(page, len(GUIDE_PAGES)),
+            )
+        return
+
+    if data == "noop":
+        return
+
+    # Guide from main menu
+    if data == "menu_guide":
+        title, body = GUIDE_PAGES[0]
+        await query.edit_message_text(
+            body,
+            parse_mode="HTML",
+            reply_markup=guide_keyboard(0, len(GUIDE_PAGES)),
+        )
+        return
 
     # Special: Crypto callbacks when module is disabled
     if data.startswith("crypto_") or data == "menu_crypto":
@@ -1157,6 +1305,7 @@ def main() -> None:
     app.add_handler(CommandHandler("briefing", cmd_briefing))
     app.add_handler(CommandHandler("positions", cmd_positions))
     app.add_handler(CommandHandler("regime", cmd_regime))
+    app.add_handler(CommandHandler("guide", cmd_guide))
 
     # Inline button callbacks
     app.add_handler(CallbackQueryHandler(handle_callback))
