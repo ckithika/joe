@@ -2,3 +2,4 @@ id,ticker,broker,direction,entry_price,entry_date,exit_price,exit_date,exit_reas
 PT-2026-02-20-001,BATL,ibkr,LONG,4.13,2026-02-20,4.13,2026-02-20,expired,6.8991,0.0,0.0,0.0,0.48,9,breakout
 PT-2026-02-20-003,JZ,ibkr,LONG,1.1,2026-02-20,1.1,2026-02-20,expired,24.31,0.0,0.0,0.0,0.405,9,breakout
 PT-2026-02-20-005,CISS,ibkr,LONG,2.19,2026-02-20,2.19,2026-02-20,expired,7.7532,0.0,0.0,0.0,0.405,9,mean_reversion
+CDIO-20260220-173000,CDIO,ibkr,LONG,2.24,2026-02-20,3.28,2026-02-23,target_hit,0.05,0.05,44.64,1.92,0.43,1,breakout

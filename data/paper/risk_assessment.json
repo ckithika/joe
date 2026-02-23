@@ -11,8 +11,8 @@
   "alerts": [
     {
       "severity": "warning",
-      "message": "Regime confidence low (41%)"
+      "message": "Regime confidence low (43%)"
     }
   ],
-  "timestamp": "2026-02-20T17:21:06.766896"
+  "timestamp": "2026-02-23T17:01:50.097695"
 }

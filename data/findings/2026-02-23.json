@@ -1,0 +1,866 @@
+{
+  "date": "2026-02-23",
+  "timestamp": "2026-02-23T17:03:54.156040",
+  "regime": {
+    "regime": "range_bound",
+    "confidence": 0.43,
+    "adx": 17.1,
+    "vix": 20.3,
+    "active_strategies": [
+      "mean_reversion",
+      "breakout"
+    ],
+    "position_size_modifier": 0.75
+  },
+  "defensive_mode": false,
+  "signals": [
+    {
+      "ticker": "EHAB",
+      "signal": "BUY",
+      "score": 0.3324,
+      "strategy": "breakout",
+      "action": "enter_now",
+      "direction": "LONG",
+      "entry_price": 11.09,
+      "stop_loss": 10.56,
+      "take_profit": 12.15,
+      "ai_analysis": {
+        "recommendation": "skip",
+        "bull_case": "The trade is supported by a significant surge in volume (2.1x average), which is a key ingredient for a successful breakout. The attractive 2:1 risk/reward ratio offers a mathematically sound trade structure if the move follows through.",
+        "bear_case": "A breakout strategy is fundamentally misaligned with a 'range_bound' market regime, creating a high risk of a false breakout or 'head fake'. Furthermore, the bearish MACD provides a strong technical signal that contradicts the long thesis, suggesting underlying momentum is fading.",
+        "risk_factors": [
+          "False breakout risk due to the range-bound market context.",
+          "Bearish MACD divergence indicates weakening momentum.",
+          "Neutral sentiment provides no fundamental catalyst to sustain the move."
+        ],
+        "confidence": 0.3
+      }
+    },
+    {
+      "ticker": "RXT",
+      "signal": "BUY",
+      "score": 0.2868,
+      "strategy": "breakout",
+      "action": "enter_now",
+      "direction": "LONG",
+      "entry_price": 1.68,
+      "stop_loss": 1.3546,
+      "take_profit": 2.3309,
+      "ai_analysis": {
+        "recommendation": "skip",
+        "bull_case": "The explosive volume surge (5.4x average) indicates significant buying pressure that could sustain a breakout move. The trade is supported by a bullish MACD and offers a well-defined risk/reward ratio of nearly 2:1.",
+        "bear_case": "The core strategy of a breakout is fundamentally misaligned with the stated 'range_bound' market regime, significantly increasing the probability of failure. An RSI of 79 signals a severely overbought condition, making the stock ripe for a sharp pullback or reversal, not a fresh entry.",
+        "risk_factors": [
+          "Exhaustion Risk: The combination of a parabolic price move and an extremely overbought RSI often signals a climactic top before a reversal.",
+          "Market Regime Conflict: Breakouts are low-probability setups in range-bound conditions; the price is more likely to revert to the mean.",
+          "Poor Entry Timing: Entering a long position at peak bullishness (RSI 79) constitutes chasing the price and presents a poor risk-adjusted entry point."
+        ],
+        "confidence": 0.25
+      }
+    },
+    {
+      "ticker": "BTCUSD",
+      "signal": "NEUTRAL",
+      "score": 0.1701,
+      "strategy": "mean_reversion",
+      "action": "watchlist",
+      "direction": "LONG",
+      "entry_price": 66120.375,
+      "stop_loss": 61484.274,
+      "take_profit": 75392.577
+    },
+    {
+      "ticker": "AZ",
+      "signal": "NEUTRAL",
+      "score": -0.165,
+      "strategy": "mean_reversion",
+      "action": "watchlist",
+      "direction": "LONG",
+      "entry_price": 5.52,
+      "stop_loss": 4.821,
+      "take_profit": 6.9179
+    },
+    {
+      "ticker": "TOMZ",
+      "signal": "NEUTRAL",
+      "score": -0.165,
+      "strategy": "mean_reversion",
+      "action": "watchlist",
+      "direction": "LONG",
+      "entry_price": 0.701,
+      "stop_loss": 0.648,
+      "take_profit": 0.807
+    },
+    {
+      "ticker": "VNDA",
+      "signal": "NEUTRAL",
+      "score": 0.075,
+      "strategy": "mean_reversion",
+      "action": "watchlist",
+      "direction": "LONG",
+      "entry_price": 5.76,
+      "stop_loss": 5.0885,
+      "take_profit": 7.103
+    }
+  ],
+  "portfolio": {
+    "virtual_balance": 500.05,
+    "starting_balance": 500.0,
+    "total_trades": 4,
+    "wins": 1,
+    "losses": 0,
+    "expired": 3,
+    "open_positions": 0,
+    "win_rate": 0.25,
+    "profit_factor": Infinity,
+    "expectancy": 0.01,
+    "sharpe_ratio": 7.94,
+    "avg_r_multiple": 0.48,
+    "strategy_metrics": {
+      "breakout": {
+        "total_trades": 3,
+        "wins": 1,
+        "pnl": 0.05,
+        "win_rate": 0.333
+      },
+      "mean_reversion": {
+        "total_trades": 1,
+        "wins": 0,
+        "pnl": 0.0,
+        "win_rate": 0.0
+      }
+    },
+    "last_updated": "2026-02-23T17:00:25.983859",
+    "max_drawdown_pct": 0
+  },
+  "positions": [],
+  "risk": {
+    "composite_score": 0.8,
+    "risk_level": "RiskLevel.LOW"
+  },
+  "ai_summary": "The market is assessed as range-bound, but with low confidence, suggesting a lack of a clear directional trend. Today's strongest signals are BUYs on EHAB and RXT, both based on breakout strategies. These breakout signals carry higher risk in a range-bound environment, where they are more likely to fail. With no open positions, the focus is on selective new entries. Given the extreme fear in the crypto market, it is critical to watch for strong volume confirmation on any potential breakout before committing capital.",
+  "crypto_intelligence": {
+    "fear_greed": {
+      "value": 5,
+      "classification": "Extreme Fear",
+      "timestamp": "1771804800",
+      "history_7d": [
+        9,
+        8,
+        7,
+        9,
+        8,
+        10,
+        12
+      ]
+    },
+    "dominance": {
+      "btc_dominance": 56.32,
+      "eth_dominance": 9.88,
+      "total_market_cap": 2355594588456.9087,
+      "btc_market_cap": 1326599961132.5327,
+      "eth_market_cap": 232836076046.6025
+    },
+    "btc_funding": {
+      "symbol": "BTCUSDT",
+      "rate": -9.317e-05,
+      "annualized": -10.2,
+      "next_funding_time": 1771833600000,
+      "direction": "neutral"
+    },
+    "eth_funding": {
+      "symbol": "ETHUSDT",
+      "rate": -0.00036526,
+      "annualized": -40.0,
+      "next_funding_time": 1771833600000,
+      "direction": "short_pay"
+    },
+    "btc_open_interest": {
+      "symbol": "BTCUSDT",
+      "open_interest": 77538.194,
+      "open_interest_usd": 5129182548.38,
+      "change_24h_pct": -2.186
+    },
+    "eth_open_interest": {
+      "symbol": "ETHUSDT",
+      "open_interest": 1784253.916,
+      "open_interest_usd": 3427962151.04,
+      "change_24h_pct": -1.385
+    },
+    "stablecoin_supply": {
+      "usdt_market_cap": 183622141836.04324,
+      "usdc_market_cap": 74428793824.50331,
+      "total_stablecoin_cap": 258050935660.54657,
+      "usdt_dominance": 71.2
+    },
+    "hash_rate": {
+      "hash_rate": 1.03,
+      "difficulty": 144398401518100,
+      "block_height": 937972,
+      "timestamp": "2026-02-23T17:02:07.808482"
+    },
+    "liquidation_estimate": {
+      "current_price": 66151.2,
+      "long_liquidation_zones": [
+        {
+          "leverage": "20x",
+          "price": 62843.64,
+          "description": "5% below \u2014 20x longs liquidated"
+        },
+        {
+          "leverage": "10x",
+          "price": 59536.08,
+          "description": "10% below \u2014 10x longs liquidated"
+        },
+        {
+          "leverage": "5x",
+          "price": 52920.96,
+          "description": "20% below \u2014 5x longs liquidated"
+        }
+      ],
+      "short_liquidation_zones": [
+        {
+          "leverage": "20x",
+          "price": 69458.76,
+          "description": "5% above \u2014 20x shorts liquidated"
+        },
+        {
+          "leverage": "10x",
+          "price": 72766.32,
+          "description": "10% above \u2014 10x shorts liquidated"
+        },
+        {
+          "leverage": "5x",
+          "price": 79381.44,
+          "description": "20% above \u2014 5x shorts liquidated"
+        }
+      ],
+      "bias": "balanced",
+      "risk_level": "low"
+    },
+    "defi": {
+      "total_tvl": 99196715797.37,
+      "top_protocols": [
+        {
+          "name": "Binance CEX",
+          "tvl": 138246153125.59,
+          "change_1d": -1.38
+        },
+        {
+          "name": "Aave V3",
+          "tvl": 25931885754.86,
+          "change_1d": -2.26
+        },
+        {
+          "name": "Lido",
+          "tvl": 18116171130.07,
+          "change_1d": -3.41
+        },
+        {
+          "name": "OKX",
+          "tvl": 17405080534.16,
+          "change_1d": -1.71
+        },
+        {
+          "name": "Bitfinex",
+          "tvl": 17044453781.86,
+          "change_1d": -2.02
+        }
+      ],
+      "eth_tvl": 59207478435.15,
+      "stablecoin_tvl": 0
+    },
+    "gas": {
+      "gas_price_gwei": 0.0862,
+      "base_fee_gwei": 0.0861,
+      "priority_fee_gwei": 0.0001
+    },
+    "whale_activity": {
+      "large_txns_24h": 4732,
+      "net_exchange_flow": "neutral",
+      "notable_txns": [
+        {
+          "estimated_daily_volume_usd": 3524967611.51,
+          "total_transactions_24h": 473289,
+          "avg_transaction_usd": 7447.81
+        }
+      ]
+    },
+    "timestamp": "2026-02-23T17:01:50.100564"
+  },
+  "stock_intelligence": {
+    "timestamp": "2026-02-23T17:02:14.152590",
+    "insider_trades": [
+      {
+        "ticker": "TOMZ",
+        "insider_name": "Fragasso Francesco",
+        "title": "2026-01-12",
+        "transaction_type": "buy",
+        "shares": 20000,
+        "price": 0.79,
+        "value": 15800.0,
+        "date": "2026-01-09"
+      },
+      {
+        "ticker": "TOMZ",
+        "insider_name": "Lim Boh Soon",
+        "title": "2026-01-12",
+        "transaction_type": "buy",
+        "shares": 198524,
+        "price": 0.79,
+        "value": 156833.96,
+        "date": "2026-01-09"
+      },
+      {
+        "ticker": "TOMZ",
+        "insider_name": "PAUL HAROLD",
+        "title": "2026-01-12",
+        "transaction_type": "buy",
+        "shares": 81300,
+        "price": 0.79,
+        "value": 64227.0,
+        "date": "2026-01-09"
+      },
+      {
+        "ticker": "VNDA",
+        "insider_name": "Wijkstrom Joakim",
+        "title": "2026-02-19",
+        "transaction_type": "buy",
+        "shares": 364269,
+        "price": 0,
+        "value": 0,
+        "date": "2026-02-18"
+      },
+      {
+        "ticker": "VNDA",
+        "insider_name": "Birznieks Gunther",
+        "title": "2026-02-19",
+        "transaction_type": "buy",
+        "shares": 536628,
+        "price": 0,
+        "value": 0,
+        "date": "2026-02-18"
+      },
+      {
+        "ticker": "VNDA",
+        "insider_name": "Williams Timothy",
+        "title": "2026-02-19",
+        "transaction_type": "buy",
+        "shares": 419884,
+        "price": 0,
+        "value": 0,
+        "date": "2026-02-18"
+      },
+      {
+        "ticker": "VNDA",
+        "insider_name": "Moran Kevin Patrick",
+        "title": "2026-02-19",
+        "transaction_type": "buy",
+        "shares": 453822,
+        "price": 0,
+        "value": 0,
+        "date": "2026-02-18"
+      },
+      {
+        "ticker": "VNDA",
+        "insider_name": "Polymeropoulos Mihael Hristos",
+        "title": "2026-02-19",
+        "transaction_type": "buy",
+        "shares": 2860731,
+        "price": 0,
+        "value": 0,
+        "date": "2026-02-18"
+      },
+      {
+        "ticker": "EHAB",
+        "insider_name": "Rodgers Stephan",
+        "title": "2026-01-12",
+        "transaction_type": "buy",
+        "shares": 19998,
+        "price": 9.97,
+        "value": 199380.06,
+        "date": "2026-01-10"
+      },
+      {
+        "ticker": "EHAB",
+        "insider_name": "Bolton Jeffrey",
+        "title": "2026-01-12",
+        "transaction_type": "buy",
+        "shares": 137002,
+        "price": 9.97,
+        "value": 1365909.94,
+        "date": "2026-01-10"
+      },
+      {
+        "ticker": "EHAB",
+        "insider_name": "Hoeflinger Erin",
+        "title": "2026-01-12",
+        "transaction_type": "buy",
+        "shares": 78707,
+        "price": 9.97,
+        "value": 784708.79,
+        "date": "2026-01-10"
+      },
+      {
+        "ticker": "EHAB",
+        "insider_name": "Ohlendorf Mark W",
+        "title": "2026-01-12",
+        "transaction_type": "buy",
+        "shares": 44527,
+        "price": 9.97,
+        "value": 443934.19,
+        "date": "2026-01-10"
+      },
+      {
+        "ticker": "EHAB",
+        "insider_name": "MCGUIGAN STUART M",
+        "title": "2026-01-12",
+        "transaction_type": "buy",
+        "shares": 74126,
+        "price": 9.97,
+        "value": 739036.22,
+        "date": "2026-01-10"
+      },
+      {
+        "ticker": "EHAB",
+        "insider_name": "Rush Gregory S",
+        "title": "2026-01-12",
+        "transaction_type": "buy",
+        "shares": 78551,
+        "price": 9.97,
+        "value": 783153.47,
+        "date": "2026-01-10"
+      },
+      {
+        "ticker": "EHAB",
+        "insider_name": "Schochet Barry P.",
+        "title": "2026-01-12",
+        "transaction_type": "buy",
+        "shares": 70232,
+        "price": 9.97,
+        "value": 700213.04,
+        "date": "2026-01-10"
+      },
+      {
+        "ticker": "EHAB",
+        "insider_name": "ELSON CHARLES M",
+        "title": "2026-01-12",
+        "transaction_type": "buy",
+        "shares": 79298,
+        "price": 9.97,
+        "value": 790601.06,
+        "date": "2026-01-10"
+      },
+      {
+        "ticker": "EHAB",
+        "insider_name": "Solomon Ryan",
+        "title": "2025-12-10",
+        "transaction_type": "sell",
+        "shares": 171691,
+        "price": 9.6,
+        "value": 1648233.6,
+        "date": "2025-12-09"
+      }
+    ],
+    "sector_performance": [
+      {
+        "sector": "RXT",
+        "change_1d": 37.14,
+        "change_1w": 310.86,
+        "change_1m": 99.69,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "SGN",
+        "change_1d": 25.4,
+        "change_1w": 90.05,
+        "change_1m": 193.51,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "OIL_CRUDE",
+        "change_1d": 1.38,
+        "change_1w": 7.58,
+        "change_1m": 2.22,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "IKT",
+        "change_1d": 1.15,
+        "change_1w": 7.32,
+        "change_1m": 0.57,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "GOLD",
+        "change_1d": -0.31,
+        "change_1w": 5.97,
+        "change_1m": -5.31,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "AMZN",
+        "change_1d": -0.91,
+        "change_1w": 4.7,
+        "change_1m": -11.55,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "NVDA",
+        "change_1d": 0.64,
+        "change_1w": 4.15,
+        "change_1m": 3.57,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "GOOGL",
+        "change_1d": 0.7,
+        "change_1w": 3.71,
+        "change_1m": -4.1,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "AAPL",
+        "change_1d": -0.71,
+        "change_1w": 2.77,
+        "change_1m": 5.6,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "JPM",
+        "change_1d": -0.35,
+        "change_1w": 2.22,
+        "change_1m": 2.02,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "small_cap",
+        "change_1d": 0.0,
+        "change_1w": 1.95,
+        "change_1m": -1.19,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "GS",
+        "change_1d": 0.63,
+        "change_1w": 1.94,
+        "change_1m": -3.27,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "META",
+        "change_1d": -0.78,
+        "change_1w": 1.55,
+        "change_1m": 0.4,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "technology",
+        "change_1d": 0.88,
+        "change_1w": 1.36,
+        "change_1m": -1.21,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "UK100",
+        "change_1d": -0.04,
+        "change_1w": 1.3,
+        "change_1m": 4.82,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "broad_market",
+        "change_1d": 0.71,
+        "change_1w": 1.2,
+        "change_1m": 0.59,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "broad_market",
+        "change_1d": 0.72,
+        "change_1w": 1.2,
+        "change_1m": 0.59,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "USDJPY",
+        "change_1d": 0.2,
+        "change_1w": 0.99,
+        "change_1m": 0.99,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "technology",
+        "change_1d": -0.13,
+        "change_1w": 0.95,
+        "change_1m": -3.76,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "dividends",
+        "change_1d": 0.13,
+        "change_1w": 0.86,
+        "change_1m": 8.44,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "broad_market",
+        "change_1d": -0.09,
+        "change_1w": 0.76,
+        "change_1m": -1.06,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "DE40",
+        "change_1d": -0.09,
+        "change_1w": 0.65,
+        "change_1m": 2.83,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "CVX",
+        "change_1d": 0.18,
+        "change_1w": 0.49,
+        "change_1m": 10.63,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "dow_30",
+        "change_1d": 0.34,
+        "change_1w": 0.29,
+        "change_1m": 1.08,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "BAC",
+        "change_1d": -0.56,
+        "change_1w": 0.29,
+        "change_1m": 0.6,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "RAAQ",
+        "change_1d": 0.19,
+        "change_1w": 0.1,
+        "change_1m": -0.39,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "TOMZ",
+        "change_1d": 0.13,
+        "change_1w": -0.01,
+        "change_1m": -7.88,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "GBPUSD",
+        "change_1d": -0.22,
+        "change_1w": -0.44,
+        "change_1m": -2.21,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "EURUSD",
+        "change_1d": -0.31,
+        "change_1w": -0.46,
+        "change_1m": -1.43,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "BTCUSD",
+        "change_1d": -2.21,
+        "change_1w": -0.46,
+        "change_1m": -15.95,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "XOM",
+        "change_1d": -0.05,
+        "change_1w": -0.66,
+        "change_1m": 10.37,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "TOPS",
+        "change_1d": 1.83,
+        "change_1w": -0.79,
+        "change_1m": -3.84,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "EHAB",
+        "change_1d": -0.98,
+        "change_1w": -1.16,
+        "change_1m": 3.26,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "MSFT",
+        "change_1d": -0.46,
+        "change_1w": -1.28,
+        "change_1m": -12.36,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "ETHUSD",
+        "change_1d": -1.87,
+        "change_1w": -1.76,
+        "change_1m": -18.09,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "TSLA",
+        "change_1d": -0.91,
+        "change_1w": -2.34,
+        "change_1m": -9.26,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "AIRG",
+        "change_1d": -0.39,
+        "change_1w": -3.03,
+        "change_1m": 17.7,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "VNDA",
+        "change_1d": -5.57,
+        "change_1w": -5.88,
+        "change_1m": -27.36,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "ACLX",
+        "change_1d": -3.64,
+        "change_1w": -6.61,
+        "change_1m": -6.91,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "AZ",
+        "change_1d": 0.18,
+        "change_1w": -8.15,
+        "change_1m": -21.81,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "EZRA",
+        "change_1d": -3.08,
+        "change_1w": -12.18,
+        "change_1m": -61.01,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "SVRN",
+        "change_1d": 0.11,
+        "change_1w": -18.6,
+        "change_1m": -62.4,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "GETY",
+        "change_1d": -0.23,
+        "change_1w": -28.13,
+        "change_1m": -41.71,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "TIRX",
+        "change_1d": -14.73,
+        "change_1w": -60.0,
+        "change_1m": -91.67,
+        "relative_strength": 0.0
+      }
+    ],
+    "options_flow": {
+      "put_call_ratio": 1.05,
+      "vix": 20.3,
+      "vix_term_structure": "contango",
+      "skew": "high_put_demand"
+    }
+  },
+  "after_hours": {
+    "timestamp": "2026-02-23T17:02:38.914030",
+    "session": "post_market",
+    "crypto_overnight": [
+      {
+        "symbol": "BTCUSDT",
+        "signal_type": "funding_flip",
+        "direction": "LONG",
+        "strength": "moderate",
+        "price_change_pct": -0.8404079411504433,
+        "current_price": 66145.1,
+        "entry_price": 66145.1,
+        "stop_loss": 64491.47,
+        "take_profit": 68460.18,
+        "reasoning": "BTCUSDT funding rate flipped from 0.0013% to -0.0093%. Shorts are now paying longs \u2014 bearish bias may be overextended, squeeze potential.",
+        "metrics": {
+          "prev_funding": 1.302e-05,
+          "current_funding": -9.317e-05
+        }
+      }
+    ],
+    "premarket_movers": [
+      {
+        "ticker": "SGN",
+        "previous_close": 0.4145,
+        "premarket_price": 0.4751,
+        "gap_pct": 14.62,
+        "premarket_volume": 61321921,
+        "avg_daily_volume": 54897783,
+        "volume_ratio": 1.12,
+        "catalyst": "news",
+        "action": "watch_long",
+        "reasoning": "SGN gapping +14.6% pre-market with 1.1x avg volume. Large gap with volume confirmation \u2014 watch for continuation after first 30 min."
+      },
+      {
+        "ticker": "RXT",
+        "previous_close": 1.225,
+        "premarket_price": 1.36,
+        "gap_pct": 11.02,
+        "premarket_volume": 191944499,
+        "avg_daily_volume": 35570892,
+        "volume_ratio": 5.4,
+        "catalyst": "news",
+        "action": "watch_long",
+        "reasoning": "RXT gapping +11.0% pre-market with 5.4x avg volume. Large gap with volume confirmation \u2014 watch for continuation after first 30 min."
+      },
+      {
+        "ticker": "SVRN",
+        "previous_close": 0.4545,
+        "premarket_price": 0.498,
+        "gap_pct": 9.57,
+        "premarket_volume": 136868,
+        "avg_daily_volume": 122723,
+        "volume_ratio": 1.12,
+        "catalyst": "unknown",
+        "action": "watch_long",
+        "reasoning": "SVRN gapping +9.6% pre-market with 1.1x avg volume. Large gap with volume confirmation \u2014 watch for continuation after first 30 min."
+      },
+      {
+        "ticker": "GETY",
+        "previous_close": 0.742,
+        "premarket_price": 0.7601,
+        "gap_pct": 2.44,
+        "premarket_volume": 1948758,
+        "avg_daily_volume": 1522331,
+        "volume_ratio": 1.28,
+        "catalyst": "unknown",
+        "action": "watch_long",
+        "reasoning": "GETY gapping up +2.4% pre-market. Wait for open. If it holds above open after 30 min, consider long."
+      },
+      {
+        "ticker": "TOPS",
+        "previous_close": 4.92,
+        "premarket_price": 5.02,
+        "gap_pct": 2.03,
+        "premarket_volume": 1835,
+        "avg_daily_volume": 3888,
+        "volume_ratio": 0.47,
+        "catalyst": "unknown",
+        "action": "watch_long",
+        "reasoning": "TOPS gapping up +2.0% pre-market. Wait for open. If it holds above open after 30 min, consider long."
+      }
+    ]
+  }
+}
