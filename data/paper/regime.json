@@ -3,7 +3,7 @@
   "confidence": 0.43,
   "spy_trend": "mixed",
   "adx": 17.1,
-  "vix": 20.3,
+  "vix": 20.2,
   "breadth": 5.0,
   "regime_age_days": 3,
   "active_strategies": [
@@ -11,7 +11,7 @@
     "breakout"
   ],
   "position_size_modifier": 0.75,
-  "timestamp": "2026-02-23T17:00:25.212104",
+  "timestamp": "2026-02-23T17:09:03.277276",
   "vix_history": [
     14.5,
     15.1,
@@ -42,7 +42,7 @@
     19.6,
     20.2,
     19.1,
-    20.3
+    20.2
   ],
   "adx_history": [
     45.7,

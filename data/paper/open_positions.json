@@ -1,1 +1,44 @@
-[]
+[
+  {
+    "id": "PT-2026-02-23-001",
+    "ticker": "EHAB",
+    "broker": "ibkr",
+    "direction": "LONG",
+    "entry_price": 11.09,
+    "entry_date": "2026-02-23",
+    "position_size": 14.1528,
+    "stop_loss": 10.56,
+    "take_profit": 12.5033,
+    "strategy": "breakout",
+    "sector": "",
+    "max_hold_days": 7,
+    "days_held": 0,
+    "signal_score": 0.3324,
+    "unrealized_pnl": 0.0,
+    "trailing_stop": 0.0,
+    "trailing_stop_atr": 0.0,
+    "highest_price": 11.09,
+    "lowest_price": 11.09
+  },
+  {
+    "id": "PT-2026-02-23-003",
+    "ticker": "RXT",
+    "broker": "ibkr",
+    "direction": "LONG",
+    "entry_price": 1.68,
+    "entry_date": "2026-02-23",
+    "position_size": 23.0486,
+    "stop_loss": 1.3546,
+    "take_profit": 2.5478,
+    "strategy": "breakout",
+    "sector": "",
+    "max_hold_days": 7,
+    "days_held": 0,
+    "signal_score": 0.2868,
+    "unrealized_pnl": 0.0,
+    "trailing_stop": 0.0,
+    "trailing_stop_atr": 0.0,
+    "highest_price": 1.68,
+    "lowest_price": 1.68
+  }
+]

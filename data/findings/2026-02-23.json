@@ -1,11 +1,11 @@
 {
   "date": "2026-02-23",
-  "timestamp": "2026-02-23T17:03:54.156040",
+  "timestamp": "2026-02-23T17:12:12.362120",
   "regime": {
     "regime": "range_bound",
     "confidence": 0.43,
     "adx": 17.1,
-    "vix": 20.3,
+    "vix": 20.2,
     "active_strategies": [
       "mean_reversion",
       "breakout"
@@ -25,15 +25,15 @@
       "stop_loss": 10.56,
       "take_profit": 12.15,
       "ai_analysis": {
-        "recommendation": "skip",
-        "bull_case": "The trade is supported by a significant surge in volume (2.1x average), which is a key ingredient for a successful breakout. The attractive 2:1 risk/reward ratio offers a mathematically sound trade structure if the move follows through.",
-        "bear_case": "A breakout strategy is fundamentally misaligned with a 'range_bound' market regime, creating a high risk of a false breakout or 'head fake'. Furthermore, the bearish MACD provides a strong technical signal that contradicts the long thesis, suggesting underlying momentum is fading.",
+        "recommendation": "reduce_size",
+        "bull_case": "The surging volume (2.1x average) confirms strong, immediate interest in the name, which is a key ingredient for any breakout. The defined 2:1 risk/reward ratio is attractive, offering a mathematically sound reason to take the trade if it works.",
+        "bear_case": "The core conflict is executing a breakout strategy in a 'range_bound' market regime, which is a very low-probability setup prone to failure or 'fakeouts'. Furthermore, the bearish MACD creates a significant negative divergence, suggesting underlying momentum is weakening even as price attempts to push higher.",
         "risk_factors": [
-          "False breakout risk due to the range-bound market context.",
-          "Bearish MACD divergence indicates weakening momentum.",
-          "Neutral sentiment provides no fundamental catalyst to sustain the move."
+          "Strategy-Regime Mismatch: Breakout strategies perform poorly in range-bound markets; the probability of a sharp reversal is high.",
+          "Bearish Momentum Divergence: The MACD reading contradicts the price action, signaling this move may lack the conviction to follow through.",
+          "Lack of Narrative Support: Neutral sentiment suggests there is no strong catalyst or news story to sustain buying pressure past the initial breakout level."
         ],
-        "confidence": 0.3
+        "confidence": 0.35
       }
     },
     {
@@ -47,27 +47,38 @@
       "stop_loss": 1.3546,
       "take_profit": 2.3309,
       "ai_analysis": {
-        "recommendation": "skip",
-        "bull_case": "The explosive volume surge (5.4x average) indicates significant buying pressure that could sustain a breakout move. The trade is supported by a bullish MACD and offers a well-defined risk/reward ratio of nearly 2:1.",
-        "bear_case": "The core strategy of a breakout is fundamentally misaligned with the stated 'range_bound' market regime, significantly increasing the probability of failure. An RSI of 79 signals a severely overbought condition, making the stock ripe for a sharp pullback or reversal, not a fresh entry.",
+        "recommendation": "reduce_size",
+        "bull_case": "The trade is supported by an exceptional surge in volume, which is 5.4 times the average, and a bullish MACD crossover. This combination indicates strong institutional conviction behind the move and suggests the breakout has the power to continue higher despite being extended.",
+        "bear_case": "The primary concern is the severely overbought RSI at 79, which signals a high probability of a near-term pullback or consolidation. Furthermore, executing a breakout strategy in a range-bound market regime is inherently risky, as these moves often fail and reverse (a 'fakeout').",
         "risk_factors": [
-          "Exhaustion Risk: The combination of a parabolic price move and an extremely overbought RSI often signals a climactic top before a reversal.",
-          "Market Regime Conflict: Breakouts are low-probability setups in range-bound conditions; the price is more likely to revert to the mean.",
-          "Poor Entry Timing: Entering a long position at peak bullishness (RSI 79) constitutes chasing the price and presents a poor risk-adjusted entry point."
+          "Overbought Technicals: The RSI at 79 suggests the asset is extended, making it vulnerable to mean reversion.",
+          "Unfavorable Market Regime: Breakout strategies have a lower probability of success in a range-bound market.",
+          "False Breakout (Bull Trap): The high volume could be climactic, marking an exhaustion top before a reversal."
         ],
-        "confidence": 0.25
+        "confidence": 0.45
       }
+    },
+    {
+      "ticker": "ETHUSD",
+      "signal": "NEUTRAL",
+      "score": 0.1828,
+      "strategy": "mean_reversion",
+      "action": "watchlist",
+      "direction": "LONG",
+      "entry_price": 1923.805,
+      "stop_loss": 1736.7605,
+      "take_profit": 2297.894
     },
     {
       "ticker": "BTCUSD",
       "signal": "NEUTRAL",
-      "score": 0.1701,
+      "score": 0.1699,
       "strategy": "mean_reversion",
       "action": "watchlist",
       "direction": "LONG",
-      "entry_price": 66120.375,
-      "stop_loss": 61484.274,
-      "take_profit": 75392.577
+      "entry_price": 66230.425,
+      "stop_loss": 61594.324,
+      "take_profit": 75502.627
     },
     {
       "ticker": "AZ",
@@ -130,15 +141,58 @@
         "win_rate": 0.0
       }
     },
-    "last_updated": "2026-02-23T17:00:25.983859",
+    "last_updated": "2026-02-23T17:09:03.278441",
     "max_drawdown_pct": 0
   },
-  "positions": [],
+  "positions": [
+    {
+      "id": "PT-2026-02-23-001",
+      "ticker": "EHAB",
+      "broker": "ibkr",
+      "direction": "LONG",
+      "entry_price": 11.09,
+      "entry_date": "2026-02-23",
+      "position_size": 14.1528,
+      "stop_loss": 10.56,
+      "take_profit": 12.5033,
+      "strategy": "breakout",
+      "sector": "",
+      "max_hold_days": 7,
+      "days_held": 0,
+      "signal_score": 0.3324,
+      "unrealized_pnl": 0.0,
+      "trailing_stop": 0.0,
+      "trailing_stop_atr": 0.0,
+      "highest_price": 11.09,
+      "lowest_price": 11.09
+    },
+    {
+      "id": "PT-2026-02-23-003",
+      "ticker": "RXT",
+      "broker": "ibkr",
+      "direction": "LONG",
+      "entry_price": 1.68,
+      "entry_date": "2026-02-23",
+      "position_size": 23.0486,
+      "stop_loss": 1.3546,
+      "take_profit": 2.5478,
+      "strategy": "breakout",
+      "sector": "",
+      "max_hold_days": 7,
+      "days_held": 0,
+      "signal_score": 0.2868,
+      "unrealized_pnl": 0.0,
+      "trailing_stop": 0.0,
+      "trailing_stop_atr": 0.0,
+      "highest_price": 1.68,
+      "lowest_price": 1.68
+    }
+  ],
   "risk": {
     "composite_score": 0.8,
     "risk_level": "RiskLevel.LOW"
   },
-  "ai_summary": "The market is assessed as range-bound, but with low confidence, suggesting a lack of a clear directional trend. Today's strongest signals are BUYs on EHAB and RXT, both based on breakout strategies. These breakout signals carry higher risk in a range-bound environment, where they are more likely to fail. With no open positions, the focus is on selective new entries. Given the extreme fear in the crypto market, it is critical to watch for strong volume confirmation on any potential breakout before committing capital.",
+  "ai_summary": "The market is in a low-confidence range-bound regime, suggesting caution is warranted as there is no clear directional bias. Today's strongest signals prompted new long positions in EHAB and RXT, both based on breakout strategies. The immediate focus is managing these new entries, as breakouts can be unreliable in choppy conditions. The key item to watch is RXT's upcoming earnings in two days, which presents significant event risk to that position. In crypto, sentiment remains in \"Extreme Fear,\" which may present contrarian opportunities despite our system's neutral mean-reversion signals.",
   "crypto_intelligence": {
     "fear_greed": {
       "value": 5,
@@ -155,11 +209,11 @@
       ]
     },
     "dominance": {
-      "btc_dominance": 56.32,
-      "eth_dominance": 9.88,
-      "total_market_cap": 2355594588456.9087,
-      "btc_market_cap": 1326599961132.5327,
-      "eth_market_cap": 232836076046.6025
+      "btc_dominance": 56.28,
+      "eth_dominance": 9.87,
+      "total_market_cap": 2350766379235.0024,
+      "btc_market_cap": 1323056158342.1443,
+      "eth_market_cap": 232051962064.6815
     },
     "btc_funding": {
       "symbol": "BTCUSDT",
@@ -177,61 +231,61 @@
     },
     "btc_open_interest": {
       "symbol": "BTCUSDT",
-      "open_interest": 77538.194,
-      "open_interest_usd": 5129182548.38,
-      "change_24h_pct": -2.186
+      "open_interest": 77530.487,
+      "open_interest_usd": 5132572510.74,
+      "change_24h_pct": -2.012
     },
     "eth_open_interest": {
       "symbol": "ETHUSDT",
-      "open_interest": 1784253.916,
-      "open_interest_usd": 3427962151.04,
-      "change_24h_pct": -1.385
+      "open_interest": 1786312.83,
+      "open_interest_usd": 3435025982.71,
+      "change_24h_pct": -1.278
     },
     "stablecoin_supply": {
-      "usdt_market_cap": 183622141836.04324,
-      "usdc_market_cap": 74428793824.50331,
-      "total_stablecoin_cap": 258050935660.54657,
+      "usdt_market_cap": 183622718060.6282,
+      "usdc_market_cap": 74426732387.1612,
+      "total_stablecoin_cap": 258049450447.7894,
       "usdt_dominance": 71.2
     },
     "hash_rate": {
       "hash_rate": 1.03,
       "difficulty": 144398401518100,
-      "block_height": 937972,
-      "timestamp": "2026-02-23T17:02:07.808482"
+      "block_height": 937974,
+      "timestamp": "2026-02-23T17:10:34.215119"
     },
     "liquidation_estimate": {
-      "current_price": 66151.2,
+      "current_price": 66202.5,
       "long_liquidation_zones": [
         {
           "leverage": "20x",
-          "price": 62843.64,
+          "price": 62892.38,
           "description": "5% below \u2014 20x longs liquidated"
         },
         {
           "leverage": "10x",
-          "price": 59536.08,
+          "price": 59582.25,
           "description": "10% below \u2014 10x longs liquidated"
         },
         {
           "leverage": "5x",
-          "price": 52920.96,
+          "price": 52962.0,
           "description": "20% below \u2014 5x longs liquidated"
         }
       ],
       "short_liquidation_zones": [
         {
           "leverage": "20x",
-          "price": 69458.76,
+          "price": 69512.62,
           "description": "5% above \u2014 20x shorts liquidated"
         },
         {
           "leverage": "10x",
-          "price": 72766.32,
+          "price": 72822.75,
           "description": "10% above \u2014 10x shorts liquidated"
         },
         {
           "leverage": "5x",
-          "price": 79381.44,
+          "price": 79443.0,
           "description": "20% above \u2014 5x shorts liquidated"
         }
       ],
@@ -271,55 +325,81 @@
       "stablecoin_tvl": 0
     },
     "gas": {
-      "gas_price_gwei": 0.0862,
-      "base_fee_gwei": 0.0861,
-      "priority_fee_gwei": 0.0001
+      "gas_price_gwei": 0.0904,
+      "base_fee_gwei": 0.0871,
+      "priority_fee_gwei": 0.0033
     },
     "whale_activity": {
-      "large_txns_24h": 4732,
+      "large_txns_24h": 4623,
       "net_exchange_flow": "neutral",
       "notable_txns": [
         {
-          "estimated_daily_volume_usd": 3524967611.51,
-          "total_transactions_24h": 473289,
-          "avg_transaction_usd": 7447.81
+          "estimated_daily_volume_usd": 3485922281.11,
+          "total_transactions_24h": 462316,
+          "avg_transaction_usd": 7540.13
         }
       ]
     },
-    "timestamp": "2026-02-23T17:01:50.100564"
+    "timestamp": "2026-02-23T17:10:19.221759"
   },
   "stock_intelligence": {
-    "timestamp": "2026-02-23T17:02:14.152590",
+    "timestamp": "2026-02-23T17:10:40.118825",
+    "upcoming_earnings": [
+      {
+        "ticker": "RXT",
+        "date": "2026-02-26",
+        "time": "bmo",
+        "estimate_eps": -0.0303,
+        "days_until": 2
+      },
+      {
+        "ticker": "EHAB",
+        "date": "2026-03-04",
+        "time": "amc",
+        "estimate_eps": 0.1445,
+        "days_until": 8
+      }
+    ],
     "insider_trades": [
       {
-        "ticker": "TOMZ",
-        "insider_name": "Fragasso Francesco",
-        "title": "2026-01-12",
-        "transaction_type": "buy",
-        "shares": 20000,
-        "price": 0.79,
-        "value": 15800.0,
-        "date": "2026-01-09"
+        "ticker": "RXT",
+        "insider_name": "Marino Mark A.",
+        "title": "2025-12-03",
+        "transaction_type": "sell",
+        "shares": 2427798,
+        "price": 1.02,
+        "value": 2476353.96,
+        "date": "2025-12-01"
       },
       {
-        "ticker": "TOMZ",
-        "insider_name": "Lim Boh Soon",
-        "title": "2026-01-12",
-        "transaction_type": "buy",
-        "shares": 198524,
-        "price": 0.79,
-        "value": 156833.96,
-        "date": "2026-01-09"
+        "ticker": "RXT",
+        "insider_name": "TEAL-GUESS KELLIE",
+        "title": "2025-12-03",
+        "transaction_type": "sell",
+        "shares": 1043650,
+        "price": 1.01,
+        "value": 1054086.5,
+        "date": "2025-12-01"
       },
       {
-        "ticker": "TOMZ",
-        "insider_name": "PAUL HAROLD",
-        "title": "2026-01-12",
-        "transaction_type": "buy",
-        "shares": 81300,
-        "price": 0.79,
-        "value": 64227.0,
-        "date": "2026-01-09"
+        "ticker": "RXT",
+        "insider_name": "SINHA DHARMENDRA KUMAR",
+        "title": "2025-12-03",
+        "transaction_type": "sell",
+        "shares": 2509573,
+        "price": 1.01,
+        "value": 2534668.73,
+        "date": "2025-12-01"
+      },
+      {
+        "ticker": "RXT",
+        "insider_name": "SINHA DHARMENDRA KUMAR",
+        "title": "2025-11-28",
+        "transaction_type": "sell",
+        "shares": 2568895,
+        "price": 1.04,
+        "value": 2671650.8,
+        "date": "2025-11-28"
       },
       {
         "ticker": "VNDA",
@@ -479,9 +559,9 @@
       },
       {
         "sector": "OIL_CRUDE",
-        "change_1d": 1.38,
-        "change_1w": 7.58,
-        "change_1m": 2.22,
+        "change_1d": 1.29,
+        "change_1w": 7.49,
+        "change_1m": 2.13,
         "relative_strength": 0.0
       },
       {
@@ -493,44 +573,44 @@
       },
       {
         "sector": "GOLD",
-        "change_1d": -0.31,
-        "change_1w": 5.97,
-        "change_1m": -5.31,
+        "change_1d": -0.26,
+        "change_1w": 6.02,
+        "change_1m": -5.27,
         "relative_strength": 0.0
       },
       {
         "sector": "AMZN",
-        "change_1d": -0.91,
-        "change_1w": 4.7,
-        "change_1m": -11.55,
+        "change_1d": -0.87,
+        "change_1w": 4.74,
+        "change_1m": -11.51,
         "relative_strength": 0.0
       },
       {
         "sector": "NVDA",
-        "change_1d": 0.64,
-        "change_1w": 4.15,
-        "change_1m": 3.57,
+        "change_1d": 0.75,
+        "change_1w": 4.27,
+        "change_1m": 3.69,
         "relative_strength": 0.0
       },
       {
         "sector": "GOOGL",
-        "change_1d": 0.7,
-        "change_1w": 3.71,
-        "change_1m": -4.1,
+        "change_1d": 0.74,
+        "change_1w": 3.74,
+        "change_1m": -4.07,
         "relative_strength": 0.0
       },
       {
         "sector": "AAPL",
-        "change_1d": -0.71,
-        "change_1w": 2.77,
-        "change_1m": 5.6,
+        "change_1d": -0.74,
+        "change_1w": 2.74,
+        "change_1m": 5.58,
         "relative_strength": 0.0
       },
       {
         "sector": "JPM",
-        "change_1d": -0.35,
-        "change_1w": 2.22,
-        "change_1m": 2.02,
+        "change_1d": -0.28,
+        "change_1w": 2.28,
+        "change_1m": 2.09,
         "relative_strength": 0.0
       },
       {
@@ -549,9 +629,9 @@
       },
       {
         "sector": "META",
-        "change_1d": -0.78,
+        "change_1d": -0.77,
         "change_1w": 1.55,
-        "change_1m": 0.4,
+        "change_1m": 0.41,
         "relative_strength": 0.0
       },
       {
@@ -563,9 +643,9 @@
       },
       {
         "sector": "UK100",
-        "change_1d": -0.04,
-        "change_1w": 1.3,
-        "change_1m": 4.82,
+        "change_1d": 0.01,
+        "change_1w": 1.35,
+        "change_1m": 4.88,
         "relative_strength": 0.0
       },
       {
@@ -584,16 +664,16 @@
       },
       {
         "sector": "USDJPY",
-        "change_1d": 0.2,
-        "change_1w": 0.99,
-        "change_1m": 0.99,
+        "change_1d": 0.18,
+        "change_1w": 0.98,
+        "change_1m": 0.97,
         "relative_strength": 0.0
       },
       {
         "sector": "technology",
-        "change_1d": -0.13,
-        "change_1w": 0.95,
-        "change_1m": -3.76,
+        "change_1d": -0.11,
+        "change_1w": 0.96,
+        "change_1m": -3.75,
         "relative_strength": 0.0
       },
       {
@@ -605,22 +685,22 @@
       },
       {
         "sector": "broad_market",
-        "change_1d": -0.09,
-        "change_1w": 0.76,
-        "change_1m": -1.06,
+        "change_1d": -0.06,
+        "change_1w": 0.78,
+        "change_1m": -1.03,
         "relative_strength": 0.0
       },
       {
         "sector": "DE40",
-        "change_1d": -0.09,
-        "change_1w": 0.65,
-        "change_1m": 2.83,
+        "change_1d": -0.08,
+        "change_1w": 0.66,
+        "change_1m": 2.84,
         "relative_strength": 0.0
       },
       {
         "sector": "CVX",
-        "change_1d": 0.18,
-        "change_1w": 0.49,
+        "change_1d": 0.17,
+        "change_1w": 0.48,
         "change_1m": 10.63,
         "relative_strength": 0.0
       },
@@ -633,9 +713,9 @@
       },
       {
         "sector": "BAC",
-        "change_1d": -0.56,
-        "change_1w": 0.29,
-        "change_1m": 0.6,
+        "change_1d": -0.6,
+        "change_1w": 0.24,
+        "change_1m": 0.55,
         "relative_strength": 0.0
       },
       {
@@ -653,31 +733,31 @@
         "relative_strength": 0.0
       },
       {
-        "sector": "GBPUSD",
-        "change_1d": -0.22,
-        "change_1w": -0.44,
-        "change_1m": -2.21,
-        "relative_strength": 0.0
-      },
-      {
-        "sector": "EURUSD",
-        "change_1d": -0.31,
-        "change_1w": -0.46,
-        "change_1m": -1.43,
-        "relative_strength": 0.0
-      },
-      {
         "sector": "BTCUSD",
-        "change_1d": -2.21,
-        "change_1w": -0.46,
-        "change_1m": -15.95,
+        "change_1d": -2.05,
+        "change_1w": -0.29,
+        "change_1m": -15.81,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "GBPUSD",
+        "change_1d": -0.17,
+        "change_1w": -0.4,
+        "change_1m": -2.17,
         "relative_strength": 0.0
       },
       {
         "sector": "XOM",
-        "change_1d": -0.05,
-        "change_1w": -0.66,
-        "change_1m": 10.37,
+        "change_1d": 0.19,
+        "change_1w": -0.42,
+        "change_1m": 10.64,
+        "relative_strength": 0.0
+      },
+      {
+        "sector": "EURUSD",
+        "change_1d": -0.29,
+        "change_1w": -0.44,
+        "change_1m": -1.41,
         "relative_strength": 0.0
       },
       {
@@ -696,23 +776,23 @@
       },
       {
         "sector": "MSFT",
-        "change_1d": -0.46,
-        "change_1w": -1.28,
-        "change_1m": -12.36,
+        "change_1d": -0.47,
+        "change_1w": -1.29,
+        "change_1m": -12.37,
         "relative_strength": 0.0
       },
       {
         "sector": "ETHUSD",
-        "change_1d": -1.87,
-        "change_1w": -1.76,
-        "change_1m": -18.09,
+        "change_1d": -1.72,
+        "change_1w": -1.6,
+        "change_1m": -17.96,
         "relative_strength": 0.0
       },
       {
         "sector": "TSLA",
-        "change_1d": -0.91,
+        "change_1d": -0.9,
         "change_1w": -2.34,
-        "change_1m": -9.26,
+        "change_1m": -9.25,
         "relative_strength": 0.0
       },
       {
@@ -774,32 +854,14 @@
     ],
     "options_flow": {
       "put_call_ratio": 1.05,
-      "vix": 20.3,
+      "vix": 20.2,
       "vix_term_structure": "contango",
       "skew": "high_put_demand"
     }
   },
   "after_hours": {
-    "timestamp": "2026-02-23T17:02:38.914030",
+    "timestamp": "2026-02-23T17:10:55.446495",
     "session": "post_market",
-    "crypto_overnight": [
-      {
-        "symbol": "BTCUSDT",
-        "signal_type": "funding_flip",
-        "direction": "LONG",
-        "strength": "moderate",
-        "price_change_pct": -0.8404079411504433,
-        "current_price": 66145.1,
-        "entry_price": 66145.1,
-        "stop_loss": 64491.47,
-        "take_profit": 68460.18,
-        "reasoning": "BTCUSDT funding rate flipped from 0.0013% to -0.0093%. Shorts are now paying longs \u2014 bearish bias may be overextended, squeeze potential.",
-        "metrics": {
-          "prev_funding": 1.302e-05,
-          "current_funding": -9.317e-05
-        }
-      }
-    ],
     "premarket_movers": [
       {
         "ticker": "SGN",
