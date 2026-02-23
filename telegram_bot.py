@@ -1171,13 +1171,33 @@ def main() -> None:
     if telegram_mode == "webhook":
         port = int(os.getenv("PORT", "8080"))
         webhook_url = os.getenv("WEBHOOK_URL", "")
-        logger.info("Bot started — webhook mode on port %d", port)
-        app.run_webhook(
-            listen="0.0.0.0",
-            port=port,
-            url_path=BOT_TOKEN,
-            webhook_url=f"{webhook_url}/{BOT_TOKEN}",
-        )
+
+        if not webhook_url:
+            # First deploy: WEBHOOK_URL not yet known. Start a minimal HTTP
+            # server so Cloud Run health checks pass and the service URL is
+            # assigned. The deploy script then updates WEBHOOK_URL and the
+            # next revision starts the real bot.
+            from http.server import HTTPServer, BaseHTTPRequestHandler
+
+            logger.warning("WEBHOOK_URL not set — health-check server only on port %d", port)
+
+            class _Health(BaseHTTPRequestHandler):
+                def do_GET(self):
+                    self.send_response(200)
+                    self.end_headers()
+                    self.wfile.write(b"OK")
+                def log_message(self, *a):
+                    pass
+
+            HTTPServer(("0.0.0.0", port), _Health).serve_forever()
+        else:
+            logger.info("Bot started — webhook mode on port %d", port)
+            app.run_webhook(
+                listen="0.0.0.0",
+                port=port,
+                url_path=BOT_TOKEN,
+                webhook_url=f"{webhook_url}/{BOT_TOKEN}",
+            )
     else:
         logger.info("Bot started — polling for updates")
         app.run_polling(allowed_updates=Update.ALL_TYPES)
