@@ -17,14 +17,26 @@ if [ "$DEPLOYMENT_MODE" = "cloud" ]; then
     fi
 fi
 
+# For jobs that need git sync, initialize the repo in /app
+init_git_repo() {
+    if [ -n "$GITHUB_TOKEN" ] && [ -n "$GITHUB_REPO" ]; then
+        echo "  Syncing git repo..."
+        git clone --depth=1 "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPO}.git" /tmp/repo 2>/dev/null
+        mv /tmp/repo/.git /app/.git
+        rm -rf /tmp/repo
+        cd /app
+        git reset -q HEAD 2>/dev/null || true
+    fi
+}
+
 # Route based on RUN_MODE
 if [ "$RUN_MODE" = "pipeline" ]; then
     echo "Running pipeline..."
+    init_git_repo
     exec python main.py "$@"
 elif [ "$RUN_MODE" = "monitor" ]; then
     echo "Running monitor cycle..."
-    cd /app
-    git pull --rebase 2>/dev/null || true
+    init_git_repo
     python monitor.py "$@"
     git add data/paper/ 2>/dev/null
     git diff --cached --quiet || git commit -m "data: monitor cycle $(date +%H:%M)" && git push || true

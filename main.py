@@ -705,7 +705,7 @@ def _push_to_github():
     try:
         # Pull latest to avoid conflicts
         subprocess.run(
-            ["git", "pull", "--rebase"],
+            ["git", "pull", "--rebase", "origin", "master"],
             cwd=project_root, capture_output=True, text=True, timeout=30,
         )
         # Stage data directories
@@ -729,7 +729,7 @@ def _push_to_github():
         )
         # Push
         result = subprocess.run(
-            ["git", "push"],
+            ["git", "push", "-u", "origin", "master"],
             cwd=project_root, capture_output=True, text=True, timeout=30,
         )
         if result.returncode == 0:
