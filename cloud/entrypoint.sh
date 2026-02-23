@@ -17,10 +17,17 @@ if [ "$DEPLOYMENT_MODE" = "cloud" ]; then
     fi
 fi
 
-# If RUN_MODE is "pipeline", run the pipeline instead of the bot
+# Route based on RUN_MODE
 if [ "$RUN_MODE" = "pipeline" ]; then
     echo "Running pipeline..."
     exec python main.py "$@"
+elif [ "$RUN_MODE" = "monitor" ]; then
+    echo "Running monitor cycle..."
+    cd /app
+    git pull --rebase 2>/dev/null || true
+    python monitor.py "$@"
+    git add data/paper/ 2>/dev/null
+    git diff --cached --quiet || git commit -m "data: monitor cycle $(date +%H:%M)" && git push || true
 else
     echo "Starting Telegram bot..."
     exec python telegram_bot.py

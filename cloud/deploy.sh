@@ -245,6 +245,48 @@ TELEGRAM_CHAT_ID=telegram-chat-id:latest" \
 
 echo "  Reminder job created."
 
+# ── Step 5c: Deploy Cloud Run Job (Monitor) ─────────────────────────────────
+
+MONITOR_JOB_NAME="trading-agent-monitor"
+
+echo "Step 5c: Creating monitor job..."
+gcloud run jobs create "$MONITOR_JOB_NAME" \
+    --image="${REGISTRY}/${IMAGE_NAME}:latest" \
+    --region="$REGION" \
+    --project="$PROJECT_ID" \
+    --memory=512Mi \
+    --task-timeout=120 \
+    --set-env-vars="DEPLOYMENT_MODE=cloud,RUN_MODE=monitor,CAPITAL_DEMO=true,LOG_LEVEL=INFO,GITHUB_REPO=${GITHUB_REPO:-}" \
+    --set-secrets="\
+CAPITAL_API_KEY=capital-api-key:latest,\
+CAPITAL_IDENTIFIER=capital-identifier:latest,\
+CAPITAL_PASSWORD=capital-password:latest,\
+ALPHA_VANTAGE_KEY=alpha-vantage-key:latest,\
+FINNHUB_KEY=finnhub-key:latest,\
+TELEGRAM_BOT_TOKEN=telegram-bot-token:latest,\
+TELEGRAM_CHAT_ID=telegram-chat-id:latest,\
+GITHUB_TOKEN=github-token:latest" \
+    --args="--once,--broker,capital" \
+    2>/dev/null || \
+gcloud run jobs update "$MONITOR_JOB_NAME" \
+    --image="${REGISTRY}/${IMAGE_NAME}:latest" \
+    --region="$REGION" --project="$PROJECT_ID" \
+    --memory=512Mi \
+    --task-timeout=120 \
+    --set-env-vars="DEPLOYMENT_MODE=cloud,RUN_MODE=monitor,CAPITAL_DEMO=true,LOG_LEVEL=INFO,GITHUB_REPO=${GITHUB_REPO:-}" \
+    --set-secrets="\
+CAPITAL_API_KEY=capital-api-key:latest,\
+CAPITAL_IDENTIFIER=capital-identifier:latest,\
+CAPITAL_PASSWORD=capital-password:latest,\
+ALPHA_VANTAGE_KEY=alpha-vantage-key:latest,\
+FINNHUB_KEY=finnhub-key:latest,\
+TELEGRAM_BOT_TOKEN=telegram-bot-token:latest,\
+TELEGRAM_CHAT_ID=telegram-chat-id:latest,\
+GITHUB_TOKEN=github-token:latest" \
+    --args="--once,--broker,capital"
+
+echo "  Monitor job created."
+
 # ── Step 6: Create Cloud Scheduler Jobs ─────────────────────────────────────
 
 echo "Step 6: Setting up scheduled runs..."
@@ -297,6 +339,29 @@ schedule_reminder() {
     echo "  Created: $name ($cron $tz)"
 }
 
+# Helper for monitor scheduler jobs (uses the monitor job)
+schedule_monitor() {
+    local name=$1
+    local cron=$2
+    local tz=$3
+    local description=$4
+
+    gcloud scheduler jobs delete "$name" \
+        --location="$REGION" --project="$PROJECT_ID" --quiet 2>/dev/null || true
+
+    gcloud scheduler jobs create http "$name" \
+        --location="$REGION" \
+        --project="$PROJECT_ID" \
+        --schedule="$cron" \
+        --time-zone="$tz" \
+        --uri="https://${REGION}-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/${PROJECT_ID}/jobs/${MONITOR_JOB_NAME}:run" \
+        --http-method=POST \
+        --oauth-service-account-email="$SA_EMAIL" \
+        --description="$description"
+
+    echo "  Created: $name ($cron $tz)"
+}
+
 # Reminders — 30 min before each weekday pipeline run
 schedule_reminder "reminder-morning" "30 8 * * 1-5" "$TZ" "Reminder: morning pipeline in 30 min"
 schedule_reminder "reminder-afternoon" "30 14 * * 1-5" "$TZ" "Reminder: afternoon pipeline in 30 min"
@@ -308,6 +373,9 @@ schedule_job "pipeline-afternoon" "0 15 * * 1-5" "$TZ" "Afternoon pipeline (befo
 # Crypto runs (daily — crypto never sleeps, no reminder needed)
 schedule_job "pipeline-crypto-am" "0 8 * * *" "$TZ" "Crypto morning update"
 schedule_job "pipeline-crypto-pm" "0 20 * * *" "$TZ" "Crypto evening update"
+
+# Intraday monitor — every 5 min during market hours
+schedule_monitor "monitor-intraday" "*/5 9-16 * * 1-5" "$TZ" "Intraday position monitor (Capital.com)"
 
 echo "  Scheduler configured."
 
@@ -331,6 +399,7 @@ echo "════════════════════════�
 echo ""
 echo "  Bot URL:     $SERVICE_URL"
 echo "  Pipeline:    gcloud run jobs execute $JOB_NAME --region=$REGION --project=$PROJECT_ID"
+echo "  Monitor:     gcloud run jobs execute $MONITOR_JOB_NAME --region=$REGION --project=$PROJECT_ID"
 echo ""
 echo "  Schedule (US/Eastern):"
 echo "    Mon-Fri 8:30 AM  — Reminder (run locally with IBKR?)"
@@ -339,11 +408,13 @@ echo "    Mon-Fri 2:30 PM  — Reminder"
 echo "    Mon-Fri 3:00 PM  — Afternoon pipeline (Capital.com)"
 echo "    Daily   8:00 AM  — Crypto morning"
 echo "    Daily   8:00 PM  — Crypto evening"
+echo "    Mon-Fri */5 min  — Intraday monitor 9 AM - 4:55 PM (Capital.com)"
 echo ""
 echo "  Workflow:"
 echo "    1. You get a Telegram reminder 30 min before each pipeline run"
 echo "    2. If at your laptop with TWS open: python main.py --once --push"
 echo "       (uses IBKR + Capital.com, pushes richer data to GitHub)"
 echo "    3. If away: the cloud job runs automatically with Capital.com only"
-echo "    4. To sync cloud data locally: git pull"
+echo "    4. Monitor runs every 5 min during market hours (SL/TP/trailing exits)"
+echo "    5. To sync cloud data locally: git pull"
 echo ""
