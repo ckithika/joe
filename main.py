@@ -866,12 +866,26 @@ def main():
             schedule.run_pending()
             time.sleep(60)
     else:
-        run_pipeline(
-            broker_filter=args.broker,
-            regime_only=args.regime_only,
-            paper_update_only=args.paper_update,
-            dry_run=args.dry_run,
-        )
+        try:
+            run_pipeline(
+                broker_filter=args.broker,
+                regime_only=args.regime_only,
+                paper_update_only=args.paper_update,
+                dry_run=args.dry_run,
+            )
+        except Exception as exc:
+            import traceback
+            tb = traceback.format_exc()[-1000:]
+            logger.critical("Pipeline crashed: %s", exc)
+            try:
+                AlertManager().send_system_alert(
+                    "Pipeline Failed",
+                    f"{exc}\n\n{tb}",
+                    level="critical",
+                )
+            except Exception:
+                pass
+            raise
 
     # Push data to GitHub if requested
     if args.push or should_push_data():

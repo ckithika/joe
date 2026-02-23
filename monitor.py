@@ -436,9 +436,24 @@ def main():
 
     # Single cycle mode
     if args.once:
-        run_cycle(ibkr, capital, dry_run=args.dry_run)
-        if ibkr:
-            ibkr.disconnect()
+        try:
+            run_cycle(ibkr, capital, dry_run=args.dry_run)
+        except Exception as exc:
+            import traceback
+            tb = traceback.format_exc()[-1000:]
+            logger.critical("Monitor failed: %s", exc)
+            try:
+                alert_manager.send_system_alert(
+                    "Monitor Failed",
+                    f"{exc}\n\n{tb}",
+                    level="critical",
+                )
+            except Exception:
+                pass
+            raise
+        finally:
+            if ibkr:
+                ibkr.disconnect()
         return
 
     # Send startup alert
@@ -457,6 +472,14 @@ def main():
                     run_cycle(ibkr, capital, dry_run=args.dry_run)
                 except Exception as e:
                     logger.error("Cycle failed: %s", e, exc_info=True)
+                    try:
+                        alert_manager.send_system_alert(
+                            "Monitor Cycle Failed",
+                            str(e),
+                            level="error",
+                        )
+                    except Exception:
+                        pass
 
             else:
                 logger.debug("Market closed — sleeping")
