@@ -90,6 +90,12 @@ class StrategyEngine:
             risk_amount = virtual_balance * risk_pct * size_mod
             position_size = risk_amount / risk_per_share if risk_per_share > 0 else 0
 
+            # Cap notional exposure at max_position_pct of balance (default 33%)
+            max_position_pct = self.position_sizing.get("max_position_pct", 33) / 100.0
+            max_notional = virtual_balance * max_position_pct
+            if entry_price > 0 and position_size * entry_price > max_notional:
+                position_size = max_notional / entry_price
+
             # Determine action
             if available_slots <= 0:
                 action = "skip"

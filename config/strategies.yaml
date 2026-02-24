@@ -90,7 +90,7 @@ strategies:
       take_profit_atr: 2.0
       trailing_stop_atr: 0.0
     max_hold_days: 1
-    risk_per_trade_pct_override: 5.0
+    risk_per_trade_pct_override: 1.0
 
   defensive:
     trigger:
@@ -114,3 +114,4 @@ position_sizing:
   trending_down: 0.5
   range_bound: 0.75
   high_volatility: 0.5
+  max_position_pct: 33  # max notional value per position as % of balance

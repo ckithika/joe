@@ -167,7 +167,7 @@ class TestMatchStrategies:
             assert signals[0].direction == "SHORT"
 
     def test_position_sizing_uses_regime_modifier(self, engine):
-        instruments = [make_scored(signal=Signal.STRONG_BUY)]
+        instruments = [make_scored(signal=Signal.STRONG_BUY, close=10.0)]
         regime_full = make_regime(position_size_modifier=1.0)
         regime_half = make_regime(position_size_modifier=0.5)
 
