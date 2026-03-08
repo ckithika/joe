@@ -287,6 +287,14 @@ def run_pipeline(
                 sig.dollar_risk = round(sig.dollar_risk * 0.5, 2)
                 approved_signals.append(sig)
             else:
+                # Correlation check — reduce size by 50% if correlated
+                corr = risk_profiler.check_correlation(sig, paper_trader.positions)
+                if corr["correlated"]:
+                    logger.info(
+                        "CORRELATION: %s — reducing size 50%%", corr["reason"]
+                    )
+                    sig.position_size = round(sig.position_size * 0.5, 4)
+                    sig.dollar_risk = round(sig.dollar_risk * 0.5, 2)
                 approved_signals.append(sig)
 
         if approved_signals:

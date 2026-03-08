@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime
 from pathlib import Path
 
 import yaml
@@ -251,6 +252,116 @@ class StrategyEngine:
             if entry.get("require_ema_alignment") and tech.ema_trend != 0:
                 score += 1
 
+        elif name == "opening_range_breakout":
+            score = self._match_opening_range_breakout(config, tech, inst)
+
+        elif name == "vwap_bounce":
+            score = self._match_vwap_bounce(config, tech, inst)
+
+        return score
+
+    def _match_opening_range_breakout(
+        self, config: dict, tech, inst: ScoredInstrument
+    ) -> float:
+        """Score instrument for Opening Range Breakout (ORB) strategy.
+
+        Checks:
+        - Current time is past the opening range period (first 15 min)
+        - Price broke above/below the opening range (approximated via first-bar high/low)
+        - Volume surge is present
+        - Range size is within acceptable ATR bounds
+        """
+        score = 0.0
+        entry = config.get("entry", {})
+        setup = config.get("setup", {})
+
+        # Time check: must be after opening range period
+        now = datetime.now()
+        opening_range_minutes = setup.get("opening_range_minutes", 15)
+        market_open_hour, market_open_min = 9, 30
+        opening_range_end = now.replace(
+            hour=market_open_hour, minute=market_open_min + opening_range_minutes,
+            second=0, microsecond=0,
+        )
+        if now < opening_range_end:
+            return 0.0  # Too early, opening range not yet formed
+
+        # Range size check using ATR as reference
+        # Approximate opening range as recent high-low (tech.atr is our proxy)
+        if tech.atr > 0:
+            # Use high-low of recent bar as opening range proxy
+            range_size = abs(tech.close - tech.ema_20) if tech.ema_20 > 0 else tech.atr * 0.5
+            range_atr_pct = range_size / tech.atr if tech.atr > 0 else 0
+
+            min_range = setup.get("min_range_atr_pct", 0.3)
+            max_range = setup.get("max_range_atr_pct", 1.5)
+
+            if min_range <= range_atr_pct <= max_range:
+                score += 2  # Range is well-sized
+            elif range_atr_pct < min_range or range_atr_pct > max_range:
+                return 0.0  # Range too small or too wide, skip
+
+        # Volume surge check
+        vol_surge = entry.get("require_volume_surge", 1.5)
+        if tech.volume_ratio >= vol_surge:
+            score += 3  # Strong volume on breakout is critical for ORB
+
+        # Strong close check (close near high for longs, near low for shorts)
+        if entry.get("require_strong_close", True):
+            # If price is trending (EMA alignment), the close is likely near the extreme
+            if tech.ema_trend != 0:
+                score += 1
+
+        # Directional breakout confirmation via MACD
+        if tech.macd_histogram != 0:
+            score += 1
+
+        return score
+
+    def _match_vwap_bounce(
+        self, config: dict, tech, inst: ScoredInstrument
+    ) -> float:
+        """Score instrument for VWAP Bounce strategy.
+
+        Checks:
+        - Price is near VWAP (approximated by EMA-20 as VWAP proxy)
+        - RSI is in the neutral zone (not overbought/oversold)
+        - Volume confirmation is present
+        - Bounce direction aligns with trend
+        """
+        score = 0.0
+        entry = config.get("entry", {})
+
+        # VWAP touch check: price near the session VWAP
+        # We approximate VWAP with EMA-20 since VWAP isn't always available
+        if entry.get("require_vwap_touch", True) and tech.ema_20 > 0:
+            distance_from_vwap = abs(tech.close - tech.ema_20) / tech.ema_20
+            if distance_from_vwap <= 0.005:  # Within 0.5% of VWAP/EMA-20
+                score += 3  # Right at VWAP — ideal bounce zone
+            elif distance_from_vwap <= 0.01:  # Within 1%
+                score += 2  # Close to VWAP
+            else:
+                return 0.0  # Too far from VWAP, not a bounce setup
+
+        # RSI range check
+        rsi_range = entry.get("rsi_range", [35, 65])
+        if rsi_range[0] <= tech.rsi <= rsi_range[1]:
+            score += 2
+        else:
+            return 0.0  # RSI outside neutral zone, skip
+
+        # Volume confirmation
+        if entry.get("require_volume_confirmation", True):
+            if tech.volume_ratio >= 1.0:
+                score += 1  # At least average volume
+            if tech.volume_ratio >= 1.3:
+                score += 1  # Above-average volume, better confirmation
+
+        # Bounce direction: should align with overall trend
+        if entry.get("bounce_direction") == "with_trend":
+            if tech.ema_trend != 0:
+                score += 1  # EMA alignment confirms trend direction
+
         return score
 
     def _make_label(self, strategy_name: str, tech) -> str:
@@ -260,6 +371,8 @@ class StrategyEngine:
             "breakout": "Breakout",
             "momentum": "Momentum Continuation",
             "day_trade": "Day Trade",
+            "opening_range_breakout": "ORB",
+            "vwap_bounce": "VWAP Bounce",
         }
         base = labels.get(strategy_name, strategy_name.replace("_", " ").title())
 
@@ -275,6 +388,10 @@ class StrategyEngine:
             return f"{base} — New Highs"
         elif strategy_name == "day_trade":
             return f"{base} — Intraday Momentum"
+        elif strategy_name == "opening_range_breakout":
+            return f"{base} — 15min Range Break"
+        elif strategy_name == "vwap_bounce":
+            return f"{base} — Mean Revert to VWAP"
         return base
 
     def check_defensive(self, regime: RegimeAssessment, performance: dict) -> bool:

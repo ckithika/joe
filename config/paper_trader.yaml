@@ -1,13 +1,19 @@
 paper_trader:
   enabled: true
   starting_balance: 1000.00
-  risk_per_trade_pct: 2.0
-  max_concurrent_positions: 5
-  max_hold_days: 10
+  risk_per_trade_pct: 3.0
+  max_concurrent_positions: 3
+  max_hold_days: 1
+
+  daily_gain_target: 50.0
+  daily_loss_limit: 30.0
+  auto_close_eod: true
 
   entry_signals:
     - STRONG_BUY
     - STRONG_SELL
+    - BUY
+    - SELL
 
   stop_loss:
     method: atr
@@ -16,6 +22,12 @@ paper_trader:
   take_profit:
     method: atr
     atr_multiplier: 3.0
+
+  # Max total notional exposure as multiple of account balance
+  max_daily_exposure_mult: 3.0
+
+  # Per-instrument daily realized loss limit ($)
+  instrument_daily_loss_limit: 15.0
 
   pdt_simulation: true
   pdt_day_trade_limit: 10

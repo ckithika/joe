@@ -17,6 +17,9 @@ logger = logging.getLogger(__name__)
 class PaperTrader:
     """Virtual portfolio tracker — no real orders, pure bookkeeping."""
 
+    # Strategies classified as day trades (tighter risk management)
+    DAY_TRADE_STRATEGIES = {"day_trade", "opening_range_breakout", "vwap_bounce"}
+
     def __init__(self, config: dict, data_dir: str = "./data/paper"):
         self.config = config
         self.data_dir = Path(data_dir)
@@ -24,9 +27,11 @@ class PaperTrader:
         self.positions_file = self.data_dir / "open_positions.json"
         self.history_file = self.data_dir / "trade_history.csv"
         self.perf_file = self.data_dir / "performance.json"
+        self.session_file = self.data_dir / "session_state.json"
 
         self.positions: list[MockPosition] = self._load_positions()
         self.performance: dict = self._load_performance()
+        self.session_state: dict = self._load_session_state()
 
         # Load strategy configs for strategy-specific exits
         self._strategy_configs = self._load_strategy_configs()
@@ -63,6 +68,22 @@ class PaperTrader:
             if any(p.ticker == sig.instrument.ticker for p in self.positions):
                 continue
 
+            # Max daily exposure check
+            if self._exceeds_max_daily_exposure(sig):
+                logger.warning(
+                    "Max daily exposure exceeded — skipping %s (reason: max_daily_exposure_exceeded)",
+                    sig.instrument.ticker,
+                )
+                continue
+
+            # Per-instrument daily loss limit
+            if self._instrument_daily_loss_exceeded(sig.instrument.ticker):
+                logger.warning(
+                    "Instrument %s has exceeded daily loss limit — skipping",
+                    sig.instrument.ticker,
+                )
+                continue
+
             # Strategy-specific take profit
             take_profit = self._compute_strategy_tp(
                 sig.strategy_name, sig.direction, sig.entry_price,
@@ -71,6 +92,9 @@ class PaperTrader:
 
             # Determine trailing stop ATR if strategy uses it
             trailing_atr = self._get_trailing_stop_atr(sig.strategy_name)
+
+            # Determine setup type from strategy name
+            setup_type = self._infer_setup_type(sig.strategy_name, sig.instrument.technical)
 
             position = MockPosition(
                 id=f"PT-{date.today().isoformat()}-{len(self.positions) + len(new_positions) + 1:03d}",
@@ -89,6 +113,8 @@ class PaperTrader:
                 trailing_stop_atr=trailing_atr,
                 highest_price=sig.entry_price,
                 lowest_price=sig.entry_price,
+                entry_time=datetime.now().isoformat(),
+                setup_type=setup_type,
             )
 
             self.positions.append(position)
@@ -226,6 +252,67 @@ class PaperTrader:
         strat = self._strategy_configs.get(strategy_name, {})
         return strat.get("max_hold_days", self.config.get("max_hold_days", 10))
 
+    def _infer_setup_type(self, strategy_name: str, technical) -> str:
+        """Infer the setup type (pattern) from the strategy name and technicals."""
+        # Map known strategy names to day-trading setup types
+        setup_map = {
+            "day_trade": "day_trade",
+            "orb": "orb",
+            "opening_range_breakout": "orb",
+            "vwap_bounce": "vwap_bounce",
+            "vwap": "vwap_bounce",
+            "breakout": "breakout",
+            "momentum": "breakout",
+            "mean_reversion": "vwap_bounce",
+            "trend_following": "day_trade",
+        }
+        return setup_map.get(strategy_name, strategy_name)
+
+    @staticmethod
+    def _determine_session_window(timestamp_str: str) -> str:
+        """Determine which trading session a timestamp falls in.
+
+        Returns one of: pre_market, opening, midday, closing, after_hours, crypto_overnight
+        """
+        if not timestamp_str:
+            return "unknown"
+        try:
+            ts = datetime.fromisoformat(timestamp_str)
+        except (ValueError, TypeError):
+            return "unknown"
+
+        hour = ts.hour
+        minute = ts.minute
+        t = hour * 60 + minute  # minutes since midnight
+
+        if t < 4 * 60:          # 00:00 - 04:00 ET
+            return "crypto_overnight"
+        elif t < 9 * 60 + 30:   # 04:00 - 09:30 ET
+            return "pre_market"
+        elif t < 10 * 60 + 30:  # 09:30 - 10:30 ET
+            return "opening"
+        elif t < 14 * 60:       # 10:30 - 14:00 ET
+            return "midday"
+        elif t < 16 * 60:       # 14:00 - 16:00 ET
+            return "closing"
+        elif t < 20 * 60:       # 16:00 - 20:00 ET
+            return "after_hours"
+        else:                    # 20:00+ ET
+            return "crypto_overnight"
+
+    @staticmethod
+    def _map_exit_reason_to_exit_type(exit_reason: str, pos) -> str:
+        """Map internal exit reasons to standardised exit_type labels."""
+        mapping = {
+            "stopped_out": "stop_loss",
+            "target_hit": "take_profit",
+            "trailing_stopped": "trailing_stop",
+            "expired": "time_decay",
+            "eod_close": "eod_close",
+            "manual": "manual",
+        }
+        return mapping.get(exit_reason, exit_reason)
+
     # ── Position Monitoring ─────────────────────────────────────
 
     def update_positions(self, current_prices: dict) -> dict:
@@ -325,7 +412,11 @@ class PaperTrader:
         return {"closed": closed, "open": [asdict(p) for p in still_open]}
 
     def _update_trailing_stop(self, pos: MockPosition, bar: dict):
-        """Update trailing stop if the strategy uses one and position is in profit."""
+        """Update trailing stop if the strategy uses one and position is in profit.
+
+        Day trade strategies use a tighter 0.75 ATR trailing stop that activates
+        after price moves 1 ATR in the profit direction.
+        """
         if pos.trailing_stop_atr <= 0:
             return
 
@@ -335,22 +426,39 @@ class PaperTrader:
         if atr_proxy <= 0:
             return
 
-        trail_distance = atr_proxy * pos.trailing_stop_atr
+        is_day_trade = pos.strategy in self.DAY_TRADE_STRATEGIES
+
+        # Day trades: tighter 0.75 ATR trailing stop
+        atr_mult = 0.75 if is_day_trade else pos.trailing_stop_atr
+        trail_distance = atr_proxy * atr_mult
+
+        # Day trades: only activate after 1 ATR profit move
+        activation_threshold = atr_proxy if is_day_trade else 0.0
 
         if pos.direction == "LONG":
+            profit_move = pos.highest_price - pos.entry_price
+            if is_day_trade and profit_move < activation_threshold:
+                return  # Not enough profit to activate trailing stop
             # Only trail up, never down
             new_trail = pos.highest_price - trail_distance
             if new_trail > pos.entry_price:  # Only activate once in profit
                 if pos.trailing_stop == 0 or new_trail > pos.trailing_stop:
                     pos.trailing_stop = round(new_trail, 4)
-                    logger.debug("Trailing stop for %s updated to %.4f", pos.ticker, pos.trailing_stop)
+                    logger.debug("Trailing stop for %s updated to %.4f%s",
+                                 pos.ticker, pos.trailing_stop,
+                                 " (day trade tight)" if is_day_trade else "")
         else:
             # SHORT: trail down, never up
+            profit_move = pos.entry_price - pos.lowest_price
+            if is_day_trade and profit_move < activation_threshold:
+                return  # Not enough profit to activate trailing stop
             new_trail = pos.lowest_price + trail_distance
             if new_trail < pos.entry_price:  # Only activate once in profit
                 if pos.trailing_stop == 0 or new_trail < pos.trailing_stop:
                     pos.trailing_stop = round(new_trail, 4)
-                    logger.debug("Trailing stop for %s updated to %.4f", pos.ticker, pos.trailing_stop)
+                    logger.debug("Trailing stop for %s updated to %.4f%s",
+                                 pos.ticker, pos.trailing_stop,
+                                 " (day trade tight)" if is_day_trade else "")
 
     def _check_exit(self, pos: MockPosition, bar: dict) -> str:
         # Check expiry first — avoids stale positions lingering forever
@@ -411,7 +519,89 @@ class PaperTrader:
                             count += 1
         return count
 
+    # ── Daily Exposure & Loss Limits ────────────────────────────
+
+    def _exceeds_max_daily_exposure(self, sig: StrategySignal) -> bool:
+        """Check if total notional value of all positions would exceed 3x account balance."""
+        max_exposure_mult = self.config.get("max_daily_exposure_mult", 3.0)
+        balance = self.performance.get("virtual_balance", 500.0)
+        max_notional = balance * max_exposure_mult
+
+        # Sum notional of all open positions
+        total_notional = sum(
+            abs(p.entry_price * p.position_size) for p in self.positions
+        )
+        # Add the proposed new position
+        new_notional = abs(sig.entry_price * sig.position_size)
+        total_notional += new_notional
+
+        if total_notional > max_notional:
+            logger.info(
+                "Exposure check: $%.2f would exceed %.0fx balance ($%.2f max)",
+                total_notional, max_exposure_mult, max_notional,
+            )
+            return True
+        return False
+
+    def _instrument_daily_loss_exceeded(self, ticker: str) -> bool:
+        """Check if an instrument has lost more than the daily limit today."""
+        daily_loss_limit = self.config.get("instrument_daily_loss_limit", 15.0)
+        today_str = date.today().isoformat()
+
+        # Check session state for today's per-instrument P&L
+        daily_pnl = self.session_state.get("daily_instrument_pnl", {})
+        if daily_pnl.get("date") != today_str:
+            # Stale or missing — recompute from trade history
+            daily_pnl = self._compute_daily_instrument_pnl(today_str)
+            self.session_state["daily_instrument_pnl"] = daily_pnl
+            self._save_session_state()
+
+        ticker_pnl = daily_pnl.get("instruments", {}).get(ticker, 0.0)
+        if ticker_pnl < -daily_loss_limit:
+            logger.info(
+                "Instrument %s daily P&L: $%.2f (limit: -$%.2f)",
+                ticker, ticker_pnl, daily_loss_limit,
+            )
+            return True
+        return False
+
+    def _compute_daily_instrument_pnl(self, today_str: str) -> dict:
+        """Compute today's realized P&L per instrument from trade history."""
+        instruments: dict[str, float] = {}
+        if self.history_file.exists():
+            with open(self.history_file) as f:
+                for trade in csv.DictReader(f):
+                    if trade.get("exit_date") == today_str:
+                        ticker = trade.get("ticker", "")
+                        pnl = float(trade.get("pnl", 0))
+                        instruments[ticker] = instruments.get(ticker, 0.0) + pnl
+        return {"date": today_str, "instruments": instruments}
+
+    def _update_daily_instrument_pnl(self, ticker: str, pnl: float):
+        """Update session state with a closed trade's P&L for today."""
+        today_str = date.today().isoformat()
+        daily_pnl = self.session_state.get("daily_instrument_pnl", {})
+        if daily_pnl.get("date") != today_str:
+            daily_pnl = {"date": today_str, "instruments": {}}
+
+        daily_pnl["instruments"][ticker] = daily_pnl["instruments"].get(ticker, 0.0) + pnl
+        self.session_state["daily_instrument_pnl"] = daily_pnl
+        self._save_session_state()
+
     # ── Persistence ─────────────────────────────────────────────
+
+    def _load_session_state(self) -> dict:
+        """Load session state from disk (daily instrument P&L tracking etc.)."""
+        if self.session_file.exists():
+            try:
+                return json.loads(self.session_file.read_text())
+            except (json.JSONDecodeError, OSError):
+                return {}
+        return {}
+
+    def _save_session_state(self):
+        """Persist session state to disk."""
+        self.session_file.write_text(json.dumps(self.session_state, indent=2))
 
     def _load_positions(self) -> list[MockPosition]:
         if self.positions_file.exists():
@@ -449,6 +639,21 @@ class PaperTrader:
         risk_amount = abs(pos.entry_price - pos.stop_loss) * pos.position_size
         r_multiple = round(pnl / risk_amount, 2) if risk_amount > 0 else 0
 
+        # Compute day-trading journal fields
+        exit_time = datetime.now().isoformat()
+        entry_time = getattr(pos, "entry_time", "") or ""
+        time_held_minutes = 0
+        if entry_time:
+            try:
+                et = datetime.fromisoformat(entry_time)
+                time_held_minutes = round((datetime.now() - et).total_seconds() / 60, 1)
+            except (ValueError, TypeError):
+                pass
+
+        session_window = self._determine_session_window(entry_time)
+        exit_type = self._map_exit_reason_to_exit_type(reason, pos)
+        setup_type = getattr(pos, "setup_type", "") or pos.strategy
+
         row = {
             "id": pos.id,
             "ticker": pos.ticker,
@@ -466,6 +671,13 @@ class PaperTrader:
             "signal_score": pos.signal_score,
             "days_held": pos.days_held,
             "strategy": pos.strategy,
+            "spread_cost": getattr(pos, "spread_cost", 0.0),
+            "setup_type": setup_type,
+            "entry_time": entry_time,
+            "exit_time": exit_time,
+            "time_held_minutes": time_held_minutes,
+            "session_window": session_window,
+            "exit_type": exit_type,
         }
         file_exists = self.history_file.exists()
         with open(self.history_file, "a", newline="") as f:
@@ -473,6 +685,9 @@ class PaperTrader:
             if not file_exists:
                 writer.writeheader()
             writer.writerow(row)
+
+        # Update daily instrument P&L in session state
+        self._update_daily_instrument_pnl(pos.ticker, pnl)
 
     def _update_performance_metrics(self):
         if not self.history_file.exists():

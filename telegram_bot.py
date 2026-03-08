@@ -1080,6 +1080,7 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/status — Portfolio overview (balance, P&amp;L, regime, risk)\n"
         "/positions — Open positions with details\n"
         "/performance — Win rate, Sharpe, best/worst trade\n"
+        "/journal — Last 5 trades with setup, times, P&amp;L\n"
         "/regime — Market regime\n\n"
         "<b>Controls:</b>\n"
         "/pause — Pause new trades (keeps monitoring SL/TP)\n"
@@ -1391,6 +1392,79 @@ async def cmd_performance(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await update.message.reply_text(text[:4096], parse_mode="HTML", reply_markup=portfolio_keyboard())
 
 
+async def cmd_journal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Show last 5 trades with day-trading details: setup, times, duration, P&L, exit type."""
+    if not authorized(update):
+        return
+    trades = load_trade_history(5)
+    if not trades:
+        await update.message.reply_text("No trades recorded yet.")
+        return
+
+    lines = ["📓 <b>Trade Journal — Last 5</b>\n"]
+    for t in reversed(trades):  # Most recent first
+        ticker = t.get("ticker", "?")
+        direction = t.get("direction", "?")
+        pnl = float(t.get("pnl", 0))
+        pnl_str = f"${pnl:+,.2f}"
+        icon = "✅" if pnl > 0 else ("❌" if pnl < 0 else "➖")
+
+        setup = t.get("setup_type") or t.get("strategy", "—")
+        exit_type = t.get("exit_type") or t.get("exit_reason", "—")
+
+        # Entry/exit times (show time portion only if available)
+        entry_time = t.get("entry_time", "")
+        exit_time = t.get("exit_time", "")
+        entry_display = ""
+        exit_display = ""
+        if entry_time:
+            try:
+                et = datetime.fromisoformat(entry_time)
+                entry_display = et.strftime("%H:%M")
+            except (ValueError, TypeError):
+                entry_display = entry_time[:5] if len(entry_time) >= 5 else entry_time
+        if exit_time:
+            try:
+                xt = datetime.fromisoformat(exit_time)
+                exit_display = xt.strftime("%H:%M")
+            except (ValueError, TypeError):
+                exit_display = exit_time[:5] if len(exit_time) >= 5 else exit_time
+
+        duration_str = ""
+        mins = t.get("time_held_minutes", "")
+        if mins:
+            try:
+                m = float(mins)
+                if m >= 60:
+                    duration_str = f"{m / 60:.1f}h"
+                else:
+                    duration_str = f"{m:.0f}m"
+            except (ValueError, TypeError):
+                pass
+
+        time_str = ""
+        if entry_display and exit_display:
+            time_str = f"{entry_display} → {exit_display}"
+        elif entry_display:
+            time_str = f"in {entry_display}"
+
+        entry_date = t.get("entry_date", "")
+
+        lines.append(f"{icon} <b>{ticker}</b> {direction} | {pnl_str}")
+        lines.append(f"   Setup: {setup} | Exit: {exit_type}")
+        detail_parts = [entry_date]
+        if time_str:
+            detail_parts.append(time_str)
+        if duration_str:
+            detail_parts.append(duration_str)
+        lines.append(f"   {' | '.join(detail_parts)}")
+        lines.append("")
+
+    await update.message.reply_text(
+        "\n".join(lines)[:4096], parse_mode="HTML", reply_markup=portfolio_keyboard()
+    )
+
+
 # ── Callback Router ──────────────────────────────────────────────────────────
 
 CALLBACK_MAP = {
@@ -1604,6 +1678,7 @@ def main() -> None:
     app.add_handler(CommandHandler("blacklist", cmd_blacklist))
     app.add_handler(CommandHandler("whitelist", cmd_whitelist))
     app.add_handler(CommandHandler("performance", cmd_performance))
+    app.add_handler(CommandHandler("journal", cmd_journal))
 
     # Inline button callbacks
     app.add_handler(CallbackQueryHandler(handle_callback))

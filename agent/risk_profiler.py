@@ -80,10 +80,12 @@ class RiskProfiler:
             if a.severity in (AlertSeverity.BLOCK, AlertSeverity.CRITICAL)
         ]
 
+        hard_block_threshold = self.config.get("composite_hard_block", 6)
+
         if blocking:
             recommendation = "blocked"
             reason = f"Hard block: {blocking[0].message}"
-        elif composite >= 7:
+        elif composite >= hard_block_threshold:
             recommendation = "skip"
             reason = "Risk grade HIGH — multiple factors elevated"
         elif composite >= 5:
@@ -390,6 +392,52 @@ class RiskProfiler:
             fomo_entry_count=sum(1 for e in recent if e.get("action") == "entry" and "fomo" in e.get("reason", "")),
             early_exit_count=sum(1 for e in recent if e.get("action") == "exit" and e.get("reason") == "manual_early"),
         )
+
+    # ── Correlation Checking ────────────────────────────────────
+
+    CORRELATION_GROUPS = {
+        "US_EQUITY": [
+            "SPY", "QQQ", "US500", "US100",
+            "AAPL", "NVDA", "TSLA", "MSFT", "AMZN", "META", "GOOGL",
+            "JPM", "GS", "BAC",
+        ],
+        "CRYPTO": ["BTCUSD", "ETHUSD", "SOLUSD", "XRPUSD", "DOGEUSD", "ADAUSD"],
+        "COMMODITIES": ["GOLD", "OIL_CRUDE"],
+    }
+
+    def check_correlation(
+        self, new_signal: StrategySignal, open_positions: list[MockPosition]
+    ) -> dict:
+        """Check if a new signal is correlated with existing open positions.
+
+        Returns {"correlated": bool, "reason": str, "existing_ticker": str}
+        """
+        new_ticker = new_signal.instrument.ticker
+        new_direction = new_signal.direction
+
+        # Find which group the new ticker belongs to
+        new_group = None
+        for group_name, tickers in self.CORRELATION_GROUPS.items():
+            if new_ticker in tickers:
+                new_group = group_name
+                break
+
+        if new_group is None:
+            return {"correlated": False, "reason": "", "existing_ticker": ""}
+
+        # Check if any open position is in the same group AND same direction
+        for pos in open_positions:
+            if pos.ticker in self.CORRELATION_GROUPS[new_group] and pos.direction == new_direction:
+                return {
+                    "correlated": True,
+                    "reason": (
+                        f"{new_ticker} correlated with open {pos.ticker} "
+                        f"(both {new_group}, both {new_direction})"
+                    ),
+                    "existing_ticker": pos.ticker,
+                }
+
+        return {"correlated": False, "reason": "", "existing_ticker": ""}
 
     # ── Helpers ──────────────────────────────────────────────────
 

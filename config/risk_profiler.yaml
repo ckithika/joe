@@ -1,11 +1,14 @@
 risk_profiler:
   enabled: true
 
+  # Composite score at which trades are skipped (lowered from 7 for day trading)
+  composite_hard_block: 6
+
   risk_weights:
-    position: 0.25
+    position: 0.20
     portfolio: 0.25
     market: 0.20
-    behavioral: 0.15
+    behavioral: 0.20
     strategy: 0.15
 
   thresholds:

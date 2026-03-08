@@ -14,7 +14,7 @@ regime:
 # Strategy Profiles
 strategies:
   trend_following:
-    enabled: true
+    enabled: false
     active_regimes: [trending_up, trending_down]
     entry:
       rsi_range: [40, 55]
@@ -30,7 +30,7 @@ strategies:
     max_hold_days: 10
 
   mean_reversion:
-    enabled: true
+    enabled: false
     active_regimes: [range_bound, trending_up]
     entry:
       rsi_threshold: 38
@@ -62,7 +62,7 @@ strategies:
     max_hold_days: 7
 
   momentum:
-    enabled: true
+    enabled: false
     active_regimes: [trending_up]
     entry:
       new_high_period: 20
@@ -87,10 +87,53 @@ strategies:
       require_ema_alignment: true
     exit:
       stop_loss_atr_fallback: 1.0
-      take_profit_atr: 2.0
-      trailing_stop_atr: 0.0
+      take_profit_atr: 2.5
+      trailing_stop_atr: 0.75
     max_hold_days: 1
-    risk_per_trade_pct_override: 1.0
+    risk_per_trade_pct_override: 3.0
+    session_windows:
+      prime_hours:
+        start: "09:30"
+        end: "11:30"
+      closing_hours:
+        start: "14:30"
+        end: "16:00"
+      outside_window_filter: stricter  # tighter entry criteria outside these windows
+
+  opening_range_breakout:
+    enabled: true
+    active_regimes: [trending_up, trending_down, range_bound, high_volatility]
+    setup:
+      opening_range_minutes: 15   # First 15-min candle
+      min_range_atr_pct: 0.3      # Min range as % of ATR (filter tiny ranges)
+      max_range_atr_pct: 1.5      # Max range (filter too-wide ranges)
+    entry:
+      require_volume_surge: 1.5
+      require_strong_close: true   # Close near high (long) or low (short)
+      breakout_buffer_pct: 0.1     # Enter 0.1% above/below range
+    exit:
+      stop_loss: opposite_range_boundary  # Long SL = range low, Short SL = range high
+      stop_loss_atr_fallback: 1.0
+      take_profit: measured_move    # Target = range height from breakout point
+      take_profit_multiplier: 2.0   # 2x the range height
+    max_hold_days: 1
+    risk_per_trade_pct_override: 3.0
+
+  vwap_bounce:
+    enabled: true
+    active_regimes: [trending_up, trending_down, range_bound]
+    entry:
+      require_vwap_touch: true      # Price must touch or cross VWAP
+      rsi_range: [35, 65]           # Not overbought/oversold
+      require_volume_confirmation: true
+      bounce_direction: with_trend   # Long if above daily VWAP trend, short if below
+    exit:
+      stop_loss_atr_fallback: 0.8
+      take_profit_atr: 2.0
+      trailing_stop_atr: 0.75
+    max_hold_days: 1
+    risk_per_trade_pct_override: 3.0
+    skip_regimes: [high_volatility]
 
   defensive:
     trigger:

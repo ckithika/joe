@@ -186,6 +186,10 @@ class MockPosition:
     trailing_stop_atr: float = 0.0
     highest_price: float = 0.0
     lowest_price: float = 0.0
+    entry_time: str = ""          # ISO timestamp for time-based exits
+    spread_cost: float = 0.0      # Estimated spread cost at entry
+    atr_at_entry: float = 0.0     # ATR when position was opened
+    setup_type: str = ""          # Which pattern triggered entry (day_trade, orb, vwap_bounce, breakout)
 
 
 @dataclass

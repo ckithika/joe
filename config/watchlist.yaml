@@ -12,3 +12,15 @@ capital:
   crypto: [BTCUSD, ETHUSD]
   commodities: [GOLD, OIL_CRUDE]
   stocks: [AAPL, NVDA, TSLA, MSFT, AMZN, META, GOOGL, JPM, GS, BAC, XOM, CVX]
+
+# Day trading focused instruments (Capital.com)
+day_trade:
+  indices: [US500, US100]
+  stocks: [AAPL, NVDA, TSLA]
+  crypto: [BTCUSD, ETHUSD]
+  commodities: [GOLD]
+
+# Day trading focused instruments (IBKR)
+day_trade_ibkr:
+  etfs: [SPY, QQQ]
+  stocks: [AAPL, NVDA, TSLA]
