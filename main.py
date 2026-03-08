@@ -2,18 +2,16 @@
 """Joe AI — your average Joe learning to trade."""
 
 import argparse
-import json
 import logging
 import os
 import sys
-import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from agent.file_lock import locked_write_json
-
 import yaml
 from dotenv import load_dotenv
+
+from agent.file_lock import locked_write_json
 
 load_dotenv()
 

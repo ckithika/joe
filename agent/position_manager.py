@@ -4,7 +4,6 @@ Extracted from PaperTrader to focus on position lifecycle management:
 entry evaluation, exit detection, trailing stops, PDT rules, and exposure limits.
 """
 
-import csv
 import logging
 from datetime import date, datetime, timedelta
 from pathlib import Path

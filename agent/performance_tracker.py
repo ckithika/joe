@@ -5,9 +5,8 @@ trading performance metrics: win rate, Sharpe ratio, drawdown,
 strategy breakdown, and R multiples.
 """
 
-import csv
-import math
 import logging
+import math
 from dataclasses import asdict
 from datetime import datetime
 from pathlib import Path

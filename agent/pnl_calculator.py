@@ -4,7 +4,6 @@ Extracted from PaperTrader to focus on trade logging, P&L calculation,
 session window classification, and exit reason mapping.
 """
 
-import csv
 import logging
 from datetime import date, datetime
 from pathlib import Path

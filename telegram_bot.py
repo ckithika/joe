@@ -3,15 +3,12 @@
 
 import asyncio
 import csv
-import json
 import logging
 import os
 import re
 import sys
 from datetime import datetime
 from pathlib import Path
-
-from agent.file_lock import locked_read_json, locked_write_json
 
 from dotenv import load_dotenv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -23,6 +20,8 @@ from telegram.ext import (
     MessageHandler,
     filters,
 )
+
+from agent.file_lock import locked_read_json, locked_write_json
 
 load_dotenv()
 
