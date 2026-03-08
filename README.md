@@ -362,6 +362,47 @@ All alerts are sent via Telegram (and Discord if configured). Here's what you re
 | **System Alert** | On pipeline failure | Error message and stack trace |
 | **Pipeline Reminder** | 30 min before scheduled runs | Prompt to open TWS for enhanced data |
 
+## Reviewing Your Data
+
+Beyond Telegram alerts, there are several ways to review performance and trades:
+
+### Streamlit Dashboard (recommended)
+
+```bash
+./venv/bin/python3 -m streamlit run dashboard.py
+```
+
+Opens a visual dashboard in your browser with portfolio charts, daily gains, strategy accuracy, equity curve, and the Go Live Readiness checklist.
+
+### Daily Report (Markdown)
+
+```bash
+cat data/findings/$(date +%Y-%m-%d).md
+```
+
+Human-readable summary of the day's regime, signals, positions, and AI analysis.
+
+### Current State (JSON)
+
+```bash
+cat data/paper/performance.json      # Balance, win rate, total trades
+cat data/paper/open_positions.json   # What's open now with P&L
+cat data/paper/session_state.json    # Today's running P&L and trade count
+```
+
+### Trade History (CSV)
+
+```bash
+column -t -s, data/paper/trade_history.csv | less
+```
+
+Full history of every closed trade with setup type, duration, session window, exit type, and P&L. Can also be opened in Google Sheets or Excel.
+
+### Data Persistence
+
+- `data/paper/` and `data/findings/` are **committed to git** — synced across cloud and local via `git push/pull`
+- `data/cache/` and `data/reports/` are **gitignored** — temporary/regenerable files only
+
 ## Scheduled Runs
 
 | Schedule | Time (ET) | Days | What |
