@@ -52,12 +52,14 @@ from agent.reporter import ReportGenerator
 from agent.ai_analyst import AIAnalyst
 from agent.after_hours import AfterHoursEngine
 from agent.alerts import AlertManager
+from agent.performance_digest import send_daily_pnl_alert, send_weekly_digest, is_sunday, send_signal_summary
 from agent.crypto_data import CryptoDataCollector
 from agent.portfolio_analytics import PortfolioAnalytics
 from agent.resilience import get_circuit_breaker
 from agent.stock_extras import StockDataCollector
 from agent.cache import save_instruments, load_cached_instruments
 from agent.models import Broker
+from agent.auto_tuner import run_tuner, should_run_tuner
 from agent.preferences import is_module_enabled, should_push_data
 from brokers.ibkr_client import IBKRClient
 from brokers.capital_client import CapitalClient
@@ -217,14 +219,31 @@ def run_pipeline(
         scored = scorer.score_instruments(instruments, sentiments)
     logger.info("Scored %d instruments", len(scored))
 
-    # Step 5: Check defensive mode
+    # Step 5: Check defensive mode and bot state (pause/blacklist)
     defensive = strategy_engine.check_defensive(regime, paper_trader.performance)
+
+    # Check Telegram bot pause state
+    from telegram_bot import is_trading_paused, get_blacklist
+    trading_paused = is_trading_paused()
+    blacklisted_tickers = get_blacklist()
+
+    if trading_paused:
+        logger.warning("Trading PAUSED via Telegram — skipping new entries")
+
+    # Filter out blacklisted tickers from scored instruments
+    if blacklisted_tickers:
+        pre_count = len(scored)
+        scored = [s for s in scored if s.ticker not in blacklisted_tickers]
+        filtered = pre_count - len(scored)
+        if filtered > 0:
+            logger.info("Blacklist filtered %d tickers: %s", filtered, ", ".join(blacklisted_tickers))
 
     # Step 6: Match strategies
     logger.info("Step 5: Matching strategies...")
-    if defensive:
+    if defensive or trading_paused:
         strategy_signals = []
-        logger.warning("Defensive mode — no new entries")
+        if defensive:
+            logger.warning("Defensive mode — no new entries")
     else:
         strategy_signals = strategy_engine.match_strategies(
             scored,
@@ -240,7 +259,7 @@ def run_pipeline(
     )
 
     # Step 8: Per-trade risk assessment and open new paper positions
-    if not defensive and pt_config.get("auto_enter", True):
+    if not defensive and not trading_paused and pt_config.get("auto_enter", True):
         entry_signals = [s for s in strategy_signals if s.action == "enter_now"]
         approved_signals = []
         for sig in entry_signals:
@@ -466,7 +485,38 @@ def run_pipeline(
             ai_summary=ai_summary or "",
         )
 
-    # Step 17: Save API health
+    # Step 16b: Signal Summary Alert
+    if alert_manager.available and strategy_signals:
+        logger.info("Step 16b: Sending signal summary alert...")
+        send_signal_summary(alert_manager, scored, strategy_signals, crypto_intel=crypto_intel)
+
+    # Step 17: Daily P&L Alert (after market close)
+    if alert_manager.available:
+        logger.info("Step 17: Sending daily P&L alert...")
+        send_daily_pnl_alert(alert_manager)
+
+    # Step 18: Weekly Digest (Sunday only)
+    if alert_manager.available and is_sunday():
+        logger.info("Step 18: Sending weekly performance digest...")
+        send_weekly_digest(alert_manager, regime=regime.regime.value)
+
+    # Step 19: Auto-tune strategy parameters (Sunday only)
+    if should_run_tuner():
+        logger.info("Step 19: Running weekly auto-tuner...")
+        try:
+            tuner_result = run_tuner()
+            if not tuner_result.get("skipped"):
+                logger.info(
+                    "Auto-tuner: analyzed %d trades, applied %d adjustments",
+                    tuner_result.get("trades_analyzed", 0),
+                    tuner_result.get("applied_count", 0),
+                )
+                # Reload strategy configs in paper trader after tuning
+                paper_trader._strategy_configs = paper_trader._load_strategy_configs()
+        except Exception as e:
+            logger.warning("Auto-tuner failed: %s", e)
+
+    # Step 20: Save API health
     health_data = breaker.get_all_health()
     if health_data:
         health_path = Path("data/paper/api_health.json")
@@ -843,11 +893,18 @@ def main():
     parser.add_argument("--backtest", action="store_true", help="Run backtest on historical data")
     parser.add_argument("--start", type=str, help="Backtest start date (YYYY-MM-DD)")
     parser.add_argument("--end", type=str, help="Backtest end date (YYYY-MM-DD)")
+    parser.add_argument("--tune", action="store_true", help="Run auto-tuner now (regardless of day)")
 
     args = parser.parse_args()
 
     if args.remind:
         _send_pipeline_reminder()
+        return
+
+    if args.tune:
+        import json as _json
+        result = run_tuner(force=True)
+        print(_json.dumps(result, indent=2, default=str))
         return
 
     if args.backtest:

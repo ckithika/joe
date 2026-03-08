@@ -372,6 +372,37 @@ def load_api_health() -> dict | None:
     return _load_json(PAPER_DIR / "api_health.json")
 
 
+# ── Bot State (pause / blacklist) ─────────────────────────────────────────────
+
+BOT_STATE_FILE = PAPER_DIR / "bot_state.json"
+
+
+def _load_bot_state() -> dict:
+    """Load bot state from disk."""
+    if BOT_STATE_FILE.exists():
+        try:
+            return json.loads(BOT_STATE_FILE.read_text())
+        except Exception:
+            pass
+    return {"paused": False, "blacklist": [], "paused_at": None}
+
+
+def _save_bot_state(state: dict) -> None:
+    """Save bot state to disk."""
+    BOT_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    BOT_STATE_FILE.write_text(json.dumps(state, indent=2))
+
+
+def is_trading_paused() -> bool:
+    """Check if trading is paused (used by main.py / paper_trader)."""
+    return _load_bot_state().get("paused", False)
+
+
+def get_blacklist() -> list[str]:
+    """Get the current ticker blacklist (used by main.py)."""
+    return _load_bot_state().get("blacklist", [])
+
+
 # ── Formatters ───────────────────────────────────────────────────────────────
 
 
@@ -1046,8 +1077,15 @@ async def cmd_help(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         "/start — Main menu\n"
         "/menu — Main menu\n"
         "/briefing — Quick briefing (regime + AI summary)\n"
-        "/positions — Open positions\n"
-        "/regime — Market regime\n"
+        "/status — Portfolio overview (balance, P&amp;L, regime, risk)\n"
+        "/positions — Open positions with details\n"
+        "/performance — Win rate, Sharpe, best/worst trade\n"
+        "/regime — Market regime\n\n"
+        "<b>Controls:</b>\n"
+        "/pause — Pause new trades (keeps monitoring SL/TP)\n"
+        "/resume — Resume trading\n"
+        "/blacklist TICKER — Block a ticker from scanning\n"
+        "/whitelist TICKER — Unblock a ticker\n\n"
         "/guide — Interactive walkthrough\n"
         "/help — This message\n\n"
         "Use the inline buttons to navigate sections.",
@@ -1097,6 +1135,260 @@ async def cmd_guide(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
         parse_mode="HTML",
         reply_markup=guide_keyboard(0, len(GUIDE_PAGES)),
     )
+
+
+async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Show current portfolio status overview."""
+    if not authorized(update):
+        return
+    perf = load_performance()
+    positions = load_open_positions()
+    regime_data = load_regime()
+    risk = load_risk()
+    bot_state = _load_bot_state()
+
+    if not perf:
+        await update.message.reply_text("No performance data available yet.")
+        return
+
+    balance = perf.get("virtual_balance", 0)
+    starting = perf.get("starting_balance", 500)
+    total_return = ((balance - starting) / starting * 100) if starting else 0
+
+    # Today's P&L: sum unrealized from open positions
+    today_pnl = sum(p.get("unrealized_pnl", 0) for p in positions)
+
+    regime_str = "Unknown"
+    if regime_data:
+        regime_str = regime_data.get("regime", "unknown").replace("_", " ").title()
+
+    risk_str = "Unknown"
+    if risk:
+        risk_str = str(risk.get("risk_level", "unknown")).replace("RiskLevel.", "").title()
+
+    paused = bot_state.get("paused", False)
+    blacklist = bot_state.get("blacklist", [])
+
+    text = (
+        f"📊 <b>Portfolio Status</b>\n\n"
+        f"<b>Balance:</b> ${balance:,.2f} ({total_return:+.1f}%)\n"
+        f"<b>Open Positions:</b> {len(positions)}\n"
+        f"<b>Today's P&amp;L:</b> ${today_pnl:+,.2f}\n"
+        f"<b>Win Rate:</b> {perf.get('win_rate', 0):.0%}\n"
+        f"<b>Total Trades:</b> {perf.get('total_trades', 0)}\n\n"
+        f"<b>Regime:</b> {regime_str}\n"
+        f"<b>Risk Grade:</b> {risk_str}\n\n"
+        f"<b>Trading:</b> {'⏸️ PAUSED' if paused else '▶️ Active'}\n"
+    )
+    if blacklist:
+        text += f"<b>Blacklist:</b> {', '.join(blacklist)}\n"
+
+    await update.message.reply_text(text, parse_mode="HTML", reply_markup=main_menu_keyboard())
+
+
+async def cmd_pause(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Pause trading — skip new entries but keep monitoring existing positions."""
+    if not authorized(update):
+        return
+    state = _load_bot_state()
+    if state.get("paused"):
+        await update.message.reply_text(
+            "⏸️ Trading is already paused.\n\nUse /resume to resume.",
+            parse_mode="HTML",
+        )
+        return
+    state["paused"] = True
+    state["paused_at"] = datetime.now().isoformat()
+    _save_bot_state(state)
+    await update.message.reply_text(
+        "⏸️ <b>Trading Paused</b>\n\n"
+        "New entries are blocked. Existing positions will still be monitored for SL/TP exits.\n\n"
+        "Use /resume to resume trading.",
+        parse_mode="HTML",
+    )
+
+
+async def cmd_resume(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Resume trading after a pause."""
+    if not authorized(update):
+        return
+    state = _load_bot_state()
+    if not state.get("paused"):
+        await update.message.reply_text(
+            "▶️ Trading is already active.\n\nUse /pause to pause.",
+            parse_mode="HTML",
+        )
+        return
+    paused_at = state.get("paused_at", "")
+    state["paused"] = False
+    state["paused_at"] = None
+    _save_bot_state(state)
+
+    duration = ""
+    if paused_at:
+        try:
+            dt = datetime.fromisoformat(paused_at)
+            elapsed = datetime.now() - dt
+            hours = int(elapsed.total_seconds() // 3600)
+            mins = int((elapsed.total_seconds() % 3600) // 60)
+            duration = f"\n\nWas paused for {hours}h {mins}m."
+        except Exception:
+            pass
+
+    await update.message.reply_text(
+        f"▶️ <b>Trading Resumed</b>\n\nNew entries are now allowed.{duration}",
+        parse_mode="HTML",
+    )
+
+
+async def cmd_blacklist(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Add a ticker to the temporary blacklist."""
+    if not authorized(update):
+        return
+    if not context.args:
+        state = _load_bot_state()
+        bl = state.get("blacklist", [])
+        if bl:
+            await update.message.reply_text(
+                f"🚫 <b>Current Blacklist</b>\n\n{', '.join(bl)}\n\n"
+                "Usage: /blacklist TICKER",
+                parse_mode="HTML",
+            )
+        else:
+            await update.message.reply_text(
+                "🚫 <b>Blacklist is empty.</b>\n\nUsage: /blacklist TICKER",
+                parse_mode="HTML",
+            )
+        return
+
+    ticker = context.args[0].upper()
+    state = _load_bot_state()
+    blacklist = state.get("blacklist", [])
+    if ticker in blacklist:
+        await update.message.reply_text(
+            f"🚫 {ticker} is already blacklisted.",
+            parse_mode="HTML",
+        )
+        return
+    blacklist.append(ticker)
+    state["blacklist"] = blacklist
+    _save_bot_state(state)
+    await update.message.reply_text(
+        f"🚫 <b>{ticker} blacklisted.</b>\n\n"
+        f"It will be skipped in scanning. Use /whitelist {ticker} to remove.",
+        parse_mode="HTML",
+    )
+
+
+async def cmd_whitelist(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Remove a ticker from the blacklist."""
+    if not authorized(update):
+        return
+    if not context.args:
+        await update.message.reply_text(
+            "Usage: /whitelist TICKER\n\nRemoves a ticker from the blacklist.",
+            parse_mode="HTML",
+        )
+        return
+
+    ticker = context.args[0].upper()
+    state = _load_bot_state()
+    blacklist = state.get("blacklist", [])
+    if ticker not in blacklist:
+        await update.message.reply_text(
+            f"✅ {ticker} is not on the blacklist.",
+            parse_mode="HTML",
+        )
+        return
+    blacklist.remove(ticker)
+    state["blacklist"] = blacklist
+    _save_bot_state(state)
+    await update.message.reply_text(
+        f"✅ <b>{ticker} removed from blacklist.</b>",
+        parse_mode="HTML",
+    )
+
+
+async def cmd_performance(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Show detailed performance: win rate, best/worst, Sharpe, etc."""
+    if not authorized(update):
+        return
+    perf = load_performance()
+    analytics = load_analytics()
+    trades = load_trade_history(100)  # Load more for best/worst
+
+    if not perf:
+        await update.message.reply_text("No performance data available yet.")
+        return
+
+    balance = perf.get("virtual_balance", 0)
+    starting = perf.get("starting_balance", 500)
+    total_return = ((balance - starting) / starting * 100) if starting else 0
+    total_trades = perf.get("total_trades", 0)
+    wins = perf.get("wins", 0)
+    losses = perf.get("losses", 0)
+    win_rate = perf.get("win_rate", 0)
+    pf = perf.get("profit_factor", 0)
+    expectancy = perf.get("expectancy", 0)
+    sharpe = perf.get("sharpe_ratio", 0)
+    max_dd = perf.get("max_drawdown_pct", 0)
+    avg_r = perf.get("avg_r_multiple", 0)
+
+    # Use portfolio analytics for better metrics if available
+    if analytics:
+        sharpe = analytics.get("sharpe_ratio", sharpe)
+        max_dd = analytics.get("max_drawdown_pct", max_dd)
+
+    # Find best and worst trade
+    best_trade = None
+    worst_trade = None
+    if trades:
+        pnl_trades = []
+        for t in trades:
+            try:
+                pnl_trades.append((float(t.get("pnl", 0)), t))
+            except (ValueError, TypeError):
+                pass
+        if pnl_trades:
+            pnl_trades.sort(key=lambda x: x[0])
+            worst_pnl, worst_trade = pnl_trades[0]
+            best_pnl, best_trade = pnl_trades[-1]
+
+    text = (
+        f"📈 <b>Performance Report</b>\n\n"
+        f"<b>Balance:</b> ${balance:,.2f} ({total_return:+.1f}%)\n"
+        f"<b>Starting:</b> ${starting:,.2f}\n\n"
+        f"<b>Trades:</b> {total_trades} (W: {wins} / L: {losses})\n"
+        f"<b>Win Rate:</b> {win_rate:.0%}\n"
+        f"<b>Profit Factor:</b> {pf:.2f}\n"
+        f"<b>Expectancy:</b> ${expectancy:,.2f}\n"
+        f"<b>Avg R-Multiple:</b> {avg_r:.2f}\n\n"
+        f"<b>Sharpe Ratio:</b> {sharpe:.2f}\n"
+        f"<b>Max Drawdown:</b> {max_dd:.1f}%\n"
+    )
+
+    if best_trade:
+        text += (
+            f"\n<b>Best Trade:</b> {best_trade.get('ticker', '?')} "
+            f"${float(best_trade.get('pnl', 0)):+,.2f}\n"
+        )
+    if worst_trade:
+        text += (
+            f"<b>Worst Trade:</b> {worst_trade.get('ticker', '?')} "
+            f"${float(worst_trade.get('pnl', 0)):+,.2f}\n"
+        )
+
+    # Strategy breakdown
+    strat_metrics = perf.get("strategy_metrics", {})
+    if strat_metrics:
+        text += "\n<b>By Strategy:</b>\n"
+        for strat, m in strat_metrics.items():
+            s_trades = m.get("total_trades", 0)
+            s_wr = m.get("win_rate", 0)
+            s_pnl = m.get("pnl", 0)
+            text += f"  {strat}: {s_trades} trades, {s_wr:.0%} WR, ${s_pnl:+,.2f}\n"
+
+    await update.message.reply_text(text[:4096], parse_mode="HTML", reply_markup=portfolio_keyboard())
 
 
 # ── Callback Router ──────────────────────────────────────────────────────────
@@ -1306,6 +1598,12 @@ def main() -> None:
     app.add_handler(CommandHandler("positions", cmd_positions))
     app.add_handler(CommandHandler("regime", cmd_regime))
     app.add_handler(CommandHandler("guide", cmd_guide))
+    app.add_handler(CommandHandler("status", cmd_status))
+    app.add_handler(CommandHandler("pause", cmd_pause))
+    app.add_handler(CommandHandler("resume", cmd_resume))
+    app.add_handler(CommandHandler("blacklist", cmd_blacklist))
+    app.add_handler(CommandHandler("whitelist", cmd_whitelist))
+    app.add_handler(CommandHandler("performance", cmd_performance))
 
     # Inline button callbacks
     app.add_handler(CallbackQueryHandler(handle_callback))
