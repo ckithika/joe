@@ -17,6 +17,7 @@ from pathlib import Path
 import yaml
 
 from agent.alerts import AlertManager
+from agent.file_lock import locked_write_json
 
 logger = logging.getLogger(__name__)
 
@@ -462,7 +463,7 @@ def _log_tuning(adjustments: list[dict], metrics: dict[str, dict]):
 
     # Keep last 52 weeks of tuning history
     existing = existing[-52:]
-    TUNING_LOG_FILE.write_text(json.dumps(existing, indent=2))
+    locked_write_json(TUNING_LOG_FILE, existing)
     logger.info("Tuning log updated: %s", TUNING_LOG_FILE)
 
 

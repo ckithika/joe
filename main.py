@@ -10,6 +10,8 @@ import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
+from agent.file_lock import locked_write_json
+
 import yaml
 from dotenv import load_dotenv
 
@@ -77,19 +79,8 @@ logger = logging.getLogger("main")
 
 
 def _atomic_write_json(path: Path, data):
-    """Write JSON atomically via temp file + os.replace to prevent corruption."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w") as f:
-            json.dump(data, f, indent=2, default=str)
-        os.replace(tmp, path)
-    except BaseException:
-        try:
-            os.unlink(tmp)
-        except OSError:
-            pass
-        raise
+    """Write JSON atomically with cross-process file lock."""
+    locked_write_json(path, data)
 
 
 def load_config(name: str) -> dict:

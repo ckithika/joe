@@ -27,6 +27,8 @@ import time
 from datetime import date, datetime, timedelta
 from pathlib import Path
 
+from agent.file_lock import locked_write_json
+
 import yaml
 from dotenv import load_dotenv
 
@@ -247,19 +249,8 @@ def load_session_state() -> dict:
 
 
 def _atomic_write_json(path: Path, data):
-    """Write JSON atomically via temp file + os.replace to prevent corruption."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
-    try:
-        with os.fdopen(fd, "w") as f:
-            json.dump(data, f, indent=2)
-        os.replace(tmp, path)
-    except BaseException:
-        try:
-            os.unlink(tmp)
-        except OSError:
-            pass
-        raise
+    """Write JSON atomically with cross-process file lock."""
+    locked_write_json(path, data)
 
 
 def save_session_state(state: dict):
@@ -430,8 +421,7 @@ def capture_opening_range(
                 }
 
     result = {"date": today, "ranges": ranges}
-    OPENING_RANGE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    OPENING_RANGE_FILE.write_text(json.dumps(result, indent=2))
+    locked_write_json(OPENING_RANGE_FILE, result)
     logger.info("Opening range captured for %d instruments", len(ranges))
     return result
 

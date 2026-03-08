@@ -11,6 +11,8 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from agent.file_lock import locked_read_json, locked_write_json
+
 from dotenv import load_dotenv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import (
@@ -385,18 +387,13 @@ BOT_STATE_FILE = PAPER_DIR / "bot_state.json"
 
 def _load_bot_state() -> dict:
     """Load bot state from disk."""
-    if BOT_STATE_FILE.exists():
-        try:
-            return json.loads(BOT_STATE_FILE.read_text())
-        except Exception:
-            pass
-    return {"paused": False, "blacklist": [], "paused_at": None}
+    default = {"paused": False, "blacklist": [], "paused_at": None}
+    return locked_read_json(BOT_STATE_FILE, default=default) or default
 
 
 def _save_bot_state(state: dict) -> None:
     """Save bot state to disk."""
-    BOT_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    BOT_STATE_FILE.write_text(json.dumps(state, indent=2))
+    locked_write_json(BOT_STATE_FILE, state)
 
 
 def is_trading_paused() -> bool:

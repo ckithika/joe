@@ -8,6 +8,7 @@ import pandas as pd
 import yaml
 
 from agent import analyzer
+from agent.file_lock import locked_write_json
 from agent.models import MarketRegime, RegimeAssessment
 
 logger = logging.getLogger(__name__)
@@ -52,16 +53,13 @@ class RegimeDetector:
             self._regime_start_date = today
         self._last_regime = regime
 
-        self._regime_history_file.parent.mkdir(parents=True, exist_ok=True)
-        self._regime_history_file.write_text(
-            json.dumps(
-                {
-                    "current_regime": regime.value,
-                    "regime_start_date": self._regime_start_date,
-                    "last_updated": today,
-                },
-                indent=2,
-            )
+        locked_write_json(
+            self._regime_history_file,
+            {
+                "current_regime": regime.value,
+                "regime_start_date": self._regime_start_date,
+                "last_updated": today,
+            },
         )
 
     def detect(
@@ -220,13 +218,12 @@ class RegimeDetector:
         adx_history: list[float] | None = None,
     ):
         output = Path("data/paper/regime.json")
-        output.parent.mkdir(parents=True, exist_ok=True)
         data = asdict(assessment)
         data["regime"] = assessment.regime.value
         data["timestamp"] = assessment.timestamp.isoformat()
         data["vix_history"] = vix_history or []
         data["adx_history"] = adx_history or []
-        output.write_text(json.dumps(data, indent=2, default=str))
+        locked_write_json(output, data)
 
     def _append_daily_log(self, assessment: RegimeAssessment):
         """Append today's regime data to a daily log for historical tracking."""
@@ -252,4 +249,4 @@ class RegimeDetector:
 
         # Keep last 90 days
         log = log[-90:]
-        self._daily_log_file.write_text(json.dumps(log, indent=2))
+        locked_write_json(self._daily_log_file, log)

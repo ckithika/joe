@@ -10,6 +10,8 @@ from pathlib import Path
 import pandas as pd
 import requests
 
+from agent.file_lock import locked_write_json
+
 logger = logging.getLogger(__name__)
 
 
@@ -370,7 +372,7 @@ class CryptoOvernightMonitor:
         return {}
 
     def _save_state(self, state: dict):
-        self.state_file.write_text(json.dumps(state, indent=2, default=str))
+        locked_write_json(self.state_file, state)
 
     def check_overnight(self) -> list[CryptoOvernightSignal]:
         """Check for overnight crypto signals. Call this each morning."""

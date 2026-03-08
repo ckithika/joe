@@ -659,21 +659,32 @@ ai-trading-agent/
 │   ├── scorer.py               # Composite scoring engine
 │   ├── news.py                 # News sentiment (Alpha Vantage + Finnhub)
 │   ├── regime.py               # Market regime detection
-│   ├── strategy.py             # Strategy matching engine (4 strategies)
+│   ├── strategy.py             # Strategy matching engine (delegates to strategies/)
+│   ├── strategies/             # Pluggable strategy modules
+│   │   ├── base.py             # BaseStrategy ABC
+│   │   ├── registry.py         # Auto-discovery registry
+│   │   ├── trend_following.py, mean_reversion.py, breakout.py, ...
 │   ├── risk_profiler.py        # 5-dimension risk assessment
-│   ├── paper_trader.py         # Virtual portfolio manager
+│   ├── paper_trader.py         # Portfolio facade (composes below 3)
+│   ├── position_manager.py     # Position entry/exit logic and guardrails
+│   ├── pnl_calculator.py       # P&L computation and trade journaling
+│   ├── performance_tracker.py  # Metrics aggregation (Sharpe, drawdown)
+│   ├── file_lock.py            # Cross-process file locking (fcntl.flock)
 │   ├── reporter.py             # Report generation (MD, CSV, JSON)
 │   ├── cache.py                # Market data caching
 │   ├── ai_analyst.py           # Gemini AI integration
 │   ├── after_hours.py          # After-hours strategies (gaps, crypto 24/7, pre-market)
-│   ├── backtester.py           # Historical backtest engine
+│   ├── backtester.py           # Historical backtest engine (with slippage/commission)
 │   ├── crypto_data.py          # Crypto intelligence
 │   ├── stock_extras.py         # Stock intelligence (earnings, breadth, etc.)
 │   ├── resilience.py           # Circuit breaker + retry with backoff
 │   ├── alerts.py               # Telegram + Discord notifications
+│   ├── config_validator.py     # Startup config and env validation
+│   ├── risk_profiles.py        # Conservative/moderate/aggressive presets
 │   └── portfolio_analytics.py  # Sharpe, Sortino, equity curve, drawdown
 │
 ├── brokers/                    # Broker API clients
+│   ├── base.py                 # Abstract broker interface (BaseBroker ABC)
 │   ├── ibkr_client.py          # Interactive Brokers (via ib_insync)
 │   └── capital_client.py       # Capital.com REST API
 │
@@ -694,7 +705,7 @@ ai-trading-agent/
 │   ├── findings/               # Daily findings (MD + JSON)
 │   └── reports/                # Daily reports + backtest results
 │
-└── tests/                      # Unit tests (281 tests)
+└── tests/                      # Unit tests (344 tests)
 ```
 
 ---
@@ -799,8 +810,10 @@ These are hardcoded and cannot be overridden:
 - **Capital.com demo only** — `CAPITAL_DEMO` must be `true`
 - **No order execution** — No `placeOrder()` or equivalent exists in the code
 - **Paper positions only** — All trades are virtual entries
-- **Position limits** — Max 3 concurrent, 2% risk, 10-day max hold
+- **Position limits** — Max 3 concurrent, 3% risk, configurable max hold
 - **Defensive mode** — Auto-stops new entries during dangerous conditions
+- **File locking** — All shared state files use cross-process `fcntl.flock()` locks
+- **Docker non-root** — Container runs as unprivileged `joeai` user
 
 ---
 
@@ -808,9 +821,10 @@ These are hardcoded and cannot be overridden:
 
 | File | Updated By | Purpose |
 |------|-----------|---------|
-| `data/paper/open_positions.json` | Paper trader | Current virtual positions |
-| `data/paper/trade_history.csv` | Paper trader | All closed trades with P&L |
-| `data/paper/performance.json` | Paper trader | Portfolio metrics (Sharpe, Win Rate) |
+| `data/paper/open_positions.json` | PositionManager | Current virtual positions (file-locked) |
+| `data/paper/trade_history.csv` | PnLCalculator | All closed trades with P&L (file-locked) |
+| `data/paper/performance.json` | PerformanceTracker | Portfolio metrics (Sharpe, Win Rate) (file-locked) |
+| `data/paper/bot_state.json` | Telegram bot | Pause/resume state, blacklist (file-locked) |
 | `data/paper/regime.json` | Regime detector | Current regime + VIX/ADX sparklines |
 | `data/paper/risk_assessment.json` | Risk profiler | Portfolio risk scores |
 | `data/paper/behavior_log.json` | Dashboard | Decision tracking for behavioral risk |
@@ -845,7 +859,7 @@ These are hardcoded and cannot be overridden:
 ## Running Tests
 
 ```bash
-pytest tests/ -v                                    # All 281 tests
+pytest tests/ -v                                    # All 344 tests
 pytest tests/test_analyzer.py -v                    # Specific file
 pytest tests/ --cov=agent --cov-report=term-missing # With coverage
 ```

@@ -7,6 +7,7 @@ from pathlib import Path
 
 import yaml
 
+from agent.file_lock import locked_write_json
 from agent.models import (
     AlertSeverity,
     BehaviorEntry,
@@ -564,12 +565,10 @@ class RiskProfiler:
         return []
 
     def _save_behavior_log(self):
-        self.data_dir.mkdir(parents=True, exist_ok=True)
-        self.behavior_file.write_text(json.dumps(self.behavior_log, indent=2))
+        locked_write_json(self.behavior_file, self.behavior_log)
 
     def _save_assessment(self, assessment: RiskAssessment):
         output = self.data_dir / "risk_assessment.json"
-        output.parent.mkdir(parents=True, exist_ok=True)
         data = {
             "composite_score": assessment.composite_score,
             "risk_level": assessment.risk_level.value,
@@ -583,4 +582,4 @@ class RiskProfiler:
             "alerts": [{"severity": a.severity.value, "message": a.message} for a in assessment.all_alerts],
             "timestamp": datetime.now().isoformat(),
         }
-        output.write_text(json.dumps(data, indent=2))
+        locked_write_json(output, data)

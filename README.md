@@ -340,7 +340,7 @@ The Crypto menu is hidden when the crypto module is disabled.
 
 ## Paper Trading
 
-The paper trader manages virtual positions with the same logic a real portfolio would use:
+The paper trader manages virtual positions with the same logic a real portfolio would use. Internally it delegates to three focused modules: **PositionManager** (entry/exit logic), **PnLCalculator** (trade journaling), and **PerformanceTracker** (metrics aggregation).
 
 - **Position sizing:** 3% risk per trade (configurable via risk profile), adjusted by regime modifier
 - **Entry:** auto-opens positions when signals pass risk profiler approval
@@ -447,6 +447,8 @@ Full history of every closed trade with setup type, duration, session window, ex
 
 - `data/paper/` and `data/findings/` are **committed to git** — synced across cloud and local via `git push/pull`
 - `data/cache/` and `data/reports/` are **gitignored** — temporary/regenerable files only
+- All shared state files use **cross-process file locking** (`fcntl.flock`) — safe for concurrent access from main.py, monitor.py, and telegram_bot.py
+- JSON writes are **atomic** (tempfile + `os.replace`) inside exclusive locks to prevent corruption
 
 ## Scheduled Runs
 
@@ -605,6 +607,7 @@ schedule:
 |------|---------|
 | `config/strategies.yaml` | Strategy definitions, regime rules, entry/exit conditions |
 | `config/strategies_baseline.yaml` | Original strategy params (baseline for auto-tuner ±20% range) |
+| `config/trading.yaml` | Market hours, holidays, risk controls, circuit breakers |
 | `config/paper_trader.yaml` | Starting balance, risk per trade, max positions |
 | `config/risk_profiler.yaml` | Risk dimension weights, thresholds, hard blocks |
 | `config/scoring.yaml` | Technical/sentiment/volume weights |
@@ -666,8 +669,22 @@ ai-trading-agent/
 ├── agent/
 │   ├── scanner.py           # Market scanning (IBKR + Capital.com)
 │   ├── scorer.py            # Technical + sentiment scoring
-│   ├── strategy.py          # 4-strategy intraday matching engine
-│   ├── paper_trader.py      # Virtual portfolio management
+│   ├── strategy.py          # Strategy matching engine (delegates to strategies/)
+│   ├── strategies/          # Pluggable strategy modules (BaseStrategy + registry)
+│   │   ├── base.py          # Abstract base class for all strategies
+│   │   ├── registry.py      # Auto-discovery registry for strategy plugins
+│   │   ├── trend_following.py
+│   │   ├── mean_reversion.py
+│   │   ├── breakout.py
+│   │   ├── momentum.py
+│   │   ├── day_trade.py
+│   │   ├── opening_range_breakout.py
+│   │   └── vwap_bounce.py
+│   ├── paper_trader.py      # Portfolio facade (composes the three below)
+│   ├── position_manager.py  # Position entry/exit logic and guardrails
+│   ├── pnl_calculator.py    # P&L computation and trade journaling
+│   ├── performance_tracker.py # Metrics aggregation (Sharpe, drawdown, etc.)
+│   ├── file_lock.py         # Cross-process file locking for shared state
 │   ├── risk_profiler.py     # 5-dimension risk assessment
 │   ├── regime.py            # Market regime detection
 │   ├── ai_analyst.py        # Gemini AI summaries + trade analysis
@@ -687,11 +704,13 @@ ai-trading-agent/
 │   ├── risk_profiles.py     # Conservative/moderate/aggressive risk presets
 │   └── config_validator.py  # Startup config and env validation
 ├── brokers/
+│   ├── base.py              # Abstract broker interface
 │   ├── ibkr_client.py       # Interactive Brokers TWS client
 │   └── capital_client.py    # Capital.com REST API client
 ├── config/
 │   ├── strategies.yaml      # Strategy definitions
 │   ├── strategies_baseline.yaml # Baseline for auto-tuner
+│   ├── trading.yaml         # Market hours, holidays, risk controls
 │   ├── paper_trader.yaml    # Paper trading settings
 │   ├── risk_profiler.yaml   # Risk assessment config
 │   ├── scoring.yaml         # Scoring weights
@@ -794,6 +813,17 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on submitting changes.
 - Check `data/paper/tuning_log.json` for history
 
 ## Changelog
+
+### 2026-03-09 — Production Hardening
+
+- **Strategy pattern** — Extracted 7 strategies into pluggable `agent/strategies/` package with base class + auto-discovery registry
+- **PaperTrader decomposition** — Split 795-line monolith into PositionManager, PnLCalculator, and PerformanceTracker (facade preserved for backward compatibility)
+- **Cross-process file locking** — `agent/file_lock.py` with `fcntl.flock()` locks on all shared JSON/CSV state files
+- **Broker abstraction** — `BaseBroker` ABC in `brokers/base.py`; IBKR and Capital.com inherit from it
+- **Config consolidation** — Moved hardcoded values (market hours, holidays, risk controls) into `config/trading.yaml`
+- **Backtester realism** — Slippage (0.05%) and commission ($1/trade) modeling for accurate P&L simulation
+- **Security** — Non-root Docker user, silent `except: pass` blocks now log errors, safe API response handling
+- **344 tests** — 63 new tests covering strategies, config validation, risk profiles, broker base, file locking
 
 ### 2026-03-08 (Evening) — Day Trading Pivot
 - **Strategy overhaul** — disabled swing strategies, added Opening Range Breakout (ORB) and VWAP Bounce
