@@ -29,6 +29,8 @@ class BacktestConfig:
     max_hold_days: int = 10
     stop_loss_atr: float = 1.5
     take_profit_atr: float = 3.0
+    slippage_pct: float = 0.05  # 0.05% slippage per trade (entry + exit)
+    commission_per_trade: float = 1.0  # $1 per trade (round trip)
 
 
 @dataclass
@@ -50,6 +52,8 @@ class BacktestTrade:
     r_multiple: float = 0.0
     days_held: int = 0
     signal_score: float = 0.0
+    slippage_cost: float = 0.0
+    commission_cost: float = 0.0
 
 
 @dataclass
@@ -70,6 +74,8 @@ class BacktestResult:
     sharpe_ratio: float
     max_drawdown_pct: float
     avg_r_multiple: float
+    total_slippage_cost: float = 0.0
+    total_commission_cost: float = 0.0
     best_trade: dict = field(default_factory=dict)
     worst_trade: dict = field(default_factory=dict)
     strategy_breakdown: dict = field(default_factory=dict)
@@ -389,14 +395,30 @@ class Backtester:
         return "open"
 
     def _close_position(self, pos: dict, exit_price: float, reason: str) -> BacktestTrade:
-        if pos["direction"] == "LONG":
-            pnl = (exit_price - pos["entry_price"]) * pos["position_size"]
-        else:
-            pnl = (pos["entry_price"] - exit_price) * pos["position_size"]
+        entry_price = pos["entry_price"]
+        slippage_per_share = entry_price * (self.config.slippage_pct / 100)
 
-        risk_amount = abs(pos["entry_price"] - pos["stop_loss"]) * pos["position_size"]
+        # Apply slippage: buy higher on entry, sell lower on exit (LONG)
+        # Sell lower on entry, buy higher on exit (SHORT)
+        if pos["direction"] == "LONG":
+            adj_entry = entry_price + slippage_per_share
+            adj_exit = exit_price - slippage_per_share
+            pnl = (adj_exit - adj_entry) * pos["position_size"]
+        else:
+            adj_entry = entry_price - slippage_per_share
+            adj_exit = exit_price + slippage_per_share
+            pnl = (adj_entry - adj_exit) * pos["position_size"]
+
+        # Total slippage cost = 2x per-share slippage (entry + exit) * size
+        slippage_cost = round(2 * slippage_per_share * pos["position_size"], 2)
+        commission_cost = round(self.config.commission_per_trade, 2)
+
+        # Deduct commission from PnL
+        pnl -= commission_cost
+
+        risk_amount = abs(entry_price - pos["stop_loss"]) * pos["position_size"]
         r_multiple = pnl / risk_amount if risk_amount > 0 else 0
-        cost_basis = pos["entry_price"] * pos["position_size"]
+        cost_basis = entry_price * pos["position_size"]
         pnl_pct = (pnl / cost_basis * 100) if cost_basis > 0 else 0
 
         return BacktestTrade(
@@ -417,6 +439,8 @@ class Backtester:
             r_multiple=round(r_multiple, 2),
             days_held=pos["days_held"],
             signal_score=pos.get("signal_score", 0),
+            slippage_cost=slippage_cost,
+            commission_cost=commission_cost,
         )
 
     def _unrealized_pnl(self, pos: dict, data: dict, current_date: date) -> float:
@@ -515,6 +539,9 @@ class Backtester:
             v["win_rate"] = round(v["wins"] / v["trades"], 3) if v["trades"] > 0 else 0
             v["pnl"] = round(v["pnl"], 2)
 
+        total_slippage = round(sum(t.slippage_cost for t in trades), 2)
+        total_commission = round(sum(t.commission_cost for t in trades), 2)
+
         best = max(trades, key=lambda t: t.pnl) if trades else None
         worst = min(trades, key=lambda t: t.pnl) if trades else None
 
@@ -535,6 +562,8 @@ class Backtester:
             sharpe_ratio=sharpe,
             max_drawdown_pct=round(max_dd * 100, 2),
             avg_r_multiple=round(sum(r_multiples) / len(r_multiples), 2) if r_multiples else 0,
+            total_slippage_cost=total_slippage,
+            total_commission_cost=total_commission,
             best_trade=asdict(best) if best else {},
             worst_trade=asdict(worst) if worst else {},
             strategy_breakdown=dict(strat_map),
@@ -567,6 +596,11 @@ class Backtester:
         print(f"  Avg R-Multiple: {result.avg_r_multiple:.2f}")
         print(f"  Sharpe Ratio:   {result.sharpe_ratio:.2f}")
         print(f"  Max Drawdown:   {result.max_drawdown_pct:.1f}%")
+
+        total_costs = result.total_slippage_cost + result.total_commission_cost
+        print(f"\n  Trading Costs:  ${total_costs:.2f}")
+        print(f"    Slippage:     ${result.total_slippage_cost:.2f}")
+        print(f"    Commissions:  ${result.total_commission_cost:.2f}")
 
         if result.best_trade:
             print(
