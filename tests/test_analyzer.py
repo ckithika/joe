@@ -5,10 +5,10 @@ import pandas as pd
 import pytest
 
 from agent.analyzer import (
+    analyze,
     compute_composite,
     compute_indicators,
     compute_signals,
-    analyze,
 )
 
 

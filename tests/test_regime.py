@@ -24,13 +24,15 @@ def make_spy_df(
     else:
         prices = 450 + np.random.randn(n) * 2
 
-    return pd.DataFrame({
-        "open": prices + np.random.randn(n) * 0.1,
-        "high": prices + abs(np.random.randn(n) * 1),
-        "low": prices - abs(np.random.randn(n) * 1),
-        "close": prices,
-        "volume": np.random.randint(50_000_000, 200_000_000, n),
-    })
+    return pd.DataFrame(
+        {
+            "open": prices + np.random.randn(n) * 0.1,
+            "high": prices + abs(np.random.randn(n) * 1),
+            "low": prices - abs(np.random.randn(n) * 1),
+            "close": prices,
+            "volume": np.random.randint(50_000_000, 200_000_000, n),
+        }
+    )
 
 
 def make_vix_df(vix_value: float = 18.0, n: int = 30) -> pd.DataFrame:

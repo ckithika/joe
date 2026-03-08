@@ -4,7 +4,6 @@ import json
 import logging
 import os
 from dataclasses import dataclass, field
-from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +54,7 @@ class AIAnalyst:
             if not self.api_key:
                 raise ValueError("GEMINI_API_KEY not set")
             from google import genai
+
             self._client = genai.Client(api_key=self.api_key)
         return self._client
 
@@ -128,9 +128,15 @@ Respond in JSON with exactly these fields:
     # ── Pre-Trade Analysis (Devil's Advocate) ─────────────────────
 
     def analyze_trade(
-        self, ticker: str, direction: str, strategy: str,
-        entry_price: float, stop_loss: float, take_profit: float,
-        setup_description: str, regime: str,
+        self,
+        ticker: str,
+        direction: str,
+        strategy: str,
+        entry_price: float,
+        stop_loss: float,
+        take_profit: float,
+        setup_description: str,
+        regime: str,
     ) -> TradeAnalysis | None:
         """Run devil's advocate analysis before entering a trade."""
         if not self.available:
@@ -180,8 +186,11 @@ Respond in JSON:
     # ── Daily Briefing Summary ────────────────────────────────────
 
     def generate_daily_summary(
-        self, regime: str, confidence: float,
-        signals: list[dict], positions: list[dict],
+        self,
+        regime: str,
+        confidence: float,
+        signals: list[dict],
+        positions: list[dict],
         performance: dict,
         crypto_intel: dict | None = None,
         stock_intel: dict | None = None,
@@ -290,9 +299,13 @@ Respond in JSON:
     # ── Crypto-Specific Analysis ──────────────────────────────────
 
     def analyze_crypto_market(
-        self, btc_price: float, eth_price: float,
-        btc_rsi: float, eth_rsi: float,
-        btc_sentiment: float, eth_sentiment: float,
+        self,
+        btc_price: float,
+        eth_price: float,
+        btc_rsi: float,
+        eth_rsi: float,
+        btc_sentiment: float,
+        eth_sentiment: float,
     ) -> str | None:
         """Crypto-specific market analysis with on-chain context."""
         if not self.available:

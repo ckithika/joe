@@ -6,31 +6,30 @@ import pandas as pd
 import pytest
 
 from agent.crypto_data import (
+    CorrelationMatrix,
     CryptoDataCollector,
     CryptoIntelligence,
-    FearGreedIndex,
+    DefiSnapshot,
     DominanceData,
+    FearGreedIndex,
     FundingRate,
+    GasData,
+    HashRateData,
     OpenInterestData,
     StablecoinSupply,
-    HashRateData,
-    DefiSnapshot,
-    GasData,
     WhaleActivity,
-    CorrelationMatrix,
     compute_correlations,
-    fetch_fear_greed,
-    fetch_dominance,
-    fetch_funding_rate,
-    fetch_open_interest,
-    fetch_stablecoin_supply,
-    fetch_hash_rate,
     estimate_liquidation_levels,
     fetch_defi_snapshot,
+    fetch_dominance,
+    fetch_fear_greed,
+    fetch_funding_rate,
     fetch_gas_data,
+    fetch_hash_rate,
+    fetch_open_interest,
+    fetch_stablecoin_supply,
     fetch_whale_activity,
 )
-
 
 # ── Fear & Greed ─────────────────────────────────────────────────
 
@@ -222,8 +221,11 @@ class TestLiquidation:
         mock_get.return_value = MagicMock(json=lambda: {"price": "50000"})
         mock_get.return_value.raise_for_status = MagicMock()
         mock_funding.return_value = FundingRate(
-            symbol="BTCUSDT", rate=0.0005, annualized=54.75,
-            next_funding_time="", direction="long_pay",
+            symbol="BTCUSDT",
+            rate=0.0005,
+            annualized=54.75,
+            next_funding_time="",
+            direction="long_pay",
         )
 
         result = estimate_liquidation_levels("BTCUSDT")
@@ -325,6 +327,7 @@ class TestWhaleActivity:
 class TestCorrelations:
     def test_compute_with_enough_data(self):
         import numpy as np
+
         np.random.seed(42)
         n = 35
         price_data = {
@@ -361,7 +364,9 @@ class TestCryptoDataCollector:
         intel = CryptoIntelligence(
             timestamp="2024-01-01",
             fear_greed=FearGreedIndex(value=25, classification="Extreme Fear", timestamp="", history_7d=[30]),
-            dominance=DominanceData(btc_dominance=56, eth_dominance=17, total_market_cap=2e12, btc_market_cap=1.1e12, eth_market_cap=3.4e11),
+            dominance=DominanceData(
+                btc_dominance=56, eth_dominance=17, total_market_cap=2e12, btc_market_cap=1.1e12, eth_market_cap=3.4e11
+            ),
         )
         result = collector.to_dict(intel)
         assert result["fear_greed"]["value"] == 25

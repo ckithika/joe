@@ -4,7 +4,7 @@ import json
 import logging
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -34,21 +34,22 @@ class EarningsGapSignal:
     2. Gap CONTINUATION: Strong gaps (>5%) with volume often keep going.
        The gap is the START of a move, not the end.
     """
+
     ticker: str
-    gap_pct: float              # +3.5 = gapped up 3.5%, -7.2 = gapped down 7.2%
-    gap_direction: str          # "up" or "down"
-    gap_size: str               # "small" (<3%), "medium" (3-7%), "large" (>7%)
+    gap_pct: float  # +3.5 = gapped up 3.5%, -7.2 = gapped down 7.2%
+    gap_direction: str  # "up" or "down"
+    gap_size: str  # "small" (<3%), "medium" (3-7%), "large" (>7%)
     previous_close: float
     open_price: float
-    strategy: str               # "gap_fill" or "gap_continuation"
+    strategy: str  # "gap_fill" or "gap_continuation"
     entry_price: float
     stop_loss: float
     take_profit: float
-    direction: str              # "LONG" or "SHORT"
-    confidence: float           # 0.0 to 1.0
+    direction: str  # "LONG" or "SHORT"
+    confidence: float  # 0.0 to 1.0
     reasoning: str
-    earnings_time: str          # "bmo" or "amc" or "unknown"
-    volume_confirmation: bool   # Was there above-average volume?
+    earnings_time: str  # "bmo" or "amc" or "unknown"
+    volume_confirmation: bool  # Was there above-average volume?
 
 
 @dataclass
@@ -65,11 +66,12 @@ class CryptoOvernightSignal:
     - Open interest spikes (>5% increase = new money entering)
     - Liquidation cascades (sudden OI drops with large price moves)
     """
-    symbol: str                 # "BTCUSDT" or "ETHUSDT"
-    signal_type: str            # "overnight_move", "funding_flip", "oi_spike", "fear_shift"
-    direction: str              # "LONG" or "SHORT"
-    strength: str               # "weak", "moderate", "strong"
-    price_change_pct: float     # Overnight price change
+
+    symbol: str  # "BTCUSDT" or "ETHUSDT"
+    signal_type: str  # "overnight_move", "funding_flip", "oi_spike", "fear_shift"
+    direction: str  # "LONG" or "SHORT"
+    strength: str  # "weak", "moderate", "strong"
+    price_change_pct: float  # Overnight price change
     current_price: float
     entry_price: float
     stop_loss: float
@@ -97,26 +99,28 @@ class PreMarketMover:
     - Gap-up + fades below open = gap-fill short
     - Volume is key — high volume gaps are more likely to continue
     """
+
     ticker: str
     previous_close: float
     premarket_price: float
     gap_pct: float
     premarket_volume: int
     avg_daily_volume: int
-    volume_ratio: float         # premarket vol / avg daily vol
-    catalyst: str               # "earnings", "news", "sector", "unknown"
-    action: str                 # "watch_long", "watch_short", "avoid"
+    volume_ratio: float  # premarket vol / avg daily vol
+    catalyst: str  # "earnings", "news", "sector", "unknown"
+    action: str  # "watch_long", "watch_short", "avoid"
     reasoning: str
 
 
 @dataclass
 class AfterHoursIntelligence:
     """Combined after-hours intelligence report."""
+
     earnings_gaps: list[EarningsGapSignal] = field(default_factory=list)
     crypto_overnight: list[CryptoOvernightSignal] = field(default_factory=list)
     premarket_movers: list[PreMarketMover] = field(default_factory=list)
     timestamp: str = ""
-    session: str = ""           # "pre_market", "post_market", "regular", "weekend"
+    session: str = ""  # "pre_market", "post_market", "regular", "weekend"
 
 
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -430,26 +434,27 @@ class CryptoOvernightMonitor:
                     sl = price * (1 + sl_mult)
                     tp = price * (1 - tp_mult)
 
-                signals.append(CryptoOvernightSignal(
-                    symbol=symbol,
-                    signal_type="overnight_move",
-                    direction=direction,
-                    strength=strength,
-                    price_change_pct=round(change_pct, 2),
-                    current_price=price,
-                    entry_price=round(entry, 2),
-                    stop_loss=round(sl, 2),
-                    take_profit=round(tp, 2),
-                    reasoning=reasoning,
-                    metrics={"prev_price": prev_price, "change_pct": round(change_pct, 2)},
-                ))
+                signals.append(
+                    CryptoOvernightSignal(
+                        symbol=symbol,
+                        signal_type="overnight_move",
+                        direction=direction,
+                        strength=strength,
+                        price_change_pct=round(change_pct, 2),
+                        current_price=price,
+                        entry_price=round(entry, 2),
+                        stop_loss=round(sl, 2),
+                        take_profit=round(tp, 2),
+                        reasoning=reasoning,
+                        metrics={"prev_price": prev_price, "change_pct": round(change_pct, 2)},
+                    )
+                )
 
         # 2. Funding rate flip
         current_funding = current.get("funding_rate", 0)
         prev_funding = prev.get("funding_rate", 0)
         if prev_funding != 0:
-            funding_flipped = (current_funding > 0 and prev_funding < 0) or \
-                              (current_funding < 0 and prev_funding > 0)
+            funding_flipped = (current_funding > 0 and prev_funding < 0) or (current_funding < 0 and prev_funding > 0)
             if funding_flipped:
                 if current_funding > 0:
                     # Flipped to positive = longs now paying shorts
@@ -472,22 +477,28 @@ class CryptoOvernightMonitor:
                 else:
                     entry, sl, tp = price, price * (1 + sl_mult), price * (1 - tp_mult)
 
-                signals.append(CryptoOvernightSignal(
-                    symbol=symbol,
-                    signal_type="funding_flip",
-                    direction=direction,
-                    strength="moderate",
-                    price_change_pct=((price - prev.get("price", price)) / prev.get("price", price)) * 100 if prev.get("price") else 0,
-                    current_price=price,
-                    entry_price=round(entry, 2),
-                    stop_loss=round(sl, 2),
-                    take_profit=round(tp, 2),
-                    reasoning=reasoning,
-                    metrics={
-                        "prev_funding": prev_funding,
-                        "current_funding": current_funding,
-                    },
-                ))
+                signals.append(
+                    CryptoOvernightSignal(
+                        symbol=symbol,
+                        signal_type="funding_flip",
+                        direction=direction,
+                        strength="moderate",
+                        price_change_pct=(
+                            ((price - prev.get("price", price)) / prev.get("price", price)) * 100
+                            if prev.get("price")
+                            else 0
+                        ),
+                        current_price=price,
+                        entry_price=round(entry, 2),
+                        stop_loss=round(sl, 2),
+                        take_profit=round(tp, 2),
+                        reasoning=reasoning,
+                        metrics={
+                            "prev_funding": prev_funding,
+                            "current_funding": current_funding,
+                        },
+                    )
+                )
 
         # 3. Open Interest spike
         current_oi = current.get("open_interest_usd", 0)
@@ -495,7 +506,9 @@ class CryptoOvernightMonitor:
         if prev_oi > 0 and current_oi > 0:
             oi_change_pct = ((current_oi - prev_oi) / prev_oi) * 100
             if abs(oi_change_pct) >= 5:
-                price_change = ((price - prev.get("price", price)) / prev.get("price", price)) * 100 if prev.get("price") else 0
+                price_change = (
+                    ((price - prev.get("price", price)) / prev.get("price", price)) * 100 if prev.get("price") else 0
+                )
 
                 # Rising OI + rising price = bullish. Rising OI + falling price = bearish.
                 if oi_change_pct > 0 and price_change > 0:
@@ -530,23 +543,25 @@ class CryptoOvernightMonitor:
                 else:
                     entry, sl, tp = price, price * (1 + sl_mult), price * (1 - tp_mult)
 
-                signals.append(CryptoOvernightSignal(
-                    symbol=symbol,
-                    signal_type="oi_spike",
-                    direction=direction,
-                    strength=strength,
-                    price_change_pct=round(price_change, 2),
-                    current_price=price,
-                    entry_price=round(entry, 2),
-                    stop_loss=round(sl, 2),
-                    take_profit=round(tp, 2),
-                    reasoning=reasoning,
-                    metrics={
-                        "prev_oi_usd": prev_oi,
-                        "current_oi_usd": current_oi,
-                        "oi_change_pct": round(oi_change_pct, 2),
-                    },
-                ))
+                signals.append(
+                    CryptoOvernightSignal(
+                        symbol=symbol,
+                        signal_type="oi_spike",
+                        direction=direction,
+                        strength=strength,
+                        price_change_pct=round(price_change, 2),
+                        current_price=price,
+                        entry_price=round(entry, 2),
+                        stop_loss=round(sl, 2),
+                        take_profit=round(tp, 2),
+                        reasoning=reasoning,
+                        metrics={
+                            "prev_oi_usd": prev_oi,
+                            "current_oi_usd": current_oi,
+                            "oi_change_pct": round(oi_change_pct, 2),
+                        },
+                    )
+                )
 
         return signals
 
@@ -717,18 +732,20 @@ class PreMarketScanner:
                     f"Moderate volume — wait for regular session confirmation."
                 )
 
-            movers.append(PreMarketMover(
-                ticker=ticker,
-                previous_close=round(previous_close, 4),
-                premarket_price=round(premarket_price, 4),
-                gap_pct=round(gap_pct, 2),
-                premarket_volume=premarket_volume,
-                avg_daily_volume=avg_daily_volume,
-                volume_ratio=round(volume_ratio, 2),
-                catalyst=catalyst,
-                action=action,
-                reasoning=reasoning,
-            ))
+            movers.append(
+                PreMarketMover(
+                    ticker=ticker,
+                    previous_close=round(previous_close, 4),
+                    premarket_price=round(premarket_price, 4),
+                    gap_pct=round(gap_pct, 2),
+                    premarket_volume=premarket_volume,
+                    avg_daily_volume=avg_daily_volume,
+                    volume_ratio=round(volume_ratio, 2),
+                    catalyst=catalyst,
+                    action=action,
+                    reasoning=reasoning,
+                )
+            )
 
         return sorted(movers, key=lambda m: abs(m.gap_pct), reverse=True)
 
@@ -825,6 +842,7 @@ class AfterHoursEngine:
     def to_dict(self, intel: AfterHoursIntelligence) -> dict:
         """Convert to JSON-serializable dict."""
         from dataclasses import asdict
+
         result = {
             "timestamp": intel.timestamp,
             "session": intel.session,
@@ -849,12 +867,12 @@ class AfterHoursEngine:
             lines.append("### Earnings Gap Signals")
             for g in intel.earnings_gaps:
                 emoji_dir = "UP" if g.gap_direction == "up" else "DOWN"
-                lines.append(
-                    f"- **{g.ticker}** — Gap {emoji_dir} {abs(g.gap_pct):.1f}% ({g.gap_size})"
-                )
+                lines.append(f"- **{g.ticker}** — Gap {emoji_dir} {abs(g.gap_pct):.1f}% ({g.gap_size})")
                 lines.append(f"  - Strategy: {g.strategy.replace('_', ' ').title()} | {g.direction}")
                 lines.append(f"  - Entry: ${g.entry_price:.2f} | SL: ${g.stop_loss:.2f} | TP: ${g.take_profit:.2f}")
-                lines.append(f"  - Confidence: {g.confidence:.0%} | Volume: {'Confirmed' if g.volume_confirmation else 'Not confirmed'}")
+                lines.append(
+                    f"  - Confidence: {g.confidence:.0%} | Volume: {'Confirmed' if g.volume_confirmation else 'Not confirmed'}"
+                )
                 lines.append(f"  - {g.reasoning}")
             lines.append("")
 
@@ -862,9 +880,7 @@ class AfterHoursEngine:
         if intel.crypto_overnight:
             lines.append("### Crypto Overnight Signals")
             for s in intel.crypto_overnight:
-                lines.append(
-                    f"- **{s.symbol}** — {s.signal_type.replace('_', ' ').title()} ({s.strength})"
-                )
+                lines.append(f"- **{s.symbol}** — {s.signal_type.replace('_', ' ').title()} ({s.strength})")
                 lines.append(f"  - {s.direction} @ ${s.current_price:,.2f} | Change: {s.price_change_pct:+.1f}%")
                 lines.append(f"  - Entry: ${s.entry_price:,.2f} | SL: ${s.stop_loss:,.2f} | TP: ${s.take_profit:,.2f}")
                 lines.append(f"  - {s.reasoning}")
@@ -874,9 +890,7 @@ class AfterHoursEngine:
         if intel.premarket_movers:
             lines.append("### Pre-Market Movers")
             for m in intel.premarket_movers:
-                lines.append(
-                    f"- **{m.ticker}** — Gap {m.gap_pct:+.1f}% | Action: {m.action.replace('_', ' ').title()}"
-                )
+                lines.append(f"- **{m.ticker}** — Gap {m.gap_pct:+.1f}% | Action: {m.action.replace('_', ' ').title()}")
                 lines.append(f"  - Prev close: ${m.previous_close:.2f} -> Pre-market: ${m.premarket_price:.2f}")
                 lines.append(f"  - Volume: {m.volume_ratio:.1f}x avg | Catalyst: {m.catalyst}")
                 lines.append(f"  - {m.reasoning}")

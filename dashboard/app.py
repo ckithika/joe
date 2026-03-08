@@ -234,7 +234,7 @@ if page == "Overview":
             st.progress(confidence, text=f"Confidence: {confidence:.0%}")
 
             r1, r2, r3 = st.columns(3)
-            adx_val = regime_data.get('adx', 0)
+            adx_val = regime_data.get("adx", 0)
             r1.metric("Trend Strength (ADX)", f"{adx_val:.1f}")
             if adx_val < 20:
                 r1.caption(":red[No Trend]")
@@ -243,7 +243,7 @@ if page == "Overview":
             else:
                 r1.caption(":green[Strong Trend]")
 
-            vix_val = regime_data.get('vix', 0)
+            vix_val = regime_data.get("vix", 0)
             r2.metric("Market Fear (VIX)", f"{vix_val:.1f}")
             if vix_val < 15:
                 r2.caption(":green[Calm]")
@@ -265,8 +265,13 @@ if page == "Overview":
             vix_hist = regime_data.get("vix_history", [])
             if vix_hist and len(vix_hist) > 2:
                 fig = go.Figure(go.Scatter(y=vix_hist, mode="lines", line=dict(color="red", width=1)))
-                fig.update_layout(height=80, margin=dict(l=0, r=0, t=10, b=0), showlegend=False,
-                                  yaxis=dict(showticklabels=False), xaxis=dict(showticklabels=False))
+                fig.update_layout(
+                    height=80,
+                    margin=dict(l=0, r=0, t=10, b=0),
+                    showlegend=False,
+                    yaxis=dict(showticklabels=False),
+                    xaxis=dict(showticklabels=False),
+                )
                 st.plotly_chart(fig, use_container_width=True)
         else:
             st.info("No regime data. Run the pipeline first.")
@@ -288,8 +293,15 @@ if page == "Overview":
             dims = risk_data.get("dimensions", {})
             if dims:
                 dim_df = pd.DataFrame([{"Dimension": k.title(), "Score": v} for k, v in dims.items()])
-                fig = px.bar(dim_df, x="Dimension", y="Score", color="Score",
-                             color_continuous_scale=["green", "yellow", "red"], range_y=[0, 10], height=200)
+                fig = px.bar(
+                    dim_df,
+                    x="Dimension",
+                    y="Score",
+                    color="Score",
+                    color_continuous_scale=["green", "yellow", "red"],
+                    range_y=[0, 10],
+                    height=200,
+                )
                 fig.update_layout(showlegend=False, margin=dict(t=10, b=10))
                 st.plotly_chart(fig, use_container_width=True)
 
@@ -311,7 +323,7 @@ if page == "Overview":
 
         m1, m2, m3, m4, m5 = st.columns(5)
         m1.metric("Balance", f"${balance:.2f}", f"{pnl:+.2f}")
-        wr_val = performance.get('win_rate', 0) * 100
+        wr_val = performance.get("win_rate", 0) * 100
         m2.metric("Win Rate", f"{wr_val:.1f}%")
         if wr_val >= 55:
             m2.caption(":green[Good]")
@@ -321,7 +333,7 @@ if page == "Overview":
             m2.caption(":red[Needs Work]")
         m3.metric("Open", f"{len(positions_data)}/3")
         m4.metric("Total Trades", f"{performance.get('total_trades', 0)}")
-        pf_val = performance.get('profit_factor', 0)
+        pf_val = performance.get("profit_factor", 0)
         m5.metric("Profit Factor", f"{pf_val:.2f}")
         if pf_val >= 1.2:
             m5.caption(":green[Good]")
@@ -334,14 +346,16 @@ if page == "Overview":
             pos_rows = []
             for pos in positions_data:
                 pnl_val = pos.get("unrealized_pnl", 0)
-                pos_rows.append({
-                    "Ticker": pos["ticker"],
-                    "Direction": pos["direction"],
-                    "Strategy": pos.get("strategy", ""),
-                    "Entry": f"${pos['entry_price']:.2f}",
-                    "P&L": f"${pnl_val:+.2f}",
-                    "Days Held": f"{pos.get('days_held', 0)}/{pos.get('max_hold_days', 10)}",
-                })
+                pos_rows.append(
+                    {
+                        "Ticker": pos["ticker"],
+                        "Direction": pos["direction"],
+                        "Strategy": pos.get("strategy", ""),
+                        "Entry": f"${pos['entry_price']:.2f}",
+                        "P&L": f"${pnl_val:+.2f}",
+                        "Days Held": f"{pos.get('days_held', 0)}/{pos.get('max_hold_days', 10)}",
+                    }
+                )
             st.dataframe(pd.DataFrame(pos_rows), use_container_width=True, hide_index=True)
             st.caption("Days Held shows current / maximum days before auto-exit.")
     else:
@@ -377,12 +391,14 @@ if page == "Overview":
                 st.markdown("**Pre-Market Movers**")
                 mover_rows = []
                 for m in movers[:5]:
-                    mover_rows.append({
-                        "Ticker": m.get("ticker", ""),
-                        "Change": f"{m.get('gap_pct', m.get('change_pct', 0)):+.1f}%",
-                        "Vol Ratio": f"{m.get('volume_ratio', 0):.1f}x",
-                        "Catalyst": m.get("catalyst", ""),
-                    })
+                    mover_rows.append(
+                        {
+                            "Ticker": m.get("ticker", ""),
+                            "Change": f"{m.get('gap_pct', m.get('change_pct', 0)):+.1f}%",
+                            "Vol Ratio": f"{m.get('volume_ratio', 0):.1f}x",
+                            "Catalyst": m.get("catalyst", ""),
+                        }
+                    )
                 st.dataframe(pd.DataFrame(mover_rows), use_container_width=True, hide_index=True)
 
             if crypto_night and modules.get("crypto", False):
@@ -407,7 +423,7 @@ elif page == "Stocks":
         available_slots = 3 - len(positions_data)
         st.caption(f"{available_slots} position slot{'s' if available_slots != 1 else ''} available")
 
-        for sig in stock_signals[:config.get("max_signals_displayed", 5)]:
+        for sig in stock_signals[: config.get("max_signals_displayed", 5)]:
             action = sig.get("action", "skip")
             ticker = sig.get("ticker", "")
             score = sig.get("score", 0)
@@ -427,7 +443,9 @@ elif page == "Stocks":
                 sl = sig.get("stop_loss", 0)
                 tp = sig.get("take_profit", 0)
                 if entry_price:
-                    st.markdown(f"**Entry:** ${entry_price:,.2f} · **Stop Loss:** ${sl:,.2f} · **Take Profit:** ${tp:,.2f}")
+                    st.markdown(
+                        f"**Entry:** ${entry_price:,.2f} · **Stop Loss:** ${sl:,.2f} · **Take Profit:** ${tp:,.2f}"
+                    )
                     if sl and entry_price and tp:
                         risk = abs(entry_price - sl)
                         reward = abs(tp - entry_price)
@@ -475,12 +493,14 @@ elif page == "Stocks":
                 for e in earnings[:8]:
                     timing = e.get("time", "")
                     timing_label = {"bmo": "Pre-Market", "amc": "After Close"}.get(timing, timing)
-                    ear_rows.append({
-                        "Ticker": e.get("ticker", ""),
-                        "Date": e.get("date", ""),
-                        "Timing": timing_label,
-                        "Days": e.get("days_until", 0),
-                    })
+                    ear_rows.append(
+                        {
+                            "Ticker": e.get("ticker", ""),
+                            "Date": e.get("date", ""),
+                            "Timing": timing_label,
+                            "Days": e.get("days_until", 0),
+                        }
+                    )
                 st.dataframe(pd.DataFrame(ear_rows), use_container_width=True, hide_index=True)
             else:
                 st.caption("No upcoming earnings for watched tickers.")
@@ -509,12 +529,14 @@ elif page == "Stocks":
             st.subheader("Sector Performance")
             sec_rows = []
             for s in sectors[:10]:
-                sec_rows.append({
-                    "Sector": s.get("sector", "").replace("_", " ").title(),
-                    "1D": f"{s.get('change_1d', 0):+.2f}%",
-                    "1W": f"{s.get('change_1w', 0):+.2f}%",
-                    "1M": f"{s.get('change_1m', 0):+.2f}%",
-                })
+                sec_rows.append(
+                    {
+                        "Sector": s.get("sector", "").replace("_", " ").title(),
+                        "1D": f"{s.get('change_1d', 0):+.2f}%",
+                        "1W": f"{s.get('change_1w', 0):+.2f}%",
+                        "1M": f"{s.get('change_1m', 0):+.2f}%",
+                    }
+                )
             st.dataframe(pd.DataFrame(sec_rows), use_container_width=True, hide_index=True)
 
         # Insider Trades
@@ -526,14 +548,16 @@ elif page == "Stocks":
                 st.markdown(f"**Buys:** {len(buys)} | **Sells:** {len(sells)}")
                 insider_rows = []
                 for t in insiders[:10]:
-                    insider_rows.append({
-                        "Ticker": t.get("ticker", ""),
-                        "Name": t.get("insider_name", ""),
-                        "Type": t.get("transaction_type", "").upper(),
-                        "Shares": f"{t.get('shares', 0):,}",
-                        "Value": f"${t.get('value', 0):,.0f}",
-                        "Date": t.get("date", ""),
-                    })
+                    insider_rows.append(
+                        {
+                            "Ticker": t.get("ticker", ""),
+                            "Name": t.get("insider_name", ""),
+                            "Type": t.get("transaction_type", "").upper(),
+                            "Shares": f"{t.get('shares', 0):,}",
+                            "Value": f"${t.get('value', 0):,.0f}",
+                            "Date": t.get("date", ""),
+                        }
+                    )
                 st.dataframe(pd.DataFrame(insider_rows), use_container_width=True, hide_index=True)
     else:
         st.info("No stock intelligence data. Run the pipeline with the stocks module enabled.")
@@ -582,10 +606,18 @@ elif page == "Crypto":
                     vals = []
                     for h in fg_hist[-7:]:
                         vals.append(h.get("value", h) if isinstance(h, dict) else int(h))
-                    fig = go.Figure(go.Scatter(y=vals, mode="lines+markers",
-                                               line=dict(color="orange", width=2), marker=dict(size=4)))
-                    fig.update_layout(height=120, margin=dict(l=0, r=0, t=5, b=0),
-                                      showlegend=False, yaxis=dict(range=[0, 100]), xaxis=dict(showticklabels=False))
+                    fig = go.Figure(
+                        go.Scatter(
+                            y=vals, mode="lines+markers", line=dict(color="orange", width=2), marker=dict(size=4)
+                        )
+                    )
+                    fig.update_layout(
+                        height=120,
+                        margin=dict(l=0, r=0, t=5, b=0),
+                        showlegend=False,
+                        yaxis=dict(range=[0, 100]),
+                        xaxis=dict(showticklabels=False),
+                    )
                     st.plotly_chart(fig, use_container_width=True)
                     st.caption("7-day history")
             else:
@@ -614,7 +646,9 @@ elif page == "Crypto":
         eth_f = crypto_intel.get("eth_funding", {})
         with col_fund:
             st.markdown("**Funding Rates**")
-            st.caption("Positive = longs pay shorts (bullish crowding). Negative = shorts pay longs (bearish crowding).")
+            st.caption(
+                "Positive = longs pay shorts (bullish crowding). Negative = shorts pay longs (bearish crowding)."
+            )
             if btc_f:
                 rate = btc_f.get("rate", 0)
                 direction = btc_f.get("direction", "neutral")
@@ -631,12 +665,14 @@ elif page == "Crypto":
             st.caption("Total value of outstanding futures contracts. Rising OI + rising price = strong trend.")
             if btc_oi:
                 oi_usd = btc_oi.get("open_interest_usd", 0)
-                col_oi.metric("BTC Open Interest", f"${oi_usd / 1e9:.2f}B",
-                              f"{btc_oi.get('change_24h_pct', 0):+.1f}% 24h")
+                col_oi.metric(
+                    "BTC Open Interest", f"${oi_usd / 1e9:.2f}B", f"{btc_oi.get('change_24h_pct', 0):+.1f}% 24h"
+                )
             if eth_oi:
                 oi_usd = eth_oi.get("open_interest_usd", 0)
-                col_oi.metric("ETH Open Interest", f"${oi_usd / 1e9:.2f}B",
-                              f"{eth_oi.get('change_24h_pct', 0):+.1f}% 24h")
+                col_oi.metric(
+                    "ETH Open Interest", f"${oi_usd / 1e9:.2f}B", f"{eth_oi.get('change_24h_pct', 0):+.1f}% 24h"
+                )
 
         st.divider()
 
@@ -654,11 +690,13 @@ elif page == "Crypto":
                 if top_protocols:
                     proto_rows = []
                     for p in top_protocols[:5]:
-                        proto_rows.append({
-                            "Protocol": p.get("name", ""),
-                            "TVL": f"${p.get('tvl', 0) / 1e9:.2f}B",
-                            "1d": f"{p.get('change_1d', p.get('change_24h', 0)):+.1f}%",
-                        })
+                        proto_rows.append(
+                            {
+                                "Protocol": p.get("name", ""),
+                                "TVL": f"${p.get('tvl', 0) / 1e9:.2f}B",
+                                "1d": f"{p.get('change_1d', p.get('change_24h', 0)):+.1f}%",
+                            }
+                        )
                     st.dataframe(pd.DataFrame(proto_rows), use_container_width=True, hide_index=True)
             if gas:
                 gas_price = gas.get("gas_price_gwei", 0)
@@ -681,7 +719,9 @@ elif page == "Crypto":
                 st.caption("Large transfers (>$100K) by major holders in the last 24 hours.")
                 st.markdown(f"**Net Exchange Flow:** {flow_icon} {flow.title()}")
                 if flow == "outflow":
-                    st.caption(":green[Outflow is bullish] — whales moving crypto off exchanges (holding, not selling).")
+                    st.caption(
+                        ":green[Outflow is bullish] — whales moving crypto off exchanges (holding, not selling)."
+                    )
                 elif flow == "inflow":
                     st.caption(":red[Inflow is bearish] — whales moving crypto to exchanges (preparing to sell).")
                 else:
@@ -701,7 +741,9 @@ elif page == "Crypto":
             with st.expander("Stablecoins & Correlations"):
                 if stable:
                     total_stable = stable.get("total_stablecoin_cap", 0)
-                    st.markdown(f"**Stablecoin Supply:** ${total_stable / 1e9:.1f}B (USDT dominance: {stable.get('usdt_dominance', 0):.1f}%)")
+                    st.markdown(
+                        f"**Stablecoin Supply:** ${total_stable / 1e9:.1f}B (USDT dominance: {stable.get('usdt_dominance', 0):.1f}%)"
+                    )
                 if corr and corr.get("pairs"):
                     st.markdown(f"**Correlations ({corr.get('period_days', 30)}d):**")
                     for pair, val in sorted(corr["pairs"].items()):
@@ -781,11 +823,15 @@ elif page == "Portfolio":
             daily_df = daily_df.dropna(subset=["exit_date"])
 
             if not daily_df.empty:
-                daily_pnl = daily_df.groupby(daily_df["exit_date"].dt.date).agg(
-                    day_pnl=("pnl", "sum"),
-                    trades=("pnl", "count"),
-                    wins=("pnl", lambda x: (x > 0).sum()),
-                ).reset_index()
+                daily_pnl = (
+                    daily_df.groupby(daily_df["exit_date"].dt.date)
+                    .agg(
+                        day_pnl=("pnl", "sum"),
+                        trades=("pnl", "count"),
+                        wins=("pnl", lambda x: (x > 0).sum()),
+                    )
+                    .reset_index()
+                )
                 daily_pnl.columns = ["Date", "Day P&L", "Trades", "Wins"]
                 daily_pnl = daily_pnl.sort_values("Date")
                 daily_pnl["Balance"] = daily_pnl["Day P&L"].cumsum() + starting
@@ -795,31 +841,45 @@ elif page == "Portfolio":
 
                 # Balance over time chart
                 fig = go.Figure()
-                fig.add_trace(go.Scatter(
-                    x=daily_pnl["Date"], y=daily_pnl["Balance"],
-                    mode="lines+markers", name="Balance",
-                    line=dict(color="blue", width=2), marker=dict(size=5),
-                ))
-                fig.add_hline(y=starting, line_dash="dash", line_color="gray",
-                              annotation_text=f"Starting ${starting:.0f}")
+                fig.add_trace(
+                    go.Scatter(
+                        x=daily_pnl["Date"],
+                        y=daily_pnl["Balance"],
+                        mode="lines+markers",
+                        name="Balance",
+                        line=dict(color="blue", width=2),
+                        marker=dict(size=5),
+                    )
+                )
+                fig.add_hline(
+                    y=starting, line_dash="dash", line_color="gray", annotation_text=f"Starting ${starting:.0f}"
+                )
                 fig.update_layout(
-                    height=300, margin=dict(t=30, b=20),
+                    height=300,
+                    margin=dict(t=30, b=20),
                     title="Portfolio Balance Over Time",
-                    xaxis_title="Date", yaxis_title="Balance ($)",
+                    xaxis_title="Date",
+                    yaxis_title="Balance ($)",
                     hovermode="x unified",
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
                 # Daily P&L bar chart
                 colors = ["green" if v >= 0 else "red" for v in daily_pnl["Day P&L"]]
-                fig_daily = go.Figure(go.Bar(
-                    x=daily_pnl["Date"], y=daily_pnl["Day P&L"],
-                    marker_color=colors, name="Daily P&L",
-                ))
+                fig_daily = go.Figure(
+                    go.Bar(
+                        x=daily_pnl["Date"],
+                        y=daily_pnl["Day P&L"],
+                        marker_color=colors,
+                        name="Daily P&L",
+                    )
+                )
                 fig_daily.update_layout(
-                    height=200, margin=dict(t=30, b=20),
+                    height=200,
+                    margin=dict(t=30, b=20),
                     title="Daily Gains / Losses",
-                    xaxis_title="Date", yaxis_title="P&L ($)",
+                    xaxis_title="Date",
+                    yaxis_title="P&L ($)",
                 )
                 st.plotly_chart(fig_daily, use_container_width=True)
 
@@ -832,7 +892,8 @@ elif page == "Portfolio":
                     display_daily["ROI %"] = display_daily["ROI %"].apply(lambda x: f"{x:+.2f}%")
                     st.dataframe(
                         display_daily[["Date", "Day P&L", "Balance", "ROI %", "Trades", "Wins"]].iloc[::-1],
-                        use_container_width=True, hide_index=True,
+                        use_container_width=True,
+                        hide_index=True,
                     )
         else:
             st.info("No completed trades yet. Daily P&L will appear after the first trade closes.")
@@ -851,31 +912,39 @@ elif page == "Portfolio":
             acc_df["pnl"] = acc_df["pnl"].astype(float)
             acc_df["profitable"] = acc_df["pnl"] > 0
 
-            strat_acc = acc_df.groupby("strategy").agg(
-                total=("pnl", "count"),
-                wins=("profitable", "sum"),
-                total_pnl=("pnl", "sum"),
-                avg_pnl=("pnl", "mean"),
-            ).reset_index()
+            strat_acc = (
+                acc_df.groupby("strategy")
+                .agg(
+                    total=("pnl", "count"),
+                    wins=("profitable", "sum"),
+                    total_pnl=("pnl", "sum"),
+                    avg_pnl=("pnl", "mean"),
+                )
+                .reset_index()
+            )
             strat_acc["accuracy"] = (strat_acc["wins"] / strat_acc["total"] * 100).round(1)
             strat_acc = strat_acc.sort_values("accuracy", ascending=False)
 
             # Accuracy bar chart
             fig_acc = go.Figure()
-            fig_acc.add_trace(go.Bar(
-                x=strat_acc["strategy"].str.replace("_", " ").str.title(),
-                y=strat_acc["accuracy"],
-                marker_color=["green" if a >= 50 else "orange" if a >= 40 else "red"
-                               for a in strat_acc["accuracy"]],
-                text=strat_acc["accuracy"].apply(lambda x: f"{x:.0f}%"),
-                textposition="auto",
-            ))
-            fig_acc.add_hline(y=50, line_dash="dash", line_color="gray",
-                              annotation_text="50% breakeven line")
+            fig_acc.add_trace(
+                go.Bar(
+                    x=strat_acc["strategy"].str.replace("_", " ").str.title(),
+                    y=strat_acc["accuracy"],
+                    marker_color=[
+                        "green" if a >= 50 else "orange" if a >= 40 else "red" for a in strat_acc["accuracy"]
+                    ],
+                    text=strat_acc["accuracy"].apply(lambda x: f"{x:.0f}%"),
+                    textposition="auto",
+                )
+            )
+            fig_acc.add_hline(y=50, line_dash="dash", line_color="gray", annotation_text="50% breakeven line")
             fig_acc.update_layout(
-                height=250, margin=dict(t=30, b=20),
+                height=250,
+                margin=dict(t=30, b=20),
                 title="Win Rate by Strategy",
-                xaxis_title="Strategy", yaxis_title="Accuracy %",
+                xaxis_title="Strategy",
+                yaxis_title="Accuracy %",
                 yaxis=dict(range=[0, 100]),
             )
             st.plotly_chart(fig_acc, use_container_width=True)
@@ -884,15 +953,17 @@ elif page == "Portfolio":
             acc_rows = []
             for _, row in strat_acc.iterrows():
                 verdict = "Profitable" if row["total_pnl"] > 0 else "Losing"
-                acc_rows.append({
-                    "Strategy": row["strategy"].replace("_", " ").title(),
-                    "Trades": int(row["total"]),
-                    "Wins": int(row["wins"]),
-                    "Accuracy": f"{row['accuracy']:.0f}%",
-                    "Total P&L": f"${row['total_pnl']:+.2f}",
-                    "Avg P&L": f"${row['avg_pnl']:+.2f}",
-                    "Verdict": verdict,
-                })
+                acc_rows.append(
+                    {
+                        "Strategy": row["strategy"].replace("_", " ").title(),
+                        "Trades": int(row["total"]),
+                        "Wins": int(row["wins"]),
+                        "Accuracy": f"{row['accuracy']:.0f}%",
+                        "Total P&L": f"${row['total_pnl']:+.2f}",
+                        "Avg P&L": f"${row['avg_pnl']:+.2f}",
+                        "Verdict": verdict,
+                    }
+                )
             st.dataframe(pd.DataFrame(acc_rows), use_container_width=True, hide_index=True)
         else:
             st.info("No trades yet. Strategy accuracy will appear after trades are completed.")
@@ -906,19 +977,23 @@ elif page == "Portfolio":
             for pos in positions_data:
                 pnl_val = pos.get("unrealized_pnl", 0)
                 trail = f"${pos['trailing_stop']:.4f}" if pos.get("trailing_stop", 0) > 0 else "—"
-                pos_rows.append({
-                    "Ticker": pos["ticker"],
-                    "Direction": pos["direction"],
-                    "Strategy": pos.get("strategy", ""),
-                    "Entry": f"${pos['entry_price']:.2f}",
-                    "P&L": f"${pnl_val:+.2f}",
-                    "Days Held": f"{pos.get('days_held', 0)}/{pos.get('max_hold_days', 10)}",
-                    "Stop Loss": f"${pos['stop_loss']:.4f}",
-                    "Take Profit": f"${pos['take_profit']:.4f}",
-                    "Trailing Stop": trail,
-                })
+                pos_rows.append(
+                    {
+                        "Ticker": pos["ticker"],
+                        "Direction": pos["direction"],
+                        "Strategy": pos.get("strategy", ""),
+                        "Entry": f"${pos['entry_price']:.2f}",
+                        "P&L": f"${pnl_val:+.2f}",
+                        "Days Held": f"{pos.get('days_held', 0)}/{pos.get('max_hold_days', 10)}",
+                        "Stop Loss": f"${pos['stop_loss']:.4f}",
+                        "Take Profit": f"${pos['take_profit']:.4f}",
+                        "Trailing Stop": trail,
+                    }
+                )
             st.dataframe(pd.DataFrame(pos_rows), use_container_width=True, hide_index=True)
-            st.caption("Stop Loss = auto-exit if price drops to this level. Take Profit = auto-exit at target. Trailing Stop = a stop that follows the price up.")
+            st.caption(
+                "Stop Loss = auto-exit if price drops to this level. Take Profit = auto-exit at target. Trailing Stop = a stop that follows the price up."
+            )
         else:
             st.caption("No open positions.")
 
@@ -927,8 +1002,20 @@ elif page == "Portfolio":
         # ── Trade History ─────────────────────────────────────────
         st.subheader("Recent Trades")
         if not trades_df.empty:
-            display_cols = [c for c in ["ticker", "direction", "strategy", "entry_price", "exit_price",
-                                         "pnl", "exit_reason", "exit_date"] if c in trades_df.columns]
+            display_cols = [
+                c
+                for c in [
+                    "ticker",
+                    "direction",
+                    "strategy",
+                    "entry_price",
+                    "exit_price",
+                    "pnl",
+                    "exit_reason",
+                    "exit_date",
+                ]
+                if c in trades_df.columns
+            ]
             st.dataframe(trades_df[display_cols].tail(10).iloc[::-1], use_container_width=True, hide_index=True)
         else:
             st.caption("No trade history yet.")
@@ -938,7 +1025,9 @@ elif page == "Portfolio":
             f"**Avg Risk Multiple (Avg R):** {performance.get('avg_r_multiple', 0):.2f} · "
             f"**Max Drawdown:** {performance.get('max_drawdown_pct', 0):.1f}%"
         )
-        st.caption("Expectancy = average $ gained per trade. Avg R = average gain relative to the risk taken. Max Drawdown = largest peak-to-trough drop.")
+        st.caption(
+            "Expectancy = average $ gained per trade. Avg R = average gain relative to the risk taken. Max Drawdown = largest peak-to-trough drop."
+        )
 
         st.divider()
 
@@ -978,7 +1067,9 @@ elif page == "Portfolio":
         with col_progress:
             pct = passed / total_checks
             if pct >= 0.8:
-                st.success(f"**{passed}/{total_checks} passed**\n\nLooking good! Review results carefully before going live.")
+                st.success(
+                    f"**{passed}/{total_checks} passed**\n\nLooking good! Review results carefully before going live."
+                )
             elif pct >= 0.5:
                 st.warning(f"**{passed}/{total_checks} passed**\n\nGetting there — keep paper trading.")
             else:
@@ -1022,7 +1113,7 @@ elif page == "Performance":
     if portfolio_analytics:
         st.subheader("Risk Metrics")
         pa1, pa2, pa3, pa4 = st.columns(4)
-        sharpe_val = portfolio_analytics.get('sharpe_ratio', 0)
+        sharpe_val = portfolio_analytics.get("sharpe_ratio", 0)
         pa1.metric("Sharpe Ratio", f"{sharpe_val:.2f}")
         if sharpe_val >= 2.0:
             pa1.caption(":green[Excellent]")
@@ -1033,7 +1124,7 @@ elif page == "Performance":
         else:
             pa1.caption(":red[Poor]")
 
-        sortino_val = portfolio_analytics.get('sortino_ratio', 0)
+        sortino_val = portfolio_analytics.get("sortino_ratio", 0)
         pa2.metric("Sortino Ratio", f"{sortino_val:.2f}")
         if sortino_val >= 2.0:
             pa2.caption(":green[Excellent]")
@@ -1044,7 +1135,7 @@ elif page == "Performance":
         else:
             pa2.caption(":red[Poor]")
 
-        calmar_val = portfolio_analytics.get('calmar_ratio', 0)
+        calmar_val = portfolio_analytics.get("calmar_ratio", 0)
         pa3.metric("Calmar Ratio", f"{calmar_val:.2f}")
         if calmar_val >= 1.0:
             pa3.caption(":green[Good]")
@@ -1053,7 +1144,7 @@ elif page == "Performance":
         else:
             pa3.caption(":red[Poor]")
 
-        max_dd_val = portfolio_analytics.get('max_drawdown_pct', 0)
+        max_dd_val = portfolio_analytics.get("max_drawdown_pct", 0)
         pa4.metric("Max Drawdown", f"{max_dd_val:.1f}%")
         if max_dd_val < 10:
             pa4.caption(":green[Safe]")
@@ -1064,8 +1155,10 @@ elif page == "Performance":
         else:
             pa4.caption(":red[Severe]")
 
-        st.caption("Sharpe = return per unit of total risk. Sortino = return per unit of downside risk (ignores upside volatility). "
-                   "Calmar = annual return / max drawdown. Max Drawdown = largest peak-to-trough decline.")
+        st.caption(
+            "Sharpe = return per unit of total risk. Sortino = return per unit of downside risk (ignores upside volatility). "
+            "Calmar = annual return / max drawdown. Max Drawdown = largest peak-to-trough decline."
+        )
 
         pa5, pa6, pa7, pa8 = st.columns(4)
         pa5.metric("Current Drawdown", f"{portfolio_analytics.get('current_drawdown_pct', 0):.1f}%")
@@ -1081,20 +1174,47 @@ elif page == "Performance":
             eq_df["trade_num"] = range(1, len(eq_df) + 1)
 
             fig = go.Figure()
-            fig.add_trace(go.Scatter(x=eq_df["trade_num"], y=eq_df["balance"],
-                                      mode="lines", name="Balance", line=dict(color="blue", width=2)))
-            fig.add_trace(go.Scatter(x=eq_df["trade_num"], y=eq_df["peak"],
-                                      mode="lines", name="Peak", line=dict(color="gray", width=1, dash="dash")))
-            fig.update_layout(height=250, margin=dict(t=30, b=20), title="Equity Curve & Peak",
-                              xaxis_title="Trade #", yaxis_title="Balance ($)")
+            fig.add_trace(
+                go.Scatter(
+                    x=eq_df["trade_num"],
+                    y=eq_df["balance"],
+                    mode="lines",
+                    name="Balance",
+                    line=dict(color="blue", width=2),
+                )
+            )
+            fig.add_trace(
+                go.Scatter(
+                    x=eq_df["trade_num"],
+                    y=eq_df["peak"],
+                    mode="lines",
+                    name="Peak",
+                    line=dict(color="gray", width=1, dash="dash"),
+                )
+            )
+            fig.update_layout(
+                height=250,
+                margin=dict(t=30, b=20),
+                title="Equity Curve & Peak",
+                xaxis_title="Trade #",
+                yaxis_title="Balance ($)",
+            )
             st.plotly_chart(fig, use_container_width=True)
 
             fig_dd = go.Figure()
-            fig_dd.add_trace(go.Scatter(x=eq_df["trade_num"], y=eq_df["drawdown_pct"],
-                                         mode="lines", fill="tozeroy", name="Drawdown",
-                                         line=dict(color="red", width=1)))
-            fig_dd.update_layout(height=150, margin=dict(t=20, b=20), title="Drawdown %",
-                                 xaxis_title="Trade #", yaxis_title="DD %")
+            fig_dd.add_trace(
+                go.Scatter(
+                    x=eq_df["trade_num"],
+                    y=eq_df["drawdown_pct"],
+                    mode="lines",
+                    fill="tozeroy",
+                    name="Drawdown",
+                    line=dict(color="red", width=1),
+                )
+            )
+            fig_dd.update_layout(
+                height=150, margin=dict(t=20, b=20), title="Drawdown %", xaxis_title="Trade #", yaxis_title="DD %"
+            )
             st.plotly_chart(fig_dd, use_container_width=True)
 
         st.divider()
@@ -1104,8 +1224,7 @@ elif page == "Performance":
         if monthly:
             st.subheader("Monthly Returns")
             month_df = pd.DataFrame([{"Month": k, "P&L": v} for k, v in monthly.items()])
-            fig = px.bar(month_df, x="Month", y="P&L", color="P&L",
-                         color_continuous_scale=["red", "gray", "green"])
+            fig = px.bar(month_df, x="Month", y="P&L", color="P&L", color_continuous_scale=["red", "gray", "green"])
             fig.update_layout(height=200, margin=dict(t=10, b=10))
             st.plotly_chart(fig, use_container_width=True)
 
@@ -1131,20 +1250,22 @@ elif page == "Performance":
         if strat_metrics:
             rows = []
             for strat, m in strat_metrics.items():
-                rows.append({
-                    "Strategy": strat.replace("_", " ").title(),
-                    "Trades": m.get("total_trades", 0),
-                    "Win Rate": f"{m.get('win_rate', 0) * 100:.0f}%",
-                    "P&L": f"${m.get('pnl', 0):+.2f}",
-                })
+                rows.append(
+                    {
+                        "Strategy": strat.replace("_", " ").title(),
+                        "Trades": m.get("total_trades", 0),
+                        "Win Rate": f"{m.get('win_rate', 0) * 100:.0f}%",
+                        "P&L": f"${m.get('pnl', 0):+.2f}",
+                    }
+                )
             st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
-            chart_data = pd.DataFrame([
-                {"Strategy": k.replace("_", " ").title(), "P&L": v.get("pnl", 0)}
-                for k, v in strat_metrics.items()
-            ])
-            fig = px.bar(chart_data, x="Strategy", y="P&L", color="P&L",
-                         color_continuous_scale=["red", "gray", "green"])
+            chart_data = pd.DataFrame(
+                [{"Strategy": k.replace("_", " ").title(), "P&L": v.get("pnl", 0)} for k, v in strat_metrics.items()]
+            )
+            fig = px.bar(
+                chart_data, x="Strategy", y="P&L", color="P&L", color_continuous_scale=["red", "gray", "green"]
+            )
             fig.update_layout(height=250, margin=dict(t=10, b=10))
             st.plotly_chart(fig, use_container_width=True)
 
@@ -1177,7 +1298,9 @@ elif page == "Performance":
         bc1.metric("Entries", entries)
         bc2.metric("Plan Adherence", f"{adherence:.0%}")
         bc3.metric("Discipline Rating", f"{avg_discipline:.1f}/5" if avg_discipline > 0 else "N/A")
-        st.caption("Plan Adherence = % of trades that followed the system's rules. Discipline Rating = how consistently you stick to the plan (5 = perfect).")
+        st.caption(
+            "Plan Adherence = % of trades that followed the system's rules. Discipline Rating = how consistently you stick to the plan (5 = perfect)."
+        )
 
 
 elif page == "System":
@@ -1191,13 +1314,15 @@ elif page == "System":
             for h in api_health:
                 state = h.get("state", "unknown")
                 icon = {"closed": "🟢", "open": "🔴", "half_open": "🟡"}.get(state, "⚪")
-                health_rows.append({
-                    "API": h.get("name", ""),
-                    "Status": f"{icon} {state.upper()}",
-                    "Calls": h.get("total_calls", 0),
-                    "Failures": h.get("failures", 0),
-                    "Fail Rate": f"{h.get('failure_rate', 0):.0%}",
-                })
+                health_rows.append(
+                    {
+                        "API": h.get("name", ""),
+                        "Status": f"{icon} {state.upper()}",
+                        "Calls": h.get("total_calls", 0),
+                        "Failures": h.get("failures", 0),
+                        "Fail Rate": f"{h.get('failure_rate', 0):.0%}",
+                    }
+                )
             st.dataframe(pd.DataFrame(health_rows), use_container_width=True, hide_index=True)
         elif isinstance(api_health, dict):
             for api, status in api_health.items():
@@ -1252,9 +1377,14 @@ elif page == "Learn":
     st.title("📖 Learn")
     st.caption("Understand every metric, strategy, and signal on this dashboard.")
 
-    learn_tab1, learn_tab2, learn_tab3, learn_tab4 = st.tabs([
-        "How to Read This Dashboard", "Glossary", "Strategy Guide", "Key Metrics Cheat Sheet",
-    ])
+    learn_tab1, learn_tab2, learn_tab3, learn_tab4 = st.tabs(
+        [
+            "How to Read This Dashboard",
+            "Glossary",
+            "Strategy Guide",
+            "Key Metrics Cheat Sheet",
+        ]
+    )
 
     # ── Tab 1: How to Read This Dashboard ─────────────────────────
     with learn_tab1:
@@ -1290,31 +1420,103 @@ history. Check here if data looks stale or something seems wrong.
         search = st.text_input("Search terms...", key="glossary_search")
 
         glossary = [
-            ("ADX (Average Directional Index)", "Measures trend strength on a 0-100 scale. Below 20 = no trend. Above 25 = strong trend. Does not indicate direction."),
-            ("A/D Ratio (Advance/Decline)", "The ratio of stocks going up vs down. Above 1.0 means more stocks are rising than falling."),
-            ("Calmar Ratio", "Annual return divided by maximum drawdown. Above 1.0 is good — it means your returns outweigh your worst losses."),
-            ("Drawdown", "The decline from a portfolio's peak to its lowest point. A 10% drawdown means you dropped 10% from your highest balance."),
-            ("Expectancy", "The average dollar amount you gain (or lose) per trade. Positive expectancy means the system is profitable over time."),
-            ("Fear & Greed Index", "A 0-100 gauge of crypto market sentiment. Low values (extreme fear) often signal buying opportunities; high values (extreme greed) signal caution."),
-            ("Funding Rate", "A periodic fee paid between long and short futures traders. Positive = longs pay shorts (market is bullish-crowded). Negative = shorts pay longs."),
-            ("Gwei", "A unit of Ethereum gas price. Low Gwei (<20) means cheap transactions; high Gwei (>50) means network congestion."),
-            ("Max Drawdown", "The largest peak-to-trough decline in your portfolio's history. Lower is better — under 15% is safe."),
-            ("McClellan Oscillator", "A breadth indicator showing market momentum. Positive = bullish breadth, negative = bearish breadth."),
-            ("Open Interest (OI)", "Total value of outstanding futures contracts. Rising OI with rising price signals a strong trend."),
-            ("Profit Factor", "Gross profits divided by gross losses. Above 1.0 = profitable. Above 1.2 = good. Below 1.0 = losing money."),
-            ("R:R (Risk to Reward)", "The ratio of potential loss to potential gain. A 1:3 R:R means for every $1 risked, you could gain $3."),
-            ("Regime", "The current market environment classification (e.g., trending, volatile, calm). The system adapts its strategies based on the regime."),
-            ("ROI (Return on Investment)", "The percentage gain or loss on your starting capital. A 10% ROI on $500 means you've made $50."),
-            ("Sharpe Ratio", "Risk-adjusted return — how much return you get per unit of total risk. Above 1.0 is acceptable, above 2.0 is excellent."),
-            ("SMA (Simple Moving Average)", "The average price over a period. '200 SMA' is the 200-day average — stocks above it are in a long-term uptrend."),
-            ("Sortino Ratio", "Like Sharpe, but only counts downside risk. A high Sortino means good returns without big losses."),
-            ("Stop Loss (SL)", "A preset price where a losing trade automatically exits to limit damage. If you buy at $100 with a $95 SL, you lose max $5."),
+            (
+                "ADX (Average Directional Index)",
+                "Measures trend strength on a 0-100 scale. Below 20 = no trend. Above 25 = strong trend. Does not indicate direction.",
+            ),
+            (
+                "A/D Ratio (Advance/Decline)",
+                "The ratio of stocks going up vs down. Above 1.0 means more stocks are rising than falling.",
+            ),
+            (
+                "Calmar Ratio",
+                "Annual return divided by maximum drawdown. Above 1.0 is good — it means your returns outweigh your worst losses.",
+            ),
+            (
+                "Drawdown",
+                "The decline from a portfolio's peak to its lowest point. A 10% drawdown means you dropped 10% from your highest balance.",
+            ),
+            (
+                "Expectancy",
+                "The average dollar amount you gain (or lose) per trade. Positive expectancy means the system is profitable over time.",
+            ),
+            (
+                "Fear & Greed Index",
+                "A 0-100 gauge of crypto market sentiment. Low values (extreme fear) often signal buying opportunities; high values (extreme greed) signal caution.",
+            ),
+            (
+                "Funding Rate",
+                "A periodic fee paid between long and short futures traders. Positive = longs pay shorts (market is bullish-crowded). Negative = shorts pay longs.",
+            ),
+            (
+                "Gwei",
+                "A unit of Ethereum gas price. Low Gwei (<20) means cheap transactions; high Gwei (>50) means network congestion.",
+            ),
+            (
+                "Max Drawdown",
+                "The largest peak-to-trough decline in your portfolio's history. Lower is better — under 15% is safe.",
+            ),
+            (
+                "McClellan Oscillator",
+                "A breadth indicator showing market momentum. Positive = bullish breadth, negative = bearish breadth.",
+            ),
+            (
+                "Open Interest (OI)",
+                "Total value of outstanding futures contracts. Rising OI with rising price signals a strong trend.",
+            ),
+            (
+                "Profit Factor",
+                "Gross profits divided by gross losses. Above 1.0 = profitable. Above 1.2 = good. Below 1.0 = losing money.",
+            ),
+            (
+                "R:R (Risk to Reward)",
+                "The ratio of potential loss to potential gain. A 1:3 R:R means for every $1 risked, you could gain $3.",
+            ),
+            (
+                "Regime",
+                "The current market environment classification (e.g., trending, volatile, calm). The system adapts its strategies based on the regime.",
+            ),
+            (
+                "ROI (Return on Investment)",
+                "The percentage gain or loss on your starting capital. A 10% ROI on $500 means you've made $50.",
+            ),
+            (
+                "Sharpe Ratio",
+                "Risk-adjusted return — how much return you get per unit of total risk. Above 1.0 is acceptable, above 2.0 is excellent.",
+            ),
+            (
+                "SMA (Simple Moving Average)",
+                "The average price over a period. '200 SMA' is the 200-day average — stocks above it are in a long-term uptrend.",
+            ),
+            (
+                "Sortino Ratio",
+                "Like Sharpe, but only counts downside risk. A high Sortino means good returns without big losses.",
+            ),
+            (
+                "Stop Loss (SL)",
+                "A preset price where a losing trade automatically exits to limit damage. If you buy at $100 with a $95 SL, you lose max $5.",
+            ),
             ("Take Profit (TP)", "A preset price where a winning trade automatically exits to lock in gains."),
-            ("Trailing Stop", "A stop loss that moves up as the price rises, locking in progressively more profit while still protecting against reversals."),
-            ("TVL (Total Value Locked)", "The total amount of crypto deposited in DeFi protocols. Rising TVL signals growing confidence in DeFi."),
-            ("VIX (Volatility Index)", "Wall Street's 'fear gauge.' Ranges 10-80. Below 15 = calm markets. Above 28 = high fear and expected volatility."),
-            ("Whale", "A large holder or entity that can move markets with a single transaction. Whale tracking monitors their activity for clues."),
-            ("Win Rate", "The percentage of trades that make money. Above 45% is good for most strategies when combined with good R:R."),
+            (
+                "Trailing Stop",
+                "A stop loss that moves up as the price rises, locking in progressively more profit while still protecting against reversals.",
+            ),
+            (
+                "TVL (Total Value Locked)",
+                "The total amount of crypto deposited in DeFi protocols. Rising TVL signals growing confidence in DeFi.",
+            ),
+            (
+                "VIX (Volatility Index)",
+                "Wall Street's 'fear gauge.' Ranges 10-80. Below 15 = calm markets. Above 28 = high fear and expected volatility.",
+            ),
+            (
+                "Whale",
+                "A large holder or entity that can move markets with a single transaction. Whale tracking monitors their activity for clues.",
+            ),
+            (
+                "Win Rate",
+                "The percentage of trades that make money. Above 45% is good for most strategies when combined with good R:R.",
+            ),
         ]
 
         filtered = glossary
@@ -1334,7 +1536,9 @@ history. Check here if data looks stale or something seems wrong.
         st.subheader("Strategy Guide")
 
         st.markdown("#### Mean Reversion")
-        st.markdown("**What it does:** Buys stocks that have dropped too far, too fast, expecting them to bounce back to their average price.")
+        st.markdown(
+            "**What it does:** Buys stocks that have dropped too far, too fast, expecting them to bounce back to their average price."
+        )
         st.markdown("**When it works best:** Calm, range-bound markets (low ADX). Struggles in strong trends.")
         st.markdown("**Risk profile:** Moderate. Wins often but can lose big if the drop continues.")
         st.caption("Key signal: RSI below 30 (oversold) or price far below its moving average.")
@@ -1344,21 +1548,27 @@ history. Check here if data looks stale or something seems wrong.
         st.markdown("#### Momentum / Trend Following")
         st.markdown("**What it does:** Buys stocks already going up, riding the trend until it weakens.")
         st.markdown("**When it works best:** Strong trending markets (high ADX). Struggles when markets chop sideways.")
-        st.markdown("**Risk profile:** Lower win rate but big winners. Losses are small and frequent; wins are large and less frequent.")
+        st.markdown(
+            "**Risk profile:** Lower win rate but big winners. Losses are small and frequent; wins are large and less frequent."
+        )
         st.caption("Key signal: Price above moving averages + increasing ADX.")
 
         st.divider()
 
         st.markdown("#### Breakout")
         st.markdown("**What it does:** Enters when price breaks through a key resistance level with high volume.")
-        st.markdown("**When it works best:** After periods of consolidation (tight price ranges). Works in any market regime.")
+        st.markdown(
+            "**When it works best:** After periods of consolidation (tight price ranges). Works in any market regime."
+        )
         st.markdown("**Risk profile:** Many false breakouts (low win rate) but profitable breakouts move fast and far.")
         st.caption("Key signal: Price above resistance + volume spike.")
 
         st.divider()
 
         st.markdown("#### VWAP")
-        st.markdown("**What it does:** Uses Volume-Weighted Average Price as a reference. Buys below VWAP (undervalued today) and sells above.")
+        st.markdown(
+            "**What it does:** Uses Volume-Weighted Average Price as a reference. Buys below VWAP (undervalued today) and sells above."
+        )
         st.markdown("**When it works best:** Intraday or short-term trades. Effective when institutions are active.")
         st.markdown("**Risk profile:** Low — tight stop losses with clearly defined entry/exit levels.")
         st.caption("Key signal: Price crossing VWAP with confirming volume.")
@@ -1366,9 +1576,15 @@ history. Check here if data looks stale or something seems wrong.
         st.divider()
 
         st.markdown("#### Crypto Momentum")
-        st.markdown("**What it does:** Applies momentum/trend following specifically to BTC and ETH using crypto-specific indicators (funding rates, open interest, whale flows).")
-        st.markdown("**When it works best:** When crypto market fear/greed is not at extremes and derivatives data confirms the trend.")
-        st.markdown("**Risk profile:** Higher volatility than stock strategies. Crypto moves 2-3x more than stocks on average.")
+        st.markdown(
+            "**What it does:** Applies momentum/trend following specifically to BTC and ETH using crypto-specific indicators (funding rates, open interest, whale flows)."
+        )
+        st.markdown(
+            "**When it works best:** When crypto market fear/greed is not at extremes and derivatives data confirms the trend."
+        )
+        st.markdown(
+            "**Risk profile:** Higher volatility than stock strategies. Crypto moves 2-3x more than stocks on average."
+        )
         st.caption("Key signal: Positive funding + rising open interest + outflow from exchanges.")
 
     # ── Tab 4: Key Metrics Cheat Sheet ────────────────────────────
@@ -1388,7 +1604,13 @@ history. Check here if data looks stale or something seems wrong.
             {"Metric": "ADX", "Bad": "< 15", "OK": "15-20", "Good": "20-30", "Excellent": "> 30"},
             {"Metric": "VIX", "Bad": "> 28", "OK": "20-28", "Good": "15-20", "Excellent": "< 15"},
             {"Metric": "Plan Adherence", "Bad": "< 60%", "OK": "60-80%", "Good": "80-90%", "Excellent": "> 90%"},
-            {"Metric": "Fear & Greed", "Bad": "> 75 (extreme greed)", "OK": "55-75", "Good": "25-55", "Excellent": "< 25 (buying opp)"},
+            {
+                "Metric": "Fear & Greed",
+                "Bad": "> 75 (extreme greed)",
+                "OK": "55-75",
+                "Good": "25-55",
+                "Excellent": "< 25 (buying opp)",
+            },
         ]
         st.dataframe(pd.DataFrame(cheat_data), use_container_width=True, hide_index=True)
 
@@ -1398,6 +1620,7 @@ history. Check here if data looks stale or something seems wrong.
 refresh_seconds = config.get("auto_refresh_seconds", 60)
 try:
     from streamlit_autorefresh import st_autorefresh
+
     st_autorefresh(interval=refresh_seconds * 1000, key="data_refresh")
 except ImportError:
     pass

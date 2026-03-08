@@ -2,7 +2,7 @@
 
 import logging
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from enum import Enum
 from functools import wraps
@@ -11,14 +11,15 @@ logger = logging.getLogger(__name__)
 
 
 class CircuitState(Enum):
-    CLOSED = "closed"      # Normal — requests go through
-    OPEN = "open"          # Tripped — requests blocked
+    CLOSED = "closed"  # Normal — requests go through
+    OPEN = "open"  # Tripped — requests blocked
     HALF_OPEN = "half_open"  # Testing — one request allowed
 
 
 @dataclass
 class APIHealth:
     """Health stats for a single API endpoint."""
+
     name: str
     total_calls: int = 0
     failures: int = 0
@@ -125,7 +126,8 @@ class CircuitBreaker:
             health.opened_at = datetime.now().isoformat()
             logger.warning(
                 "Circuit %s: CLOSED -> OPEN (%d consecutive failures)",
-                api_name, health.consecutive_failures,
+                api_name,
+                health.consecutive_failures,
             )
 
     def get_all_health(self) -> list[dict]:
@@ -137,10 +139,7 @@ class CircuitBreaker:
         lines = ["## API Health"]
         for h in self._apis.values():
             icon = {"closed": "OK", "open": "DOWN", "half_open": "TESTING"}[h.state.value]
-            lines.append(
-                f"- **{h.name}**: [{icon}] {h.total_calls} calls, "
-                f"{h.failure_rate:.0%} failure rate"
-            )
+            lines.append(f"- **{h.name}**: [{icon}] {h.total_calls} calls, " f"{h.failure_rate:.0%} failure rate")
         return "\n".join(lines)
 
 
@@ -174,6 +173,7 @@ def retry_with_backoff(
     - On failure: retry with exponential backoff (1s, 2s, 4s, ...)
     - After max_retries failures: record failure in circuit breaker, return None
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
@@ -192,10 +192,14 @@ def retry_with_backoff(
                 except exceptions as e:
                     last_error = e
                     if attempt < max_retries - 1:
-                        delay = min(base_delay * (2 ** attempt), max_delay)
+                        delay = min(base_delay * (2**attempt), max_delay)
                         logger.warning(
                             "%s attempt %d/%d failed: %s — retrying in %.1fs",
-                            api_name, attempt + 1, max_retries, e, delay,
+                            api_name,
+                            attempt + 1,
+                            max_retries,
+                            e,
+                            delay,
                         )
                         time.sleep(delay)
 
@@ -205,6 +209,7 @@ def retry_with_backoff(
             return None
 
         return wrapper
+
     return decorator
 
 
@@ -237,10 +242,14 @@ def resilient_request(
         except Exception as e:
             last_error = e
             if attempt < max_retries - 1:
-                delay = min(base_delay * (2 ** attempt), 30.0)
+                delay = min(base_delay * (2**attempt), 30.0)
                 logger.warning(
                     "%s attempt %d/%d failed: %s — retrying in %.1fs",
-                    api_name, attempt + 1, max_retries, e, delay,
+                    api_name,
+                    attempt + 1,
+                    max_retries,
+                    e,
+                    delay,
                 )
                 time.sleep(delay)
 

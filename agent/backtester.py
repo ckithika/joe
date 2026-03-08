@@ -13,7 +13,7 @@ from pathlib import Path
 import pandas as pd
 
 from agent import analyzer
-from agent.models import Broker, Instrument, MockPosition, Signal
+from agent.models import Broker, Instrument
 from agent.regime import RegimeDetector
 from agent.scorer import ScoringEngine
 from agent.strategy import StrategyEngine
@@ -129,18 +129,18 @@ class Backtester:
                 continue
 
             regime = self.regime_detector.detect(spy_slice, vix_df=vix_slice)
-            regime_history.append({
-                "date": date_str,
-                "regime": regime.regime.value,
-                "confidence": regime.confidence,
-                "adx": regime.adx,
-                "vix": regime.vix,
-            })
+            regime_history.append(
+                {
+                    "date": date_str,
+                    "regime": regime.regime.value,
+                    "confidence": regime.confidence,
+                    "adx": regime.adx,
+                    "vix": regime.vix,
+                }
+            )
 
             # Step 2: Update existing positions
-            positions, day_closed = self._update_positions(
-                positions, historical_data, current_date, balance
-            )
+            positions, day_closed = self._update_positions(positions, historical_data, current_date, balance)
             for trade in day_closed:
                 balance += trade.pnl
                 closed_trades.append(trade)
@@ -161,7 +161,8 @@ class Backtester:
             # Step 6: Match strategies
             if not defensive:
                 signals = self.strategy_engine.match_strategies(
-                    scored, regime,
+                    scored,
+                    regime,
                     virtual_balance=balance,
                     open_position_count=len(positions),
                     max_positions=self.config.max_concurrent_positions,
@@ -183,33 +184,34 @@ class Backtester:
                     risk_amount = balance * (self.config.risk_per_trade_pct / 100) * regime.position_size_modifier
                     pos_size = risk_amount / risk_per_share
 
-                    positions.append({
-                        "ticker": sig.instrument.ticker,
-                        "broker": sig.instrument.broker.value,
-                        "direction": sig.direction,
-                        "strategy": sig.strategy_name,
-                        "entry_price": sig.entry_price,
-                        "entry_date": date_str,
-                        "position_size": round(pos_size, 4),
-                        "stop_loss": sig.stop_loss,
-                        "take_profit": sig.take_profit,
-                        "max_hold_days": self._get_max_hold(sig.strategy_name),
-                        "days_held": 0,
-                        "signal_score": sig.instrument.composite_score,
-                        "highest_price": sig.entry_price,
-                        "lowest_price": sig.entry_price,
-                    })
+                    positions.append(
+                        {
+                            "ticker": sig.instrument.ticker,
+                            "broker": sig.instrument.broker.value,
+                            "direction": sig.direction,
+                            "strategy": sig.strategy_name,
+                            "entry_price": sig.entry_price,
+                            "entry_date": date_str,
+                            "position_size": round(pos_size, 4),
+                            "stop_loss": sig.stop_loss,
+                            "take_profit": sig.take_profit,
+                            "max_hold_days": self._get_max_hold(sig.strategy_name),
+                            "days_held": 0,
+                            "signal_score": sig.instrument.composite_score,
+                            "highest_price": sig.entry_price,
+                            "lowest_price": sig.entry_price,
+                        }
+                    )
 
             # Record daily balance
-            unrealized = sum(
-                self._unrealized_pnl(p, historical_data, current_date)
-                for p in positions
+            unrealized = sum(self._unrealized_pnl(p, historical_data, current_date) for p in positions)
+            daily_balances.append(
+                {
+                    "date": date_str,
+                    "balance": round(balance + unrealized, 2),
+                    "open_positions": len(positions),
+                }
             )
-            daily_balances.append({
-                "date": date_str,
-                "balance": round(balance + unrealized, 2),
-                "open_positions": len(positions),
-            })
 
         # Force-close any remaining positions at last available price
         for pos in positions:
@@ -220,8 +222,13 @@ class Backtester:
                 closed_trades.append(trade)
 
         return self._compile_results(
-            start_date, end_date, len(trading_days),
-            balance, closed_trades, daily_balances, regime_history,
+            start_date,
+            end_date,
+            len(trading_days),
+            balance,
+            closed_trades,
+            daily_balances,
+            regime_history,
         )
 
     def _get_trading_days(self, spy_data: pd.DataFrame, start: date, end: date) -> list[date]:
@@ -300,17 +307,33 @@ class Backtester:
             if not bar:
                 continue
 
-            broker = Broker.CAPITAL if ticker.upper() in (
-                "BTCUSD", "ETHUSD", "EURUSD", "GBPUSD", "USDJPY",
-                "GOLD", "OIL_CRUDE", "US500", "US100", "UK100", "DE40",
-            ) else Broker.IBKR
+            broker = (
+                Broker.CAPITAL
+                if ticker.upper()
+                in (
+                    "BTCUSD",
+                    "ETHUSD",
+                    "EURUSD",
+                    "GBPUSD",
+                    "USDJPY",
+                    "GOLD",
+                    "OIL_CRUDE",
+                    "US500",
+                    "US100",
+                    "UK100",
+                    "DE40",
+                )
+                else Broker.IBKR
+            )
 
-            instruments.append(Instrument(
-                ticker=ticker,
-                name=ticker,
-                broker=broker,
-                ohlcv=sliced,
-            ))
+            instruments.append(
+                Instrument(
+                    ticker=ticker,
+                    name=ticker,
+                    broker=broker,
+                    ohlcv=sliced,
+                )
+            )
         return instruments
 
     def _update_positions(
@@ -442,9 +465,14 @@ class Backtester:
         return {"max_drawdown_pct": round(max_dd * 100, 2)}
 
     def _compile_results(
-        self, start_date: str, end_date: str, trading_days: int,
-        final_balance: float, trades: list[BacktestTrade],
-        daily_balances: list, regime_history: list,
+        self,
+        start_date: str,
+        end_date: str,
+        trading_days: int,
+        final_balance: float,
+        trades: list[BacktestTrade],
+        daily_balances: list,
+        regime_history: list,
     ) -> BacktestResult:
         starting = self.config.starting_balance
         pnls = [t.pnl for t in trades]
@@ -530,7 +558,9 @@ class Backtester:
         arrow = "+" if pnl >= 0 else ""
         print(f"  Total Return:     {arrow}${pnl:.2f} ({arrow}{result.total_return_pct:.1f}%)")
 
-        print(f"\n  Trades: {result.total_trades} | Wins: {result.wins} | Losses: {result.losses} | Expired: {result.expired}")
+        print(
+            f"\n  Trades: {result.total_trades} | Wins: {result.wins} | Losses: {result.losses} | Expired: {result.expired}"
+        )
         print(f"  Win Rate:       {result.win_rate:.1%}")
         print(f"  Profit Factor:  {result.profit_factor:.2f}")
         print(f"  Expectancy:     ${result.expectancy:.2f}/trade")
@@ -539,12 +569,16 @@ class Backtester:
         print(f"  Max Drawdown:   {result.max_drawdown_pct:.1f}%")
 
         if result.best_trade:
-            print(f"\n  Best Trade:  {result.best_trade['ticker']} ({result.best_trade['strategy']}) +${result.best_trade['pnl']:.2f}")
+            print(
+                f"\n  Best Trade:  {result.best_trade['ticker']} ({result.best_trade['strategy']}) +${result.best_trade['pnl']:.2f}"
+            )
         if result.worst_trade:
-            print(f"  Worst Trade: {result.worst_trade['ticker']} ({result.worst_trade['strategy']}) ${result.worst_trade['pnl']:.2f}")
+            print(
+                f"  Worst Trade: {result.worst_trade['ticker']} ({result.worst_trade['strategy']}) ${result.worst_trade['pnl']:.2f}"
+            )
 
         if result.strategy_breakdown:
-            print(f"\n  Strategy Breakdown:")
+            print("\n  Strategy Breakdown:")
             print(f"  {'Strategy':<20} {'Trades':>6} {'Win%':>6} {'P&L':>10}")
             print(f"  {'-'*20} {'-'*6} {'-'*6} {'-'*10}")
             for strat, m in sorted(result.strategy_breakdown.items()):
@@ -554,7 +588,7 @@ class Backtester:
             regimes = defaultdict(int)
             for r in result.regime_history:
                 regimes[r["regime"]] += 1
-            print(f"\n  Regime Distribution:")
+            print("\n  Regime Distribution:")
             for regime, count in sorted(regimes.items(), key=lambda x: -x[1]):
                 pct = count / len(result.regime_history) * 100
                 print(f"    {regime}: {count} days ({pct:.0f}%)")

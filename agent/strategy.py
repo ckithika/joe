@@ -5,7 +5,6 @@ from pathlib import Path
 import yaml
 
 from agent.models import (
-    MarketRegime,
     RegimeAssessment,
     ScoredInstrument,
     Signal,
@@ -141,9 +140,7 @@ class StrategyEngine:
 
         return signals
 
-    def _find_best_strategy(
-        self, inst: ScoredInstrument, regime: RegimeAssessment
-    ) -> tuple[str, str, str] | None:
+    def _find_best_strategy(self, inst: ScoredInstrument, regime: RegimeAssessment) -> tuple[str, str, str] | None:
         """Find the best matching strategy for an instrument in the current regime."""
         tech = inst.technical
 
@@ -190,9 +187,7 @@ class StrategyEngine:
         label = self._make_label(best_name, tech)
         return best_name, label, direction
 
-    def _score_strategy_match(
-        self, name: str, config: dict, tech, inst: ScoredInstrument
-    ) -> float:
+    def _score_strategy_match(self, name: str, config: dict, tech, inst: ScoredInstrument) -> float:
         """Score how well an instrument matches a strategy (0 = no match, higher = better)."""
         score = 0.0
         entry = config.get("entry", {})
@@ -260,9 +255,7 @@ class StrategyEngine:
 
         return score
 
-    def _match_opening_range_breakout(
-        self, config: dict, tech, inst: ScoredInstrument
-    ) -> float:
+    def _match_opening_range_breakout(self, config: dict, tech, inst: ScoredInstrument) -> float:
         """Score instrument for Opening Range Breakout (ORB) strategy.
 
         Checks:
@@ -280,8 +273,10 @@ class StrategyEngine:
         opening_range_minutes = setup.get("opening_range_minutes", 15)
         market_open_hour, market_open_min = 9, 30
         opening_range_end = now.replace(
-            hour=market_open_hour, minute=market_open_min + opening_range_minutes,
-            second=0, microsecond=0,
+            hour=market_open_hour,
+            minute=market_open_min + opening_range_minutes,
+            second=0,
+            microsecond=0,
         )
         if now < opening_range_end:
             return 0.0  # Too early, opening range not yet formed
@@ -318,9 +313,7 @@ class StrategyEngine:
 
         return score
 
-    def _match_vwap_bounce(
-        self, config: dict, tech, inst: ScoredInstrument
-    ) -> float:
+    def _match_vwap_bounce(self, config: dict, tech, inst: ScoredInstrument) -> float:
         """Score instrument for VWAP Bounce strategy.
 
         Checks:

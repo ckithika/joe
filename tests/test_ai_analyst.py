@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from agent.ai_analyst import AIAnalyst, SentimentAnalysis, TradeAnalysis, JournalInsight
+from agent.ai_analyst import AIAnalyst, JournalInsight, SentimentAnalysis, TradeAnalysis
 
 
 class TestAIAnalystAvailability:
@@ -29,13 +29,15 @@ class TestSentimentAnalysis:
 
     @patch.object(AIAnalyst, "_call")
     def test_successful_analysis(self, mock_call):
-        mock_call.return_value = json.dumps({
-            "sentiment": "bullish",
-            "confidence": 0.8,
-            "score": 0.6,
-            "reasoning": "Strong earnings outlook",
-            "key_factors": ["revenue growth", "market expansion"],
-        })
+        mock_call.return_value = json.dumps(
+            {
+                "sentiment": "bullish",
+                "confidence": 0.8,
+                "score": 0.6,
+                "reasoning": "Strong earnings outlook",
+                "key_factors": ["revenue growth", "market expansion"],
+            }
+        )
 
         analyst = AIAnalyst(api_key="key")
         result = analyst.analyze_sentiment("AAPL", ["AAPL beats earnings"])
@@ -61,14 +63,19 @@ class TestBatchSentiment:
     @patch.object(AIAnalyst, "analyze_sentiment")
     def test_batch_processes_all_tickers(self, mock_analyze):
         mock_analyze.return_value = SentimentAnalysis(
-            ticker="", sentiment="neutral", confidence=0.5,
-            score=0.0, reasoning="test",
+            ticker="",
+            sentiment="neutral",
+            confidence=0.5,
+            score=0.0,
+            reasoning="test",
         )
         analyst = AIAnalyst(api_key="key")
-        results = analyst.batch_sentiment({
-            "AAPL": ["headline1"],
-            "MSFT": ["headline2"],
-        })
+        results = analyst.batch_sentiment(
+            {
+                "AAPL": ["headline1"],
+                "MSFT": ["headline2"],
+            }
+        )
         assert len(results) == 2
         assert mock_analyze.call_count == 2
 
@@ -80,16 +87,20 @@ class TestTradeAnalysis:
 
     @patch.object(AIAnalyst, "_call")
     def test_successful_analysis(self, mock_call):
-        mock_call.return_value = json.dumps({
-            "recommendation": "take",
-            "bull_case": "Strong uptrend with momentum",
-            "bear_case": "Approaching resistance level",
-            "risk_factors": ["earnings next week", "high VIX"],
-            "confidence": 0.7,
-        })
+        mock_call.return_value = json.dumps(
+            {
+                "recommendation": "take",
+                "bull_case": "Strong uptrend with momentum",
+                "bear_case": "Approaching resistance level",
+                "risk_factors": ["earnings next week", "high VIX"],
+                "confidence": 0.7,
+            }
+        )
 
         analyst = AIAnalyst(api_key="key")
-        result = analyst.analyze_trade("AAPL", "LONG", "trend_following", 185, 180, 195, "breakout setup", "trending_up")
+        result = analyst.analyze_trade(
+            "AAPL", "LONG", "trend_following", 185, 180, 195, "breakout setup", "trending_up"
+        )
         assert result is not None
         assert result.recommendation == "take"
         assert result.confidence == 0.7
@@ -109,7 +120,16 @@ class TestDailySummary:
             regime="trending_up",
             confidence=0.85,
             signals=[{"ticker": "AAPL", "signal": "STRONG_BUY", "score": 0.9, "strategy": "trend"}],
-            positions=[{"ticker": "MSFT", "direction": "LONG", "entry_price": 350, "unrealized_pnl": 5.0, "days_held": 3, "max_hold_days": 10}],
+            positions=[
+                {
+                    "ticker": "MSFT",
+                    "direction": "LONG",
+                    "entry_price": 350,
+                    "unrealized_pnl": 5.0,
+                    "days_held": 3,
+                    "max_hold_days": 10,
+                }
+            ],
             performance={"virtual_balance": 520, "win_rate": 0.6, "total_trades": 10},
         )
         assert result is not None
@@ -120,8 +140,11 @@ class TestDailySummary:
         mock_call.return_value = "Summary with crypto context."
         analyst = AIAnalyst(api_key="key")
         result = analyst.generate_daily_summary(
-            regime="trending_up", confidence=0.8,
-            signals=[], positions=[], performance={"virtual_balance": 500, "win_rate": 0, "total_trades": 0},
+            regime="trending_up",
+            confidence=0.8,
+            signals=[],
+            positions=[],
+            performance={"virtual_balance": 500, "win_rate": 0, "total_trades": 0},
             crypto_intel={"fear_greed": {"value": 25, "classification": "Extreme Fear"}},
         )
         assert result is not None
@@ -138,13 +161,15 @@ class TestJournalAnalysis:
 
     @patch.object(AIAnalyst, "_call")
     def test_successful_analysis(self, mock_call):
-        mock_call.return_value = json.dumps({
-            "patterns": ["winning on momentum", "losing on reversals"],
-            "strengths": ["good risk management"],
-            "weaknesses": ["overtrading in ranging markets"],
-            "suggestions": ["reduce position size in volatile markets"],
-            "overall_assessment": "Solid foundation with room to improve.",
-        })
+        mock_call.return_value = json.dumps(
+            {
+                "patterns": ["winning on momentum", "losing on reversals"],
+                "strengths": ["good risk management"],
+                "weaknesses": ["overtrading in ranging markets"],
+                "suggestions": ["reduce position size in volatile markets"],
+                "overall_assessment": "Solid foundation with room to improve.",
+            }
+        )
 
         analyst = AIAnalyst(api_key="key")
         result = analyst.analyze_journal("ticker,pnl\nAAPL,5.00\nMSFT,-3.00")

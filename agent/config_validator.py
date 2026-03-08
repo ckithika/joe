@@ -33,10 +33,7 @@ def validate_env() -> list[str]:
                 warnings.append(f"Missing env var: {var} — {description}")
 
     if missing_critical:
-        raise RuntimeError(
-            "Missing critical environment variables:\n  - "
-            + "\n  - ".join(missing_critical)
-        )
+        raise RuntimeError("Missing critical environment variables:\n  - " + "\n  - ".join(missing_critical))
 
     return warnings
 
@@ -52,27 +49,19 @@ def validate_trading_config(config: dict) -> list[str]:
 
     starting_balance = pt.get("starting_balance", 0)
     if not isinstance(starting_balance, (int, float)) or starting_balance <= 0:
-        warnings.append(
-            f"paper_trader.starting_balance must be > 0, got {starting_balance!r}"
-        )
+        warnings.append(f"paper_trader.starting_balance must be > 0, got {starting_balance!r}")
 
     risk_pct = pt.get("risk_per_trade_pct", 0)
     if not isinstance(risk_pct, (int, float)) or not (0 < risk_pct <= 100):
-        warnings.append(
-            f"paper_trader.risk_per_trade_pct must be 0-100, got {risk_pct!r}"
-        )
+        warnings.append(f"paper_trader.risk_per_trade_pct must be 0-100, got {risk_pct!r}")
 
     max_concurrent = pt.get("max_concurrent_positions", 0)
     if not isinstance(max_concurrent, int) or max_concurrent <= 0:
-        warnings.append(
-            f"paper_trader.max_concurrent_positions must be > 0, got {max_concurrent!r}"
-        )
+        warnings.append(f"paper_trader.max_concurrent_positions must be > 0, got {max_concurrent!r}")
 
     max_hold = pt.get("max_hold_days", 0)
     if not isinstance(max_hold, int) or max_hold <= 0:
-        warnings.append(
-            f"paper_trader.max_hold_days must be > 0, got {max_hold!r}"
-        )
+        warnings.append(f"paper_trader.max_hold_days must be > 0, got {max_hold!r}")
 
     return warnings
 
@@ -99,23 +88,17 @@ def validate_strategies(config: dict) -> list[str]:
 
         missing = required_keys - set(strat.keys())
         if missing:
-            warnings.append(
-                f"Strategy '{name}' missing keys: {', '.join(sorted(missing))}"
-            )
+            warnings.append(f"Strategy '{name}' missing keys: {', '.join(sorted(missing))}")
 
         if "max_hold_days" in strat:
             mhd = strat["max_hold_days"]
             if not isinstance(mhd, int) or mhd <= 0:
-                warnings.append(
-                    f"Strategy '{name}'.max_hold_days must be > 0, got {mhd!r}"
-                )
+                warnings.append(f"Strategy '{name}'.max_hold_days must be > 0, got {mhd!r}")
 
         if "active_regimes" in strat:
             ar = strat["active_regimes"]
             if not isinstance(ar, list) or len(ar) == 0:
-                warnings.append(
-                    f"Strategy '{name}'.active_regimes must be a non-empty list"
-                )
+                warnings.append(f"Strategy '{name}'.active_regimes must be a non-empty list")
 
     return warnings
 

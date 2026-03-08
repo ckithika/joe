@@ -7,7 +7,7 @@ import math
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
@@ -16,6 +16,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class EquityPoint:
     """A single point on the equity curve."""
+
     date: str
     balance: float
     drawdown_pct: float
@@ -25,6 +26,7 @@ class EquityPoint:
 @dataclass
 class StrategyStats:
     """Detailed stats for a single strategy."""
+
     name: str
     total_trades: int = 0
     wins: int = 0
@@ -44,6 +46,7 @@ class StrategyStats:
 @dataclass
 class PortfolioReport:
     """Complete portfolio analytics report."""
+
     # Overall metrics
     starting_balance: float = 500.0
     current_balance: float = 500.0
@@ -249,12 +252,14 @@ class PortfolioAnalytics:
                 current_dd_start = None
 
             exit_date = trades[i].get("exit_date", "") if i < len(trades) else ""
-            curve.append(EquityPoint(
-                date=exit_date,
-                balance=round(balance, 2),
-                drawdown_pct=round(dd_pct, 2),
-                peak=round(peak, 2),
-            ))
+            curve.append(
+                EquityPoint(
+                    date=exit_date,
+                    balance=round(balance, 2),
+                    drawdown_pct=round(dd_pct, 2),
+                    peak=round(peak, 2),
+                )
+            )
 
         report.equity_curve = curve
         report.max_drawdown_pct = round(max_dd, 2)
@@ -309,22 +314,24 @@ class PortfolioAnalytics:
             total_wins = sum(wins)
             total_losses = abs(sum(losses))
 
-            stats.append(StrategyStats(
-                name=name,
-                total_trades=len(strat_trades),
-                wins=len(wins),
-                losses=len(losses),
-                win_rate=round(len(wins) / len(strat_trades), 3) if strat_trades else 0,
-                total_pnl=round(sum(pnls), 2),
-                avg_pnl=round(statistics.mean(pnls), 2) if pnls else 0,
-                avg_win=round(statistics.mean(wins), 2) if wins else 0,
-                avg_loss=round(statistics.mean(losses), 2) if losses else 0,
-                profit_factor=round(total_wins / total_losses, 2) if total_losses > 0 else float("inf"),
-                avg_hold_days=round(statistics.mean(hold_days), 1) if hold_days else 0,
-                best_trade=round(max(pnls), 2) if pnls else 0,
-                worst_trade=round(min(pnls), 2) if pnls else 0,
-                avg_r_multiple=round(statistics.mean(r_mults), 2) if r_mults else 0,
-            ))
+            stats.append(
+                StrategyStats(
+                    name=name,
+                    total_trades=len(strat_trades),
+                    wins=len(wins),
+                    losses=len(losses),
+                    win_rate=round(len(wins) / len(strat_trades), 3) if strat_trades else 0,
+                    total_pnl=round(sum(pnls), 2),
+                    avg_pnl=round(statistics.mean(pnls), 2) if pnls else 0,
+                    avg_win=round(statistics.mean(wins), 2) if wins else 0,
+                    avg_loss=round(statistics.mean(losses), 2) if losses else 0,
+                    profit_factor=round(total_wins / total_losses, 2) if total_losses > 0 else float("inf"),
+                    avg_hold_days=round(statistics.mean(hold_days), 1) if hold_days else 0,
+                    best_trade=round(max(pnls), 2) if pnls else 0,
+                    worst_trade=round(min(pnls), 2) if pnls else 0,
+                    avg_r_multiple=round(statistics.mean(r_mults), 2) if r_mults else 0,
+                )
+            )
 
         return sorted(stats, key=lambda s: s.total_pnl, reverse=True)
 
@@ -375,6 +382,7 @@ class PortfolioAnalytics:
     def to_dict(self, report: PortfolioReport) -> dict:
         """Convert report to JSON-serializable dict."""
         from dataclasses import asdict
+
         d = asdict(report)
         # Convert EquityPoint list
         d["equity_curve"] = [asdict(p) for p in report.equity_curve]
@@ -397,7 +405,9 @@ class PortfolioAnalytics:
         # Risk
         lines.append("### Risk Metrics")
         lines.append(f"- **Sharpe Ratio:** {report.sharpe_ratio:.2f} | **Sortino:** {report.sortino_ratio:.2f}")
-        lines.append(f"- **Max Drawdown:** {report.max_drawdown_pct:.1f}% (duration: {report.max_drawdown_duration_days} trades)")
+        lines.append(
+            f"- **Max Drawdown:** {report.max_drawdown_pct:.1f}% (duration: {report.max_drawdown_duration_days} trades)"
+        )
         lines.append(f"- **Current Drawdown:** {report.current_drawdown_pct:.1f}%")
         lines.append(f"- **Calmar Ratio:** {report.calmar_ratio:.2f}")
         lines.append("")
@@ -405,8 +415,12 @@ class PortfolioAnalytics:
         # Streaks
         lines.append("### Streaks & Activity")
         lines.append(f"- **Best Day:** ${report.best_day_pnl:+.2f} | **Worst Day:** ${report.worst_day_pnl:+.2f}")
-        lines.append(f"- **Max Win Streak:** {report.max_consecutive_wins} | **Max Loss Streak:** {report.max_consecutive_losses}")
-        lines.append(f"- **Avg Hold:** {report.avg_hold_days:.1f} days | **Trades/Week:** {report.avg_trades_per_week:.1f}")
+        lines.append(
+            f"- **Max Win Streak:** {report.max_consecutive_wins} | **Max Loss Streak:** {report.max_consecutive_losses}"
+        )
+        lines.append(
+            f"- **Avg Hold:** {report.avg_hold_days:.1f} days | **Trades/Week:** {report.avg_trades_per_week:.1f}"
+        )
         lines.append("")
 
         # Strategy breakdown

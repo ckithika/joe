@@ -74,11 +74,7 @@ class RiskProfiler:
         )
 
         all_alerts = d1.alerts + d2.alerts + d3.alerts + d4.alerts + d5.alerts
-        blocking = [
-            a
-            for a in all_alerts
-            if a.severity in (AlertSeverity.BLOCK, AlertSeverity.CRITICAL)
-        ]
+        blocking = [a for a in all_alerts if a.severity in (AlertSeverity.BLOCK, AlertSeverity.CRITICAL)]
 
         hard_block_threshold = self.config.get("composite_hard_block", 6)
 
@@ -160,9 +156,7 @@ class RiskProfiler:
 
         if rr < 1.5:
             score += 4
-            alerts.append(
-                RiskAlert(AlertSeverity.WARNING, "position", f"R:R {rr:.1f} below 1.5", "rr_ratio", rr, 1.5)
-            )
+            alerts.append(RiskAlert(AlertSeverity.WARNING, "position", f"R:R {rr:.1f} below 1.5", "rr_ratio", rr, 1.5))
         elif rr < 2.0:
             score += 2
 
@@ -174,9 +168,7 @@ class RiskProfiler:
 
         return DimensionScore("position", min(score, 10), alerts, details)
 
-    def _assess_portfolio_risk(
-        self, signal, positions: list[MockPosition], performance: dict
-    ) -> DimensionScore:
+    def _assess_portfolio_risk(self, signal, positions: list[MockPosition], performance: dict) -> DimensionScore:
         score = 0
         alerts = []
         details = {}
@@ -187,23 +179,34 @@ class RiskProfiler:
 
         if signal and slots_used >= max_slots:
             alerts.append(
-                RiskAlert(AlertSeverity.BLOCK, "portfolio", f"All {max_slots} slots full", "max_positions", slots_used, max_slots)
+                RiskAlert(
+                    AlertSeverity.BLOCK,
+                    "portfolio",
+                    f"All {max_slots} slots full",
+                    "max_positions",
+                    slots_used,
+                    max_slots,
+                )
             )
             return DimensionScore("portfolio", 10, alerts, details)
 
         balance = performance.get("virtual_balance", 500)
         if balance > 0 and positions:
-            total_risk_pct = sum(
-                abs(p.entry_price - p.stop_loss) * p.position_size / balance * 100
-                for p in positions
-            )
+            total_risk_pct = sum(abs(p.entry_price - p.stop_loss) * p.position_size / balance * 100 for p in positions)
             details["total_risk_pct"] = round(total_risk_pct, 1)
 
             max_risk = self.config.get("portfolio", {}).get("max_total_risk_pct", 6.0)
             if total_risk_pct > max_risk:
                 score += 5
                 alerts.append(
-                    RiskAlert(AlertSeverity.WARNING, "portfolio", f"Total risk {total_risk_pct:.1f}% > {max_risk}%", "total_exposure", total_risk_pct, max_risk)
+                    RiskAlert(
+                        AlertSeverity.WARNING,
+                        "portfolio",
+                        f"Total risk {total_risk_pct:.1f}% > {max_risk}%",
+                        "total_exposure",
+                        total_risk_pct,
+                        max_risk,
+                    )
                 )
             elif total_risk_pct > max_risk * 0.66:
                 score += 2
@@ -214,7 +217,14 @@ class RiskProfiler:
         if dd < dd_limit + buffer:
             score += 4
             alerts.append(
-                RiskAlert(AlertSeverity.ALERT, "portfolio", f"Drawdown {dd:.1f}% near limit {dd_limit}%", "drawdown_proximity", dd, dd_limit)
+                RiskAlert(
+                    AlertSeverity.ALERT,
+                    "portfolio",
+                    f"Drawdown {dd:.1f}% near limit {dd_limit}%",
+                    "drawdown_proximity",
+                    dd,
+                    dd_limit,
+                )
             )
 
         # Sector concentration check
@@ -231,18 +241,19 @@ class RiskProfiler:
                 sector_counts.setdefault(sector, []).append(p.ticker)
 
         if new_sector_name:
-            sector_counts.setdefault(new_sector_name, []).append(
-                signal.instrument.ticker if signal else ""
-            )
+            sector_counts.setdefault(new_sector_name, []).append(signal.instrument.ticker if signal else "")
 
         for sector, tickers in sector_counts.items():
             if sector and len(tickers) > max_sector:
                 score += 3
                 alerts.append(
                     RiskAlert(
-                        AlertSeverity.WARNING, "portfolio",
+                        AlertSeverity.WARNING,
+                        "portfolio",
                         f"Sector concentration: {len(tickers)} positions in {sector} ({', '.join(tickers)})",
-                        "sector_concentration", len(tickers), max_sector,
+                        "sector_concentration",
+                        len(tickers),
+                        max_sector,
                     )
                 )
                 break  # Only flag worst sector
@@ -259,7 +270,12 @@ class RiskProfiler:
         if signal and hasattr(signal, "strategy_name"):
             if signal.strategy_name not in regime.active_strategies:
                 alerts.append(
-                    RiskAlert(AlertSeverity.BLOCK, "market", f"Strategy '{signal.strategy_name}' not active in {regime.regime.value}", "regime_alignment")
+                    RiskAlert(
+                        AlertSeverity.BLOCK,
+                        "market",
+                        f"Strategy '{signal.strategy_name}' not active in {regime.regime.value}",
+                        "regime_alignment",
+                    )
                 )
                 return DimensionScore("market", 10, alerts, details)
 
@@ -275,14 +291,28 @@ class RiskProfiler:
         if regime.regime_age_days > age_warning:
             score += 1
             alerts.append(
-                RiskAlert(AlertSeverity.INFO, "market", f"Regime persisted {regime.regime_age_days}d — watch for transition", "regime_age", regime.regime_age_days, age_warning)
+                RiskAlert(
+                    AlertSeverity.INFO,
+                    "market",
+                    f"Regime persisted {regime.regime_age_days}d — watch for transition",
+                    "regime_age",
+                    regime.regime_age_days,
+                    age_warning,
+                )
             )
 
         min_conf = self.config.get("market", {}).get("min_regime_confidence", 0.5)
         if regime.confidence < min_conf:
             score += 2
             alerts.append(
-                RiskAlert(AlertSeverity.WARNING, "market", f"Regime confidence low ({regime.confidence:.0%})", "regime_confidence", regime.confidence, min_conf)
+                RiskAlert(
+                    AlertSeverity.WARNING,
+                    "market",
+                    f"Regime confidence low ({regime.confidence:.0%})",
+                    "regime_confidence",
+                    regime.confidence,
+                    min_conf,
+                )
             )
 
         return DimensionScore("market", min(score, 10), alerts, details)
@@ -297,34 +327,69 @@ class RiskProfiler:
         if profile.trades_per_day_avg > max_tpd:
             score += 3
             alerts.append(
-                RiskAlert(AlertSeverity.WARNING, "behavioral", f"Avg {profile.trades_per_day_avg:.1f} trades/day — overtrading?", "overtrading", profile.trades_per_day_avg, max_tpd)
+                RiskAlert(
+                    AlertSeverity.WARNING,
+                    "behavioral",
+                    f"Avg {profile.trades_per_day_avg:.1f} trades/day — overtrading?",
+                    "overtrading",
+                    profile.trades_per_day_avg,
+                    max_tpd,
+                )
             )
 
         if profile.revenge_trade_count > 0:
             score += 4
             alerts.append(
-                RiskAlert(AlertSeverity.ALERT, "behavioral", f"{profile.revenge_trade_count} possible revenge trade(s)", "revenge_trading", profile.revenge_trade_count, 0)
+                RiskAlert(
+                    AlertSeverity.ALERT,
+                    "behavioral",
+                    f"{profile.revenge_trade_count} possible revenge trade(s)",
+                    "revenge_trading",
+                    profile.revenge_trade_count,
+                    0,
+                )
             )
 
         win_warn = beh_config.get("win_streak_warning", 3)
         if profile.consecutive_wins >= win_warn:
             score += 2
             alerts.append(
-                RiskAlert(AlertSeverity.WARNING, "behavioral", f"{profile.consecutive_wins} consecutive wins — watch overconfidence", "win_streak", profile.consecutive_wins, win_warn)
+                RiskAlert(
+                    AlertSeverity.WARNING,
+                    "behavioral",
+                    f"{profile.consecutive_wins} consecutive wins — watch overconfidence",
+                    "win_streak",
+                    profile.consecutive_wins,
+                    win_warn,
+                )
             )
 
         loss_warn = beh_config.get("loss_streak_warning", 3)
         if profile.consecutive_losses >= loss_warn:
             score += 4
             alerts.append(
-                RiskAlert(AlertSeverity.ALERT, "behavioral", f"{profile.consecutive_losses} consecutive losses — consider pausing", "loss_spiral", profile.consecutive_losses, loss_warn)
+                RiskAlert(
+                    AlertSeverity.ALERT,
+                    "behavioral",
+                    f"{profile.consecutive_losses} consecutive losses — consider pausing",
+                    "loss_spiral",
+                    profile.consecutive_losses,
+                    loss_warn,
+                )
             )
 
         min_adherence = beh_config.get("min_plan_adherence", 0.7)
         if profile.plan_adherence_pct < min_adherence:
             score += 3
             alerts.append(
-                RiskAlert(AlertSeverity.WARNING, "behavioral", f"Plan adherence {profile.plan_adherence_pct:.0%} — discipline slipping", "plan_adherence", profile.plan_adherence_pct, min_adherence)
+                RiskAlert(
+                    AlertSeverity.WARNING,
+                    "behavioral",
+                    f"Plan adherence {profile.plan_adherence_pct:.0%} — discipline slipping",
+                    "plan_adherence",
+                    profile.plan_adherence_pct,
+                    min_adherence,
+                )
             )
 
         details["plan_adherence"] = profile.plan_adherence_pct
@@ -348,7 +413,14 @@ class RiskProfiler:
             if total < min_sample:
                 score += 2
                 alerts.append(
-                    RiskAlert(AlertSeverity.INFO, "strategy", f"Only {total} trades for {strategy_name}", "sample_size", total, min_sample)
+                    RiskAlert(
+                        AlertSeverity.INFO,
+                        "strategy",
+                        f"Only {total} trades for {strategy_name}",
+                        "sample_size",
+                        total,
+                        min_sample,
+                    )
                 )
             else:
                 wr = m.get("win_rate", 0)
@@ -356,7 +428,14 @@ class RiskProfiler:
                 if wr < min_wr:
                     score += 4
                     alerts.append(
-                        RiskAlert(AlertSeverity.ALERT, "strategy", f"{strategy_name} win rate {wr:.0%} < {min_wr:.0%}", "strategy_win_rate", wr, min_wr)
+                        RiskAlert(
+                            AlertSeverity.ALERT,
+                            "strategy",
+                            f"{strategy_name} win rate {wr:.0%} < {min_wr:.0%}",
+                            "strategy_win_rate",
+                            wr,
+                            min_wr,
+                        )
                     )
 
             details["strategy"] = strategy_name
@@ -397,17 +476,26 @@ class RiskProfiler:
 
     CORRELATION_GROUPS = {
         "US_EQUITY": [
-            "SPY", "QQQ", "US500", "US100",
-            "AAPL", "NVDA", "TSLA", "MSFT", "AMZN", "META", "GOOGL",
-            "JPM", "GS", "BAC",
+            "SPY",
+            "QQQ",
+            "US500",
+            "US100",
+            "AAPL",
+            "NVDA",
+            "TSLA",
+            "MSFT",
+            "AMZN",
+            "META",
+            "GOOGL",
+            "JPM",
+            "GS",
+            "BAC",
         ],
         "CRYPTO": ["BTCUSD", "ETHUSD", "SOLUSD", "XRPUSD", "DOGEUSD", "ADAUSD"],
         "COMMODITIES": ["GOLD", "OIL_CRUDE"],
     }
 
-    def check_correlation(
-        self, new_signal: StrategySignal, open_positions: list[MockPosition]
-    ) -> dict:
+    def check_correlation(self, new_signal: StrategySignal, open_positions: list[MockPosition]) -> dict:
         """Check if a new signal is correlated with existing open positions.
 
         Returns {"correlated": bool, "reason": str, "existing_ticker": str}
@@ -431,8 +519,7 @@ class RiskProfiler:
                 return {
                     "correlated": True,
                     "reason": (
-                        f"{new_ticker} correlated with open {pos.ticker} "
-                        f"(both {new_group}, both {new_direction})"
+                        f"{new_ticker} correlated with open {pos.ticker} " f"(both {new_group}, both {new_direction})"
                     ),
                     "existing_ticker": pos.ticker,
                 }
@@ -468,14 +555,8 @@ class RiskProfiler:
         return count
 
     def _count_revenge_trades(self, recent: list[dict]) -> int:
-        stop_dates = {
-            e["date"]
-            for e in recent
-            if e.get("action") == "exit" and e.get("reason") == "stopped_out"
-        }
-        return len(
-            [e for e in recent if e.get("action") == "entry" and e.get("date") in stop_dates]
-        )
+        stop_dates = {e["date"] for e in recent if e.get("action") == "exit" and e.get("reason") == "stopped_out"}
+        return len([e for e in recent if e.get("action") == "entry" and e.get("date") in stop_dates])
 
     def _load_behavior_log(self) -> list[dict]:
         if self.behavior_file.exists():
@@ -499,10 +580,7 @@ class RiskProfiler:
                 "behavioral": assessment.behavioral_risk.score,
                 "strategy": assessment.strategy_risk.score,
             },
-            "alerts": [
-                {"severity": a.severity.value, "message": a.message}
-                for a in assessment.all_alerts
-            ],
+            "alerts": [{"severity": a.severity.value, "message": a.message} for a in assessment.all_alerts],
             "timestamp": datetime.now().isoformat(),
         }
         output.write_text(json.dumps(data, indent=2))

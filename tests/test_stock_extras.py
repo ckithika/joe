@@ -7,14 +7,14 @@ import pandas as pd
 import pytest
 
 from agent.stock_extras import (
-    StockDataCollector,
-    StockIntelligence,
     EarningsEvent,
     InsiderTrade,
-    SectorPerformance,
     MarketBreadth,
     OptionsFlow,
+    SectorPerformance,
     ShortInterestData,
+    StockDataCollector,
+    StockIntelligence,
     compute_market_breadth,
     compute_sector_performance,
     estimate_options_flow,
@@ -23,20 +23,21 @@ from agent.stock_extras import (
     fetch_short_interest,
 )
 
-
 # ── Helper ───────────────────────────────────────────────────────
 
 
 def make_price_df(n=100, start_price=100):
     np.random.seed(42)
     prices = start_price + np.cumsum(np.random.randn(n) * 0.5)
-    return pd.DataFrame({
-        "open": prices + np.random.randn(n) * 0.1,
-        "high": prices + abs(np.random.randn(n)),
-        "low": prices - abs(np.random.randn(n)),
-        "close": prices,
-        "volume": np.random.randint(1_000_000, 10_000_000, n),
-    })
+    return pd.DataFrame(
+        {
+            "open": prices + np.random.randn(n) * 0.1,
+            "high": prices + abs(np.random.randn(n)),
+            "low": prices - abs(np.random.randn(n)),
+            "close": prices,
+            "volume": np.random.randint(1_000_000, 10_000_000, n),
+        }
+    )
 
 
 # ── Earnings Calendar ───────────────────────────────────────────
@@ -237,8 +238,12 @@ class TestStockDataCollector:
                 EarningsEvent(ticker="AAPL", date="2024-02-01", time="amc", estimate_eps=2.15, days_until=5),
             ],
             market_breadth=MarketBreadth(
-                advance_decline_ratio=1.5, new_highs=10, new_lows=3,
-                pct_above_200sma=65.0, pct_above_50sma=55.0, mcclellan_oscillator=12.5,
+                advance_decline_ratio=1.5,
+                new_highs=10,
+                new_lows=3,
+                pct_above_200sma=65.0,
+                pct_above_50sma=55.0,
+                mcclellan_oscillator=12.5,
             ),
         )
         summary = collector.format_summary(intel)

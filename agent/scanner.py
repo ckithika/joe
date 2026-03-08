@@ -3,9 +3,9 @@ from pathlib import Path
 
 import yaml
 
-from agent.models import Broker, Instrument, SECTOR_MAP
-from brokers.ibkr_client import IBKRClient
+from agent.models import SECTOR_MAP, Broker, Instrument
 from brokers.capital_client import CapitalClient
+from brokers.ibkr_client import IBKRClient
 
 logger = logging.getLogger(__name__)
 
@@ -124,8 +124,7 @@ class MarketScanner:
         """Run full scan across both brokers."""
         instruments = self.scan_ibkr() + self.scan_capital()
         logger.info(
-            "Full scan complete: %d total instruments "
-            "(IBKR: %d, Capital: %d)",
+            "Full scan complete: %d total instruments " "(IBKR: %d, Capital: %d)",
             len(instruments),
             sum(1 for i in instruments if i.broker == Broker.IBKR),
             sum(1 for i in instruments if i.broker == Broker.CAPITAL),

@@ -17,8 +17,10 @@ load_dotenv()
 
 # Fast path: --remind needs no heavy imports
 if "--remind" in sys.argv:
+
     def _send_pipeline_reminder():
         import requests as req
+
         bot_token = os.getenv("TELEGRAM_BOT_TOKEN", "")
         chat_id = os.getenv("TELEGRAM_CHAT_ID", "")
         if not bot_token or not chat_id:
@@ -36,35 +38,35 @@ if "--remind" in sys.argv:
             json={"chat_id": chat_id, "text": text, "parse_mode": "HTML"},
         )
         print(f"Reminder sent: {resp.status_code}")
+
     _send_pipeline_reminder()
     sys.exit(0)
 
 # Add project root to path
 sys.path.insert(0, str(Path(__file__).parent))
 
+from agent.after_hours import AfterHoursEngine
+from agent.ai_analyst import AIAnalyst
+from agent.alerts import AlertManager
+from agent.auto_tuner import run_tuner, should_run_tuner
+from agent.cache import load_cached_instruments, save_instruments
+from agent.config_validator import validate_all
+from agent.crypto_data import CryptoDataCollector
+from agent.news import NewsSentinel
+from agent.paper_trader import PaperTrader
+from agent.performance_digest import is_sunday, send_daily_pnl_alert, send_signal_summary, send_weekly_digest
+from agent.portfolio_analytics import PortfolioAnalytics
+from agent.preferences import is_module_enabled, should_push_data
+from agent.regime import RegimeDetector
+from agent.reporter import ReportGenerator
+from agent.resilience import get_circuit_breaker
+from agent.risk_profiler import RiskProfiler
 from agent.scanner import MarketScanner
 from agent.scorer import ScoringEngine
-from agent.news import NewsSentinel
-from agent.regime import RegimeDetector
-from agent.strategy import StrategyEngine
-from agent.paper_trader import PaperTrader
-from agent.risk_profiler import RiskProfiler
-from agent.reporter import ReportGenerator
-from agent.ai_analyst import AIAnalyst
-from agent.after_hours import AfterHoursEngine
-from agent.alerts import AlertManager
-from agent.performance_digest import send_daily_pnl_alert, send_weekly_digest, is_sunday, send_signal_summary
-from agent.crypto_data import CryptoDataCollector
-from agent.portfolio_analytics import PortfolioAnalytics
-from agent.resilience import get_circuit_breaker
 from agent.stock_extras import StockDataCollector
-from agent.cache import save_instruments, load_cached_instruments
-from agent.models import Broker
-from agent.auto_tuner import run_tuner, should_run_tuner
-from agent.preferences import is_module_enabled, should_push_data
-from agent.config_validator import validate_all
-from brokers.ibkr_client import IBKRClient
+from agent.strategy import StrategyEngine
 from brokers.capital_client import CapitalClient
+from brokers.ibkr_client import IBKRClient
 
 logging.basicConfig(
     level=os.getenv("LOG_LEVEL", "INFO"),
@@ -198,11 +200,15 @@ def run_pipeline(
     current_prices = _get_current_prices(ibkr, capital, paper_trader.positions)
     position_update = paper_trader.update_positions(current_prices)
     for closed in position_update.get("closed", []):
-        logger.info("Closed: %s %s — %s ($%.2f)", closed["direction"], closed["ticker"], closed["reason"], closed["pnl"])
+        logger.info(
+            "Closed: %s %s — %s ($%.2f)", closed["direction"], closed["ticker"], closed["reason"], closed["pnl"]
+        )
         if alert_manager.available:
             alert_manager.send_position_alert(
-                ticker=closed["ticker"], event=closed["reason"],
-                pnl=closed["pnl"], direction=closed["direction"],
+                ticker=closed["ticker"],
+                event=closed["reason"],
+                pnl=closed["pnl"],
+                direction=closed["direction"],
             )
 
     if paper_update_only:
@@ -250,7 +256,8 @@ def run_pipeline(
     defensive = strategy_engine.check_defensive(regime, paper_trader.performance)
 
     # Check Telegram bot pause state
-    from telegram_bot import is_trading_paused, get_blacklist
+    from telegram_bot import get_blacklist, is_trading_paused
+
     trading_paused = is_trading_paused()
     blacklisted_tickers = get_blacklist()
 
@@ -281,35 +288,25 @@ def run_pipeline(
 
     # Step 7: Risk profiling
     logger.info("Step 6: Risk profiling...")
-    portfolio_risk = risk_profiler.assess_portfolio(
-        paper_trader.positions, paper_trader.performance, regime
-    )
+    portfolio_risk = risk_profiler.assess_portfolio(paper_trader.positions, paper_trader.performance, regime)
 
     # Step 8: Per-trade risk assessment and open new paper positions
     if not defensive and not trading_paused and pt_config.get("auto_enter", True):
         entry_signals = [s for s in strategy_signals if s.action == "enter_now"]
         approved_signals = []
         for sig in entry_signals:
-            trade_risk = risk_profiler.assess_trade(
-                sig, paper_trader.positions, paper_trader.performance, regime
-            )
+            trade_risk = risk_profiler.assess_trade(sig, paper_trader.positions, paper_trader.performance, regime)
             sig.risk_assessment = trade_risk
             if trade_risk.recommendation == "blocked":
-                logger.warning(
-                    "BLOCKED %s: %s", sig.instrument.ticker, trade_risk.recommendation_reason
-                )
+                logger.warning("BLOCKED %s: %s", sig.instrument.ticker, trade_risk.recommendation_reason)
                 sig.action = "skip"
                 sig.skip_reason = trade_risk.recommendation_reason
             elif trade_risk.recommendation == "skip":
-                logger.warning(
-                    "SKIP %s: %s", sig.instrument.ticker, trade_risk.recommendation_reason
-                )
+                logger.warning("SKIP %s: %s", sig.instrument.ticker, trade_risk.recommendation_reason)
                 sig.action = "skip"
                 sig.skip_reason = trade_risk.recommendation_reason
             elif trade_risk.recommendation == "reduce_size":
-                logger.info(
-                    "REDUCE SIZE %s: %s", sig.instrument.ticker, trade_risk.recommendation_reason
-                )
+                logger.info("REDUCE SIZE %s: %s", sig.instrument.ticker, trade_risk.recommendation_reason)
                 sig.position_size = round(sig.position_size * 0.5, 4)
                 sig.dollar_risk = round(sig.dollar_risk * 0.5, 2)
                 approved_signals.append(sig)
@@ -317,9 +314,7 @@ def run_pipeline(
                 # Correlation check — reduce size by 50% if correlated
                 corr = risk_profiler.check_correlation(sig, paper_trader.positions)
                 if corr["correlated"]:
-                    logger.info(
-                        "CORRELATION: %s — reducing size 50%%", corr["reason"]
-                    )
+                    logger.info("CORRELATION: %s — reducing size 50%%", corr["reason"])
                     sig.position_size = round(sig.position_size * 0.5, 4)
                     sig.dollar_risk = round(sig.dollar_risk * 0.5, 2)
                 approved_signals.append(sig)
@@ -342,12 +337,8 @@ def run_pipeline(
     # Step 10: Crypto Intelligence
     crypto_intel = None
     if is_module_enabled("crypto"):
-        has_crypto_positions = any(
-            p.ticker in ("BTCUSD", "ETHUSD") for p in paper_trader.positions
-        )
-        has_crypto_signals = any(
-            s.instrument.ticker in ("BTCUSD", "ETHUSD") for s in strategy_signals
-        )
+        has_crypto_positions = any(p.ticker in ("BTCUSD", "ETHUSD") for p in paper_trader.positions)
+        has_crypto_signals = any(s.instrument.ticker in ("BTCUSD", "ETHUSD") for s in strategy_signals)
         if has_crypto_positions or has_crypto_signals or not dry_run:
             logger.info("Step 8: Collecting crypto intelligence...")
             try:
@@ -384,7 +375,8 @@ def run_pipeline(
                             if ear.ticker in open_tickers:
                                 logger.warning(
                                     "EARNINGS WARNING: %s reports in %d days — consider closing position",
-                                    ear.ticker, ear.days_until,
+                                    ear.ticker,
+                                    ear.days_until,
                                 )
                                 if alert_manager.available:
                                     alert_manager.send_earnings_warning(ear.ticker, ear.days_until)
@@ -426,11 +418,13 @@ def run_pipeline(
                 + len(after_hours_intel.premarket_movers)
             )
             if total_signals > 0:
-                logger.info("After-hours: %d signals (gaps: %d, crypto: %d, pre-market: %d)",
-                            total_signals,
-                            len(after_hours_intel.earnings_gaps),
-                            len(after_hours_intel.crypto_overnight),
-                            len(after_hours_intel.premarket_movers))
+                logger.info(
+                    "After-hours: %d signals (gaps: %d, crypto: %d, pre-market: %d)",
+                    total_signals,
+                    len(after_hours_intel.earnings_gaps),
+                    len(after_hours_intel.crypto_overnight),
+                    len(after_hours_intel.premarket_movers),
+                )
         except Exception as e:
             logger.warning("After-hours scan failed: %s", e)
     else:
@@ -442,12 +436,14 @@ def run_pipeline(
         logger.info("Step 10: Running AI analysis...")
         signal_dicts = []
         for s in strategy_signals[:5]:
-            signal_dicts.append({
-                "ticker": s.instrument.ticker,
-                "signal": s.instrument.signal.value,
-                "score": s.instrument.composite_score,
-                "strategy": s.strategy_name,
-            })
+            signal_dicts.append(
+                {
+                    "ticker": s.instrument.ticker,
+                    "signal": s.instrument.signal.value,
+                    "score": s.instrument.composite_score,
+                    "strategy": s.strategy_name,
+                }
+            )
 
         # Pass intelligence context to AI for richer summaries
         crypto_dict = crypto_collector.to_dict(crypto_intel) if crypto_intel else None
@@ -501,8 +497,11 @@ def run_pipeline(
         report_dict = portfolio_analytics.to_dict(portfolio_report)
         analytics_path = Path("data/paper/portfolio_analytics.json")
         _atomic_write_json(analytics_path, report_dict)
-        logger.info("Portfolio analytics saved (Sharpe: %.2f, Max DD: %.1f%%)",
-                     portfolio_report.sharpe_ratio, portfolio_report.max_drawdown_pct)
+        logger.info(
+            "Portfolio analytics saved (Sharpe: %.2f, Max DD: %.1f%%)",
+            portfolio_report.sharpe_ratio,
+            portfolio_report.max_drawdown_pct,
+        )
     except Exception as e:
         logger.warning("Portfolio analytics failed: %s", e)
 
@@ -589,14 +588,20 @@ def _get_current_prices(ibkr, capital, positions) -> dict:
 
 
 def _save_daily_findings(
-    regime, strategy_signals, paper_data, portfolio_risk, ai_summary, defensive,
-    crypto_intel=None, stock_intel=None, after_hours_intel=None,
+    regime,
+    strategy_signals,
+    paper_data,
+    portfolio_risk,
+    ai_summary,
+    defensive,
+    crypto_intel=None,
+    stock_intel=None,
+    after_hours_intel=None,
 ):
     """Save a daily findings document summarizing the day's analysis."""
-    from dataclasses import asdict
+    from agent.after_hours import AfterHoursEngine
     from agent.crypto_data import CryptoDataCollector
     from agent.stock_extras import StockDataCollector
-    from agent.after_hours import AfterHoursEngine
 
     crypto_collector = CryptoDataCollector()
     stock_collector = StockDataCollector()
@@ -646,8 +651,16 @@ def _save_daily_findings(
         "portfolio": paper_data["performance"],
         "positions": paper_data["positions"],
         "risk": {
-            "composite_score": portfolio_risk.get("composite_score", 0) if isinstance(portfolio_risk, dict) else getattr(portfolio_risk, "composite_score", 0),
-            "risk_level": portfolio_risk.get("risk_level", "unknown") if isinstance(portfolio_risk, dict) else getattr(portfolio_risk, "risk_level", "unknown"),
+            "composite_score": (
+                portfolio_risk.get("composite_score", 0)
+                if isinstance(portfolio_risk, dict)
+                else getattr(portfolio_risk, "composite_score", 0)
+            ),
+            "risk_level": (
+                portfolio_risk.get("risk_level", "unknown")
+                if isinstance(portfolio_risk, dict)
+                else getattr(portfolio_risk, "risk_level", "unknown")
+            ),
         },
         "ai_summary": ai_summary,
     }
@@ -673,14 +686,14 @@ def _save_daily_findings(
     md_lines = [
         f"# Daily Findings — {today}",
         "",
-        f"## Market Regime",
+        "## Market Regime",
         f"- **Regime:** {regime.regime.value.replace('_', ' ').title()}",
         f"- **Confidence:** {regime.confidence:.0%}",
         f"- **ADX:** {regime.adx:.1f} | **VIX:** {regime.vix:.1f}",
         f"- **Active Strategies:** {', '.join(s.replace('_', ' ').title() for s in regime.active_strategies)}",
         f"- **Defensive Mode:** {'YES' if defensive else 'No'}",
         "",
-        f"## Portfolio",
+        "## Portfolio",
         f"- **Balance:** ${paper_data['performance'].get('virtual_balance', 500):.2f}",
         f"- **Open Positions:** {len(paper_data['positions'])}",
         f"- **Win Rate:** {paper_data['performance'].get('win_rate', 0) * 100:.1f}%",
@@ -716,12 +729,14 @@ def _save_daily_findings(
         md_lines.append("")
 
     if ai_summary:
-        md_lines.extend([
-            "## AI Daily Summary",
-            "",
-            ai_summary,
-            "",
-        ])
+        md_lines.extend(
+            [
+                "## AI Daily Summary",
+                "",
+                ai_summary,
+                "",
+            ]
+        )
 
     # Crypto intelligence section
     if crypto_intel:
@@ -757,10 +772,9 @@ def _send_pipeline_reminder():
         logger.warning("Telegram not configured — cannot send reminder")
         return
 
-    now = datetime.now().strftime("%H:%M")
     text = (
         "⏰ <b>Pipeline Reminder</b>\n\n"
-        f"The automated pipeline will run in ~30 minutes.\n\n"
+        "The automated pipeline will run in ~30 minutes.\n\n"
         "If you're at your laptop with TWS open, run locally for full IBKR data:\n"
         "<code>python main.py --once --push</code>\n\n"
         "Otherwise, the cloud job will run with Capital.com data only."
@@ -791,17 +805,25 @@ def _push_to_github():
         # Pull latest to avoid conflicts
         subprocess.run(
             ["git", "pull", "--rebase", "origin", "master"],
-            cwd=project_root, capture_output=True, text=True, timeout=30,
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         # Stage data directories
         subprocess.run(
             ["git", "add", "data/findings/", "data/paper/"],
-            cwd=project_root, capture_output=True, text=True, timeout=10,
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         # Check if there's anything to commit
         status = subprocess.run(
             ["git", "diff", "--cached", "--quiet"],
-            cwd=project_root, capture_output=True, timeout=10,
+            cwd=project_root,
+            capture_output=True,
+            timeout=10,
         )
         if status.returncode == 0:
             logger.info("No data changes to push")
@@ -810,12 +832,18 @@ def _push_to_github():
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M")
         subprocess.run(
             ["git", "commit", "-m", f"data: pipeline run {timestamp}"],
-            cwd=project_root, capture_output=True, text=True, timeout=10,
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            timeout=10,
         )
         # Push
         result = subprocess.run(
             ["git", "push", "-u", "origin", "master"],
-            cwd=project_root, capture_output=True, text=True, timeout=30,
+            cwd=project_root,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode == 0:
             logger.info("Data pushed to GitHub successfully")
@@ -829,7 +857,7 @@ def _push_to_github():
 
 def run_backtest(start_date: str | None, end_date: str | None, broker_filter: str | None = None):
     """Run a backtest over historical data."""
-    from agent.backtester import Backtester, BacktestConfig
+    from agent.backtester import BacktestConfig, Backtester
 
     if not end_date:
         end_date = datetime.now().strftime("%Y-%m-%d")
@@ -860,6 +888,7 @@ def run_backtest(start_date: str | None, end_date: str | None, broker_filter: st
 
     # Fetch historical data for all watchlist instruments
     import yaml
+
     watchlist_config = yaml.safe_load(Path("config/watchlist.yaml").read_text())
     historical_data = {}
 
@@ -938,6 +967,7 @@ def main():
 
     if args.tune:
         import json as _json
+
         result = run_tuner(force=True)
         print(_json.dumps(result, indent=2, default=str))
         return
@@ -947,13 +977,12 @@ def main():
         return
 
     if args.schedule:
-        import schedule
         import time
 
+        import schedule
+
         logger.info("Scheduling daily run at %s", args.schedule)
-        schedule.every().day.at(args.schedule).do(
-            run_pipeline, broker_filter=args.broker, dry_run=args.dry_run
-        )
+        schedule.every().day.at(args.schedule).do(run_pipeline, broker_filter=args.broker, dry_run=args.dry_run)
         while True:
             schedule.run_pending()
             time.sleep(60)
@@ -967,6 +996,7 @@ def main():
             )
         except Exception as exc:
             import traceback
+
             tb = traceback.format_exc()[-1000:]
             logger.critical("Pipeline crashed: %s", exc)
             try:

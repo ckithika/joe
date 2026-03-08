@@ -18,7 +18,6 @@ from agent.after_hours import (
     PreMarketScanner,
 )
 
-
 # ── Helper ───────────────────────────────────────────────────────
 
 
@@ -39,13 +38,15 @@ def make_ohlcv(n=30, base=100, gap_pct=0):
         highs[-1] = max(gap_open, prices[-1]) + abs(np.random.randn())
         lows[-1] = min(gap_open, prices[-1]) - abs(np.random.randn())
 
-    return pd.DataFrame({
-        "open": opens,
-        "high": highs,
-        "low": lows,
-        "close": prices,
-        "volume": np.random.randint(1_000_000, 10_000_000, n),
-    })
+    return pd.DataFrame(
+        {
+            "open": opens,
+            "high": highs,
+            "low": lows,
+            "close": prices,
+            "volume": np.random.randint(1_000_000, 10_000_000, n),
+        }
+    )
 
 
 # ── Earnings Gap Analyzer ───────────────────────────────────────
@@ -117,7 +118,7 @@ class TestEarningsGapAnalyzer:
             open_price=315.0,  # 5% gap
             current_price=314.0,
             atr=10.0,
-            volume_today=5_000_000,   # below 1.5x avg
+            volume_today=5_000_000,  # below 1.5x avg
             avg_volume=10_000_000,
         )
         assert signal is None  # medium gap without volume confirmation
@@ -247,6 +248,7 @@ class TestCryptoOvernightMonitor:
         monitor = CryptoOvernightMonitor(state_file=state_file)
 
         with patch.object(monitor, "_fetch_current_data") as mock_fetch:
+
             def side_effect(symbol):
                 if symbol == "BTCUSDT":
                     return {
@@ -331,11 +333,21 @@ class TestAfterHoursEngine:
             session="pre_market",
             earnings_gaps=[
                 EarningsGapSignal(
-                    ticker="AAPL", gap_pct=5.0, gap_direction="up", gap_size="medium",
-                    previous_close=185, open_price=194.25, strategy="gap_continuation",
-                    entry_price=194.0, stop_loss=190.0, take_profit=200.0,
-                    direction="LONG", confidence=0.5, reasoning="test",
-                    earnings_time="amc", volume_confirmation=True,
+                    ticker="AAPL",
+                    gap_pct=5.0,
+                    gap_direction="up",
+                    gap_size="medium",
+                    previous_close=185,
+                    open_price=194.25,
+                    strategy="gap_continuation",
+                    entry_price=194.0,
+                    stop_loss=190.0,
+                    take_profit=200.0,
+                    direction="LONG",
+                    confidence=0.5,
+                    reasoning="test",
+                    earnings_time="amc",
+                    volume_confirmation=True,
                 ),
             ],
         )
@@ -357,9 +369,15 @@ class TestAfterHoursEngine:
             timestamp="2024-01-01",
             premarket_movers=[
                 PreMarketMover(
-                    ticker="TSLA", previous_close=200, premarket_price=220,
-                    gap_pct=10.0, premarket_volume=5_000_000, avg_daily_volume=3_000_000,
-                    volume_ratio=1.67, catalyst="earnings", action="watch_long",
+                    ticker="TSLA",
+                    previous_close=200,
+                    premarket_price=220,
+                    gap_pct=10.0,
+                    premarket_volume=5_000_000,
+                    avg_daily_volume=3_000_000,
+                    volume_ratio=1.67,
+                    catalyst="earnings",
+                    action="watch_long",
                     reasoning="test reasoning",
                 ),
             ],

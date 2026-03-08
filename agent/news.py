@@ -149,9 +149,7 @@ class NewsSentinel:
         logger.warning("No sentiment data available for %s", ticker)
         return None
 
-    def get_sentiments(
-        self, tickers: list[str], max_tickers: int = 15
-    ) -> dict[str, NewsSentiment]:
+    def get_sentiments(self, tickers: list[str], max_tickers: int = 15) -> dict[str, NewsSentiment]:
         """Fetch sentiment for multiple tickers with rate limiting."""
         results = {}
         for ticker in tickers[:max_tickers]:

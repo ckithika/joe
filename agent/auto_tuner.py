@@ -147,13 +147,9 @@ def _suggest_adjustments(
     current_strategies = current.get("strategies", {})
     baseline_strategies = baseline.get("strategies", {})
 
-    # Which strategies had trades in the window?
-    active_strategies = set(metrics.keys())
-
     # All enabled strategies
     enabled_strategies = {
-        name for name, conf in current_strategies.items()
-        if conf.get("enabled", False) and name != "defensive"
+        name for name, conf in current_strategies.items() if conf.get("enabled", False) and name != "defensive"
     }
 
     for strat_name in enabled_strategies:
@@ -163,34 +159,30 @@ def _suggest_adjustments(
 
         if m is None:
             # Strategy had 0 trades — consider loosening entry criteria
-            adjustments.extend(
-                _loosen_entry(strat_name, strat_conf, base_conf)
-            )
+            adjustments.extend(_loosen_entry(strat_name, strat_conf, base_conf))
             continue
 
         # Rule 1: Win rate < 30% → tighten entry
         if m["trade_count"] >= 3 and m["win_rate"] < 0.30:
-            adjustments.extend(
-                _tighten_entry(strat_name, strat_conf, base_conf, m)
-            )
+            adjustments.extend(_tighten_entry(strat_name, strat_conf, base_conf, m))
 
         # Rule 2: Avg hold time exceeds max_hold_days → reduce hold or tighten stops
         max_hold = strat_conf.get("max_hold_days", 10)
         if m["avg_hold_time"] > max_hold * 0.9:
-            adjustments.extend(
-                _reduce_hold_time(strat_name, strat_conf, base_conf, m)
-            )
+            adjustments.extend(_reduce_hold_time(strat_name, strat_conf, base_conf, m))
 
         # Rule 3: Sharpe < 0 → flag for review (no auto-change, just log)
         if m["trade_count"] >= 3 and m["sharpe"] < 0:
-            adjustments.append({
-                "strategy": strat_name,
-                "parameter": "REVIEW",
-                "old_value": None,
-                "new_value": None,
-                "reason": f"Negative Sharpe ({m['sharpe']:.2f}) over {m['trade_count']} trades — manual review recommended",
-                "auto_apply": False,
-            })
+            adjustments.append(
+                {
+                    "strategy": strat_name,
+                    "parameter": "REVIEW",
+                    "old_value": None,
+                    "new_value": None,
+                    "reason": f"Negative Sharpe ({m['sharpe']:.2f}) over {m['trade_count']} trades — manual review recommended",
+                    "auto_apply": False,
+                }
+            )
 
     return adjustments
 
@@ -207,14 +199,16 @@ def _tighten_entry(strat_name: str, conf: dict, base: dict, m: dict) -> list[dic
         base_val = base_entry.get("rsi_threshold", 38)
         new = _clamp_to_baseline(old - 3, base_val)
         if new != old:
-            adjustments.append({
-                "strategy": strat_name,
-                "parameter": "entry.rsi_threshold",
-                "old_value": old,
-                "new_value": new,
-                "reason": f"Win rate {m['win_rate']:.0%} < 30% — lowering RSI threshold for stricter oversold entry",
-                "auto_apply": True,
-            })
+            adjustments.append(
+                {
+                    "strategy": strat_name,
+                    "parameter": "entry.rsi_threshold",
+                    "old_value": old,
+                    "new_value": new,
+                    "reason": f"Win rate {m['win_rate']:.0%} < 30% — lowering RSI threshold for stricter oversold entry",
+                    "auto_apply": True,
+                }
+            )
 
     elif strat_name == "breakout":
         # Require higher volume surge
@@ -222,14 +216,16 @@ def _tighten_entry(strat_name: str, conf: dict, base: dict, m: dict) -> list[dic
         base_val = base_entry.get("require_volume_surge", 1.5)
         new = _clamp_to_baseline(old + 0.2, base_val)
         if new != old:
-            adjustments.append({
-                "strategy": strat_name,
-                "parameter": "entry.require_volume_surge",
-                "old_value": old,
-                "new_value": new,
-                "reason": f"Win rate {m['win_rate']:.0%} < 30% — requiring higher volume surge for breakout confirmation",
-                "auto_apply": True,
-            })
+            adjustments.append(
+                {
+                    "strategy": strat_name,
+                    "parameter": "entry.require_volume_surge",
+                    "old_value": old,
+                    "new_value": new,
+                    "reason": f"Win rate {m['win_rate']:.0%} < 30% — requiring higher volume surge for breakout confirmation",
+                    "auto_apply": True,
+                }
+            )
 
     elif strat_name == "momentum":
         # Require higher volume surge
@@ -237,14 +233,16 @@ def _tighten_entry(strat_name: str, conf: dict, base: dict, m: dict) -> list[dic
         base_val = base_entry.get("volume_surge", 2.0)
         new = _clamp_to_baseline(old + 0.2, base_val)
         if new != old:
-            adjustments.append({
-                "strategy": strat_name,
-                "parameter": "entry.volume_surge",
-                "old_value": old,
-                "new_value": new,
-                "reason": f"Win rate {m['win_rate']:.0%} < 30% — requiring higher volume for momentum entry",
-                "auto_apply": True,
-            })
+            adjustments.append(
+                {
+                    "strategy": strat_name,
+                    "parameter": "entry.volume_surge",
+                    "old_value": old,
+                    "new_value": new,
+                    "reason": f"Win rate {m['win_rate']:.0%} < 30% — requiring higher volume for momentum entry",
+                    "auto_apply": True,
+                }
+            )
 
     elif strat_name == "trend_following":
         # Narrow RSI range (require more pullback)
@@ -252,14 +250,16 @@ def _tighten_entry(strat_name: str, conf: dict, base: dict, m: dict) -> list[dic
         base_range = base_entry.get("rsi_range", [40, 55])
         new_upper = _clamp_to_baseline(rsi_range[1] - 3, base_range[1])
         if new_upper != rsi_range[1]:
-            adjustments.append({
-                "strategy": strat_name,
-                "parameter": "entry.rsi_range[1]",
-                "old_value": rsi_range[1],
-                "new_value": new_upper,
-                "reason": f"Win rate {m['win_rate']:.0%} < 30% — narrowing RSI range for better pullback entries",
-                "auto_apply": True,
-            })
+            adjustments.append(
+                {
+                    "strategy": strat_name,
+                    "parameter": "entry.rsi_range[1]",
+                    "old_value": rsi_range[1],
+                    "new_value": new_upper,
+                    "reason": f"Win rate {m['win_rate']:.0%} < 30% — narrowing RSI range for better pullback entries",
+                    "auto_apply": True,
+                }
+            )
 
     elif strat_name == "day_trade":
         # Require higher volume surge
@@ -267,14 +267,16 @@ def _tighten_entry(strat_name: str, conf: dict, base: dict, m: dict) -> list[dic
         base_val = base_entry.get("require_volume_surge", 1.3)
         new = _clamp_to_baseline(old + 0.15, base_val)
         if new != old:
-            adjustments.append({
-                "strategy": strat_name,
-                "parameter": "entry.require_volume_surge",
-                "old_value": old,
-                "new_value": new,
-                "reason": f"Win rate {m['win_rate']:.0%} < 30% — requiring higher volume for day trades",
-                "auto_apply": True,
-            })
+            adjustments.append(
+                {
+                    "strategy": strat_name,
+                    "parameter": "entry.require_volume_surge",
+                    "old_value": old,
+                    "new_value": new,
+                    "reason": f"Win rate {m['win_rate']:.0%} < 30% — requiring higher volume for day trades",
+                    "auto_apply": True,
+                }
+            )
 
     return adjustments
 
@@ -292,28 +294,32 @@ def _reduce_hold_time(strat_name: str, conf: dict, base: dict, m: dict) -> list[
         base_val = base_exit.get("trailing_stop_atr", trailing)
         new = _clamp_to_baseline(trailing - 0.2, base_val)
         if new != trailing:
-            adjustments.append({
-                "strategy": strat_name,
-                "parameter": "exit.trailing_stop_atr",
-                "old_value": trailing,
-                "new_value": new,
-                "reason": f"Avg hold time {m['avg_hold_time']:.1f}d near max — tightening trailing stop",
-                "auto_apply": True,
-            })
+            adjustments.append(
+                {
+                    "strategy": strat_name,
+                    "parameter": "exit.trailing_stop_atr",
+                    "old_value": trailing,
+                    "new_value": new,
+                    "reason": f"Avg hold time {m['avg_hold_time']:.1f}d near max — tightening trailing stop",
+                    "auto_apply": True,
+                }
+            )
     else:
         # Reduce max_hold_days
         old = conf.get("max_hold_days", 10)
         base_val = base.get("max_hold_days", old)
         new = _clamp_to_baseline(old - 1, base_val)
         if new != old and new >= 1:
-            adjustments.append({
-                "strategy": strat_name,
-                "parameter": "max_hold_days",
-                "old_value": old,
-                "new_value": int(new),
-                "reason": f"Avg hold time {m['avg_hold_time']:.1f}d near max — reducing max hold days",
-                "auto_apply": True,
-            })
+            adjustments.append(
+                {
+                    "strategy": strat_name,
+                    "parameter": "max_hold_days",
+                    "old_value": old,
+                    "new_value": int(new),
+                    "reason": f"Avg hold time {m['avg_hold_time']:.1f}d near max — reducing max hold days",
+                    "auto_apply": True,
+                }
+            )
 
     return adjustments
 
@@ -329,56 +335,64 @@ def _loosen_entry(strat_name: str, conf: dict, base: dict) -> list[dict]:
         base_val = base_entry.get("rsi_threshold", 38)
         new = _clamp_to_baseline(old + 2, base_val)
         if new != old:
-            adjustments.append({
-                "strategy": strat_name,
-                "parameter": "entry.rsi_threshold",
-                "old_value": old,
-                "new_value": new,
-                "reason": "0 trades in 2 weeks — slightly raising RSI threshold to allow more entries",
-                "auto_apply": True,
-            })
+            adjustments.append(
+                {
+                    "strategy": strat_name,
+                    "parameter": "entry.rsi_threshold",
+                    "old_value": old,
+                    "new_value": new,
+                    "reason": "0 trades in 2 weeks — slightly raising RSI threshold to allow more entries",
+                    "auto_apply": True,
+                }
+            )
 
     elif strat_name == "breakout":
         old = entry.get("require_volume_surge", 1.5)
         base_val = base_entry.get("require_volume_surge", 1.5)
         new = _clamp_to_baseline(old - 0.1, base_val)
         if new != old:
-            adjustments.append({
-                "strategy": strat_name,
-                "parameter": "entry.require_volume_surge",
-                "old_value": old,
-                "new_value": new,
-                "reason": "0 trades in 2 weeks — slightly lowering volume surge requirement",
-                "auto_apply": True,
-            })
+            adjustments.append(
+                {
+                    "strategy": strat_name,
+                    "parameter": "entry.require_volume_surge",
+                    "old_value": old,
+                    "new_value": new,
+                    "reason": "0 trades in 2 weeks — slightly lowering volume surge requirement",
+                    "auto_apply": True,
+                }
+            )
 
     elif strat_name == "momentum":
         old = entry.get("volume_surge", 2.0)
         base_val = base_entry.get("volume_surge", 2.0)
         new = _clamp_to_baseline(old - 0.15, base_val)
         if new != old:
-            adjustments.append({
-                "strategy": strat_name,
-                "parameter": "entry.volume_surge",
-                "old_value": old,
-                "new_value": new,
-                "reason": "0 trades in 2 weeks — slightly lowering volume surge requirement",
-                "auto_apply": True,
-            })
+            adjustments.append(
+                {
+                    "strategy": strat_name,
+                    "parameter": "entry.volume_surge",
+                    "old_value": old,
+                    "new_value": new,
+                    "reason": "0 trades in 2 weeks — slightly lowering volume surge requirement",
+                    "auto_apply": True,
+                }
+            )
 
     elif strat_name == "day_trade":
         old = entry.get("require_volume_surge", 1.3)
         base_val = base_entry.get("require_volume_surge", 1.3)
         new = _clamp_to_baseline(old - 0.1, base_val)
         if new != old:
-            adjustments.append({
-                "strategy": strat_name,
-                "parameter": "entry.require_volume_surge",
-                "old_value": old,
-                "new_value": new,
-                "reason": "0 trades in 2 weeks — slightly lowering volume surge requirement",
-                "auto_apply": True,
-            })
+            adjustments.append(
+                {
+                    "strategy": strat_name,
+                    "parameter": "entry.require_volume_surge",
+                    "old_value": old,
+                    "new_value": new,
+                    "reason": "0 trades in 2 weeks — slightly lowering volume surge requirement",
+                    "auto_apply": True,
+                }
+            )
 
     return adjustments
 
@@ -533,8 +547,12 @@ def run_tuner(force: bool = False) -> dict:
         for strat, m in metrics.items():
             logger.info(
                 "  %s: %d trades, WR %.0f%%, avg P&L $%.2f, avg hold %.1fd, Sharpe %.2f",
-                strat, m["trade_count"], m["win_rate"] * 100,
-                m["avg_pnl"], m["avg_hold_time"], m["sharpe"],
+                strat,
+                m["trade_count"],
+                m["win_rate"] * 100,
+                m["avg_pnl"],
+                m["avg_hold_time"],
+                m["sharpe"],
             )
 
     # Step 3: Generate adjustments
@@ -552,8 +570,11 @@ def run_tuner(force: bool = False) -> dict:
         if adj.get("auto_apply"):
             logger.info(
                 "Applying: %s.%s: %s -> %s (%s)",
-                adj["strategy"], adj["parameter"],
-                adj["old_value"], adj["new_value"], adj["reason"],
+                adj["strategy"],
+                adj["parameter"],
+                adj["old_value"],
+                adj["new_value"],
+                adj["reason"],
             )
             config = _apply_adjustment(config, adj)
             applied_count += 1

@@ -31,7 +31,7 @@ def _load_from_github(path: Path) -> dict | list | None:
     # Strip leading parts to get repo-relative path
     for prefix in ("ai-trading-agent/", "./"):
         if rel_path.startswith(prefix):
-            rel_path = rel_path[len(prefix):]
+            rel_path = rel_path[len(prefix) :]
 
     url = f"https://api.github.com/repos/{_GITHUB_REPO}/contents/{rel_path}"
     headers = {"Accept": "application/vnd.github.raw+json"}
@@ -81,7 +81,7 @@ def _list_github_files(directory: Path, pattern: str = "*.json") -> list[Path]:
     rel_path = str(directory)
     for prefix in ("ai-trading-agent/", "./"):
         if rel_path.startswith(prefix):
-            rel_path = rel_path[len(prefix):]
+            rel_path = rel_path[len(prefix) :]
 
     url = f"https://api.github.com/repos/{_GITHUB_REPO}/contents/{rel_path}"
     headers = {"Accept": "application/vnd.github.v3+json"}

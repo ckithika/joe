@@ -1,6 +1,5 @@
 import logging
 import time
-from datetime import datetime
 
 import pandas as pd
 import requests
@@ -68,9 +67,7 @@ class CapitalClient:
             return self.authenticate()
         return True
 
-    def get_prices(
-        self, epic: str, resolution: str = "DAY", max_bars: int = 50
-    ) -> pd.DataFrame | None:
+    def get_prices(self, epic: str, resolution: str = "DAY", max_bars: int = 50) -> pd.DataFrame | None:
         if not self._ensure_connected():
             return None
         try:
@@ -93,26 +90,10 @@ class CapitalClient:
                 rows.append(
                     {
                         "date": p.get("snapshotTimeUTC", ""),
-                        "open": (
-                            p.get("openPrice", {}).get("bid", 0)
-                            + p.get("openPrice", {}).get("ask", 0)
-                        )
-                        / 2,
-                        "high": (
-                            p.get("highPrice", {}).get("bid", 0)
-                            + p.get("highPrice", {}).get("ask", 0)
-                        )
-                        / 2,
-                        "low": (
-                            p.get("lowPrice", {}).get("bid", 0)
-                            + p.get("lowPrice", {}).get("ask", 0)
-                        )
-                        / 2,
-                        "close": (
-                            close_price.get("bid", 0)
-                            + close_price.get("ask", 0)
-                        )
-                        / 2,
+                        "open": (p.get("openPrice", {}).get("bid", 0) + p.get("openPrice", {}).get("ask", 0)) / 2,
+                        "high": (p.get("highPrice", {}).get("bid", 0) + p.get("highPrice", {}).get("ask", 0)) / 2,
+                        "low": (p.get("lowPrice", {}).get("bid", 0) + p.get("lowPrice", {}).get("ask", 0)) / 2,
+                        "close": (close_price.get("bid", 0) + close_price.get("ask", 0)) / 2,
                         "volume": p.get("lastTradedVolume", 0),
                     }
                 )
@@ -156,9 +137,7 @@ class CapitalClient:
 
     def ping(self) -> bool:
         try:
-            requests.get(
-                f"{self.BASE_URL}/ping", headers=self._headers(), timeout=5
-            )
+            requests.get(f"{self.BASE_URL}/ping", headers=self._headers(), timeout=5)
             return True
         except Exception:
             return False

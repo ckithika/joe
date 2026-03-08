@@ -268,12 +268,14 @@ def is_crypto(ticker: str) -> bool:
 def _load_json(path: Path) -> dict | list | None:
     """Load a JSON file — delegates to data_loader for cloud support."""
     from agent.data_loader import load_json_file
+
     return load_json_file(path)
 
 
 def _latest_findings() -> dict | None:
     """Load today's findings, falling back to the most recent file."""
     from agent.data_loader import list_json_files
+
     today = datetime.now().strftime("%Y-%m-%d")
     data = _load_json(FINDINGS_DIR / f"{today}.json")
     if data:
@@ -446,11 +448,14 @@ def format_risk() -> str:
     level = str(risk.get("risk_level", "unknown")).replace("RiskLevel.", "")
     score = risk.get("composite_score", 0)
     emoji_map = {
-        "LOW": "🟢", "MODERATE": "🟡", "ELEVATED": "🟠",
-        "HIGH": "🔴", "EXTREME": "🔴",
+        "LOW": "🟢",
+        "MODERATE": "🟡",
+        "ELEVATED": "🟠",
+        "HIGH": "🔴",
+        "EXTREME": "🔴",
     }
     emoji = emoji_map.get(level.upper(), "⚪")
-    text = f"⚠️ <b>Risk Assessment</b>\n\n"
+    text = "⚠️ <b>Risk Assessment</b>\n\n"
     text += f"{emoji} <b>Level:</b> {level.title()}\n"
     text += f"<b>Composite Score:</b> {score:.1f}\n"
 
@@ -479,7 +484,7 @@ def format_after_hours() -> str:
     if not ah:
         return "❌ No after-hours data available."
     session = ah.get("session", "unknown")
-    text = f"🌙 <b>After-Hours Intel</b>\n\n"
+    text = "🌙 <b>After-Hours Intel</b>\n\n"
     text += f"<b>Session:</b> {session.replace('_', ' ').title()}\n"
 
     gaps = ah.get("earnings_gaps", [])
@@ -587,10 +592,7 @@ def format_sector_performance() -> str:
         w1 = s.get("change_1w", 0)
         m1 = s.get("change_1m", 0)
         direction = "🟢" if d1 >= 0 else "🔴"
-        text += (
-            f"{direction} <b>{ticker_display(name)}</b>\n"
-            f"  1D: {d1:+.2f}% | 1W: {w1:+.2f}% | 1M: {m1:+.2f}%\n\n"
-        )
+        text += f"{direction} <b>{ticker_display(name)}</b>\n" f"  1D: {d1:+.2f}% | 1W: {w1:+.2f}% | 1M: {m1:+.2f}%\n\n"
     return text[:4000]
 
 
@@ -758,15 +760,17 @@ def format_whale_activity() -> str:
         if longs or shorts:
             text += "\n<b>Liquidation Zones:</b>\n"
             if longs:
-                text += "  Longs: " + ", ".join(
-                    f"${z:,.0f}" if isinstance(z, (int, float)) else str(z)
-                    for z in longs[:3]
-                ) + "\n"
+                text += (
+                    "  Longs: "
+                    + ", ".join(f"${z:,.0f}" if isinstance(z, (int, float)) else str(z) for z in longs[:3])
+                    + "\n"
+                )
             if shorts:
-                text += "  Shorts: " + ", ".join(
-                    f"${z:,.0f}" if isinstance(z, (int, float)) else str(z)
-                    for z in shorts[:3]
-                ) + "\n"
+                text += (
+                    "  Shorts: "
+                    + ", ".join(f"${z:,.0f}" if isinstance(z, (int, float)) else str(z) for z in shorts[:3])
+                    + "\n"
+                )
     return text
 
 
@@ -931,22 +935,17 @@ def _build_qa_context() -> str:
     positions = load_open_positions()
     if positions:
         pos_text = ", ".join(
-            f"{p.get('ticker')} {p.get('direction')} (PnL ${p.get('unrealized_pnl', 0):+.2f})"
-            for p in positions
+            f"{p.get('ticker')} {p.get('direction')} (PnL ${p.get('unrealized_pnl', 0):+.2f})" for p in positions
         )
         parts.append(f"Open positions: {pos_text}")
     signals = load_signals(crypto=False)[:3]
     if signals:
-        sig_text = ", ".join(
-            f"{s.get('ticker')} {s.get('signal')} ({s.get('strategy')})"
-            for s in signals
-        )
+        sig_text = ", ".join(f"{s.get('ticker')} {s.get('signal')} ({s.get('strategy')})" for s in signals)
         parts.append(f"Top signals: {sig_text}")
     analytics = load_analytics()
     if analytics:
         parts.append(
-            f"Sharpe: {analytics.get('sharpe_ratio', 0):.2f}, "
-            f"Max DD: {analytics.get('max_drawdown_pct', 0):.1f}%"
+            f"Sharpe: {analytics.get('sharpe_ratio', 0):.2f}, " f"Max DD: {analytics.get('max_drawdown_pct', 0):.1f}%"
         )
     return "\n".join(parts) if parts else "No data available yet."
 
@@ -959,6 +958,7 @@ def _ask_gemini(question: str, context: str) -> str:
 
     try:
         from google import genai
+
         client = genai.Client(api_key=api_key)
 
         prompt = f"""You are a trading education assistant for a paper trading portfolio.
@@ -986,69 +986,82 @@ QUESTION: {question}"""
 
 def main_menu_keyboard() -> InlineKeyboardMarkup:
     from agent.preferences import is_module_enabled
+
     buttons = [
         [InlineKeyboardButton("📊 Daily Briefing", callback_data="menu_briefing")],
         [InlineKeyboardButton("📈 Stocks", callback_data="menu_stocks")],
     ]
     if is_module_enabled("crypto"):
         buttons.append([InlineKeyboardButton("🪙 Crypto", callback_data="menu_crypto")])
-    buttons.extend([
-        [InlineKeyboardButton("💼 Portfolio", callback_data="menu_portfolio")],
-        [InlineKeyboardButton("🤖 Ask AI", callback_data="menu_ask_ai")],
-        [InlineKeyboardButton("📖 Guide", callback_data="menu_guide")],
-        [InlineKeyboardButton("⚙️ System", callback_data="menu_system")],
-    ])
+    buttons.extend(
+        [
+            [InlineKeyboardButton("💼 Portfolio", callback_data="menu_portfolio")],
+            [InlineKeyboardButton("🤖 Ask AI", callback_data="menu_ask_ai")],
+            [InlineKeyboardButton("📖 Guide", callback_data="menu_guide")],
+            [InlineKeyboardButton("⚙️ System", callback_data="menu_system")],
+        ]
+    )
     return InlineKeyboardMarkup(buttons)
 
 
 def briefing_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("🌡️ Market Regime", callback_data="briefing_regime")],
-        [InlineKeyboardButton("🤖 AI Summary", callback_data="briefing_ai")],
-        [InlineKeyboardButton("⚠️ Risk Assessment", callback_data="briefing_risk")],
-        [InlineKeyboardButton("🌙 After-Hours Intel", callback_data="briefing_after_hours")],
-        [InlineKeyboardButton("« Back", callback_data="back_main")],
-    ])
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("🌡️ Market Regime", callback_data="briefing_regime")],
+            [InlineKeyboardButton("🤖 AI Summary", callback_data="briefing_ai")],
+            [InlineKeyboardButton("⚠️ Risk Assessment", callback_data="briefing_risk")],
+            [InlineKeyboardButton("🌙 After-Hours Intel", callback_data="briefing_after_hours")],
+            [InlineKeyboardButton("« Back", callback_data="back_main")],
+        ]
+    )
 
 
 def stocks_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("📊 Today's Signals", callback_data="stocks_signals")],
-        [InlineKeyboardButton("📅 Earnings Calendar", callback_data="stocks_earnings")],
-        [InlineKeyboardButton("📈 Market Breadth", callback_data="stocks_breadth")],
-        [InlineKeyboardButton("🏭 Sector Performance", callback_data="stocks_sectors")],
-        [InlineKeyboardButton("🕵️ Insider Activity", callback_data="stocks_insider")],
-        [InlineKeyboardButton("« Back", callback_data="back_main")],
-    ])
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("📊 Today's Signals", callback_data="stocks_signals")],
+            [InlineKeyboardButton("📅 Earnings Calendar", callback_data="stocks_earnings")],
+            [InlineKeyboardButton("📈 Market Breadth", callback_data="stocks_breadth")],
+            [InlineKeyboardButton("🏭 Sector Performance", callback_data="stocks_sectors")],
+            [InlineKeyboardButton("🕵️ Insider Activity", callback_data="stocks_insider")],
+            [InlineKeyboardButton("« Back", callback_data="back_main")],
+        ]
+    )
 
 
 def crypto_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("😱 Fear & Greed Index", callback_data="crypto_fear_greed")],
-        [InlineKeyboardButton("₿ BTC/ETH Overview", callback_data="crypto_btc_eth")],
-        [InlineKeyboardButton("🏦 DeFi & Gas", callback_data="crypto_defi")],
-        [InlineKeyboardButton("🐋 Whale Activity", callback_data="crypto_whale")],
-        [InlineKeyboardButton("🌙 Overnight Signals", callback_data="crypto_signals")],
-        [InlineKeyboardButton("« Back", callback_data="back_main")],
-    ])
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("😱 Fear & Greed Index", callback_data="crypto_fear_greed")],
+            [InlineKeyboardButton("₿ BTC/ETH Overview", callback_data="crypto_btc_eth")],
+            [InlineKeyboardButton("🏦 DeFi & Gas", callback_data="crypto_defi")],
+            [InlineKeyboardButton("🐋 Whale Activity", callback_data="crypto_whale")],
+            [InlineKeyboardButton("🌙 Overnight Signals", callback_data="crypto_signals")],
+            [InlineKeyboardButton("« Back", callback_data="back_main")],
+        ]
+    )
 
 
 def portfolio_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("📂 Open Positions", callback_data="portfolio_positions")],
-        [InlineKeyboardButton("💰 Performance Summary", callback_data="portfolio_performance")],
-        [InlineKeyboardButton("📐 Analytics", callback_data="portfolio_analytics")],
-        [InlineKeyboardButton("📜 Trade History", callback_data="portfolio_history")],
-        [InlineKeyboardButton("« Back", callback_data="back_main")],
-    ])
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("📂 Open Positions", callback_data="portfolio_positions")],
+            [InlineKeyboardButton("💰 Performance Summary", callback_data="portfolio_performance")],
+            [InlineKeyboardButton("📐 Analytics", callback_data="portfolio_analytics")],
+            [InlineKeyboardButton("📜 Trade History", callback_data="portfolio_history")],
+            [InlineKeyboardButton("« Back", callback_data="back_main")],
+        ]
+    )
 
 
 def system_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("🔧 API Health", callback_data="system_health")],
-        [InlineKeyboardButton("▶️ Run Pipeline", callback_data="system_run_pipeline")],
-        [InlineKeyboardButton("« Back", callback_data="back_main")],
-    ])
+    return InlineKeyboardMarkup(
+        [
+            [InlineKeyboardButton("🔧 API Health", callback_data="system_health")],
+            [InlineKeyboardButton("▶️ Run Pipeline", callback_data="system_run_pipeline")],
+            [InlineKeyboardButton("« Back", callback_data="back_main")],
+        ]
+    )
 
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
@@ -1255,8 +1268,7 @@ async def cmd_blacklist(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         bl = state.get("blacklist", [])
         if bl:
             await update.message.reply_text(
-                f"🚫 <b>Current Blacklist</b>\n\n{', '.join(bl)}\n\n"
-                "Usage: /blacklist TICKER",
+                f"🚫 <b>Current Blacklist</b>\n\n{', '.join(bl)}\n\n" "Usage: /blacklist TICKER",
                 parse_mode="HTML",
             )
         else:
@@ -1285,8 +1297,7 @@ async def cmd_blacklist(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
     state["blacklist"] = blacklist
     _save_bot_state(state)
     await update.message.reply_text(
-        f"🚫 <b>{ticker} blacklisted.</b>\n\n"
-        f"It will be skipped in scanning. Use /whitelist {ticker} to remove.",
+        f"🚫 <b>{ticker} blacklisted.</b>\n\n" f"It will be skipped in scanning. Use /whitelist {ticker} to remove.",
         parse_mode="HTML",
     )
 
@@ -1385,15 +1396,9 @@ async def cmd_performance(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     )
 
     if best_trade:
-        text += (
-            f"\n<b>Best Trade:</b> {best_trade.get('ticker', '?')} "
-            f"${float(best_trade.get('pnl', 0)):+,.2f}\n"
-        )
+        text += f"\n<b>Best Trade:</b> {best_trade.get('ticker', '?')} " f"${float(best_trade.get('pnl', 0)):+,.2f}\n"
     if worst_trade:
-        text += (
-            f"<b>Worst Trade:</b> {worst_trade.get('ticker', '?')} "
-            f"${float(worst_trade.get('pnl', 0)):+,.2f}\n"
-        )
+        text += f"<b>Worst Trade:</b> {worst_trade.get('ticker', '?')} " f"${float(worst_trade.get('pnl', 0)):+,.2f}\n"
 
     # Strategy breakdown
     strat_metrics = perf.get("strategy_metrics", {})
@@ -1476,9 +1481,7 @@ async def cmd_journal(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
         lines.append(f"   {' | '.join(detail_parts)}")
         lines.append("")
 
-    await update.message.reply_text(
-        "\n".join(lines)[:4096], parse_mode="HTML", reply_markup=portfolio_keyboard()
-    )
+    await update.message.reply_text("\n".join(lines)[:4096], parse_mode="HTML", reply_markup=portfolio_keyboard())
 
 
 # ── Callback Router ──────────────────────────────────────────────────────────
@@ -1566,6 +1569,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     # Special: Crypto callbacks when module is disabled
     if data.startswith("crypto_") or data == "menu_crypto":
         from agent.preferences import is_module_enabled
+
         if not is_module_enabled("crypto"):
             await query.edit_message_text(
                 "🪙 <b>Crypto module is disabled.</b>\n\nEnable it in the setup wizard:\n<code>python setup_wizard.py</code>",
@@ -1584,14 +1588,14 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         try:
             main_py = Path(__file__).parent / "main.py"
             proc = await asyncio.create_subprocess_exec(
-                sys.executable, str(main_py), "--once",
+                sys.executable,
+                str(main_py),
+                "--once",
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
             try:
-                stdout, stderr = await asyncio.wait_for(
-                    proc.communicate(), timeout=600
-                )
+                stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=600)
             except asyncio.TimeoutError:
                 proc.kill()
                 await query.edit_message_text(
@@ -1704,6 +1708,7 @@ def main() -> None:
 
     # Webhook vs polling mode
     from agent.preferences import get_telegram_mode
+
     telegram_mode = os.getenv("TELEGRAM_MODE", get_telegram_mode())
 
     if telegram_mode == "webhook":
@@ -1715,7 +1720,7 @@ def main() -> None:
             # server so Cloud Run health checks pass and the service URL is
             # assigned. The deploy script then updates WEBHOOK_URL and the
             # next revision starts the real bot.
-            from http.server import HTTPServer, BaseHTTPRequestHandler
+            from http.server import BaseHTTPRequestHandler, HTTPServer
 
             logger.warning("WEBHOOK_URL not set — health-check server only on port %d", port)
 
@@ -1724,6 +1729,7 @@ def main() -> None:
                     self.send_response(200)
                     self.end_headers()
                     self.wfile.write(b"OK")
+
                 def log_message(self, *a):
                     pass
 

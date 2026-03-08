@@ -33,8 +33,9 @@ def _rate_limit(api_name: str):
 @dataclass
 class FearGreedIndex:
     """Crypto Fear & Greed Index (0-100)."""
-    value: int              # 0 = extreme fear, 100 = extreme greed
-    classification: str     # "Extreme Fear", "Fear", "Neutral", "Greed", "Extreme Greed"
+
+    value: int  # 0 = extreme fear, 100 = extreme greed
+    classification: str  # "Extreme Fear", "Fear", "Neutral", "Greed", "Extreme Greed"
     timestamp: str
     history_7d: list[int] = field(default_factory=list)
 
@@ -42,9 +43,10 @@ class FearGreedIndex:
 @dataclass
 class DominanceData:
     """BTC and ETH market dominance percentages."""
-    btc_dominance: float        # e.g. 52.3
-    eth_dominance: float        # e.g. 17.1
-    total_market_cap: float     # total crypto market cap in USD
+
+    btc_dominance: float  # e.g. 52.3
+    eth_dominance: float  # e.g. 17.1
+    total_market_cap: float  # total crypto market cap in USD
     btc_market_cap: float
     eth_market_cap: float
 
@@ -52,35 +54,39 @@ class DominanceData:
 @dataclass
 class FundingRate:
     """Perpetual futures funding rate for a symbol."""
+
     symbol: str
-    rate: float                 # e.g. 0.0001 = 0.01%
-    annualized: float           # annualized rate
+    rate: float  # e.g. 0.0001 = 0.01%
+    annualized: float  # annualized rate
     next_funding_time: str
-    direction: str              # "long_pay" or "short_pay" or "neutral"
+    direction: str  # "long_pay" or "short_pay" or "neutral"
 
 
 @dataclass
 class OpenInterestData:
     """Open interest for a symbol."""
+
     symbol: str
-    open_interest: float        # in contracts
-    open_interest_usd: float    # in USD
-    change_24h_pct: float       # 24h change percentage
+    open_interest: float  # in contracts
+    open_interest_usd: float  # in USD
+    change_24h_pct: float  # 24h change percentage
 
 
 @dataclass
 class StablecoinSupply:
     """Stablecoin market supply data."""
+
     usdt_market_cap: float
     usdc_market_cap: float
     total_stablecoin_cap: float
-    usdt_dominance: float       # % of total stablecoin market
+    usdt_dominance: float  # % of total stablecoin market
 
 
 @dataclass
 class HashRateData:
     """Bitcoin network hash rate."""
-    hash_rate: float            # TH/s
+
+    hash_rate: float  # TH/s
     difficulty: float
     block_height: int
     timestamp: str
@@ -89,38 +95,43 @@ class HashRateData:
 @dataclass
 class DefiSnapshot:
     """DeFi ecosystem snapshot."""
-    total_tvl: float            # Total Value Locked in USD
-    top_protocols: list[dict]   # [{name, tvl, change_1d}]
-    eth_tvl: float              # ETH chain TVL
-    stablecoin_tvl: float       # Stablecoins in DeFi
+
+    total_tvl: float  # Total Value Locked in USD
+    top_protocols: list[dict]  # [{name, tvl, change_1d}]
+    eth_tvl: float  # ETH chain TVL
+    stablecoin_tvl: float  # Stablecoins in DeFi
 
 
 @dataclass
 class GasData:
     """Ethereum gas metrics."""
-    gas_price_gwei: float       # current gas price
-    base_fee_gwei: float        # EIP-1559 base fee
-    priority_fee_gwei: float    # priority/tip fee
+
+    gas_price_gwei: float  # current gas price
+    base_fee_gwei: float  # EIP-1559 base fee
+    priority_fee_gwei: float  # priority/tip fee
 
 
 @dataclass
 class WhaleActivity:
     """Large transaction activity."""
-    large_txns_24h: int         # transactions > $1M
-    net_exchange_flow: str      # "inflow" or "outflow"
-    notable_txns: list[dict]    # [{amount, from_type, to_type, symbol}]
+
+    large_txns_24h: int  # transactions > $1M
+    net_exchange_flow: str  # "inflow" or "outflow"
+    notable_txns: list[dict]  # [{amount, from_type, to_type, symbol}]
 
 
 @dataclass
 class CorrelationMatrix:
     """Asset correlation data."""
-    pairs: dict[str, float]     # {"BTC-ETH": 0.85, "BTC-SPY": 0.42, ...}
+
+    pairs: dict[str, float]  # {"BTC-ETH": 0.85, "BTC-SPY": 0.42, ...}
     period_days: int
 
 
 @dataclass
 class CryptoIntelligence:
     """Combined crypto intelligence report."""
+
     # Core
     fear_greed: FearGreedIndex | None = None
     dominance: DominanceData | None = None
@@ -489,13 +500,23 @@ def estimate_liquidation_levels(symbol: str = "BTCUSDT") -> dict | None:
             ],
             "short_liquidation_zones": [
                 {"leverage": "20x", "price": round(price * 1.05, 2), "description": "5% above — 20x shorts liquidated"},
-                {"leverage": "10x", "price": round(price * 1.10, 2), "description": "10% above — 10x shorts liquidated"},
+                {
+                    "leverage": "10x",
+                    "price": round(price * 1.10, 2),
+                    "description": "10% above — 10x shorts liquidated",
+                },
                 {"leverage": "5x", "price": round(price * 1.20, 2), "description": "20% above — 5x shorts liquidated"},
             ],
-            "bias": "long_heavy" if (funding and funding.rate > 0.0003) else
-                    "short_heavy" if (funding and funding.rate < -0.0001) else "balanced",
-            "risk_level": "high" if (funding and abs(funding.rate) > 0.0005) else
-                          "moderate" if (funding and abs(funding.rate) > 0.0002) else "low",
+            "bias": (
+                "long_heavy"
+                if (funding and funding.rate > 0.0003)
+                else "short_heavy" if (funding and funding.rate < -0.0001) else "balanced"
+            ),
+            "risk_level": (
+                "high"
+                if (funding and abs(funding.rate) > 0.0005)
+                else "moderate" if (funding and abs(funding.rate) > 0.0002) else "low"
+            ),
         }
         return zones
     except Exception as e:
@@ -552,11 +573,13 @@ def fetch_defi_snapshot() -> DefiSnapshot | None:
         valid_protocols = [p for p in protocols if isinstance(p.get("tvl"), (int, float)) and p["tvl"] > 0]
         for p in sorted(valid_protocols, key=lambda x: x.get("tvl", 0), reverse=True)[:5]:
             change_1d = p.get("change_1d")
-            top_5.append({
-                "name": p.get("name", ""),
-                "tvl": round(p.get("tvl", 0), 2),
-                "change_1d": round(float(change_1d), 2) if change_1d is not None else 0,
-            })
+            top_5.append(
+                {
+                    "name": p.get("name", ""),
+                    "tvl": round(p.get("tvl", 0), 2),
+                    "change_1d": round(float(change_1d), 2) if change_1d is not None else 0,
+                }
+            )
 
         return DefiSnapshot(
             total_tvl=round(total_tvl, 2),
@@ -671,7 +694,6 @@ def fetch_whale_activity() -> WhaleActivity | None:
 
         # Estimate from transaction count and volume
         tx_count = data.get("n_tx", 0)
-        total_btc_sent = data.get("total_btc_sent", 0) / 1e8  # satoshi to BTC
         estimated_value = data.get("estimated_transaction_volume_usd", 0)
 
         # Large transactions estimated as >$1M
@@ -694,11 +716,13 @@ def fetch_whale_activity() -> WhaleActivity | None:
         return WhaleActivity(
             large_txns_24h=estimated_large,
             net_exchange_flow=net_flow,
-            notable_txns=[{
-                "estimated_daily_volume_usd": round(estimated_value, 2),
-                "total_transactions_24h": tx_count,
-                "avg_transaction_usd": round(avg_tx_value, 2),
-            }],
+            notable_txns=[
+                {
+                    "estimated_daily_volume_usd": round(estimated_value, 2),
+                    "total_transactions_24h": tx_count,
+                    "avg_transaction_usd": round(avg_tx_value, 2),
+                }
+            ],
         )
     except Exception as e:
         logger.warning("Whale activity fetch failed: %s", e)
@@ -738,7 +762,7 @@ def compute_correlations(price_data: dict[str, pd.DataFrame], period_days: int =
                 if cols:
                     series = df[cols[0]].tail(period_days).pct_change().dropna()
                     if len(series) >= period_days - 5:
-                        close_prices[ticker] = series.values[:period_days - 1]
+                        close_prices[ticker] = series.values[: period_days - 1]
 
         if len(close_prices) < 2:
             return None
@@ -753,7 +777,7 @@ def compute_correlations(price_data: dict[str, pd.DataFrame], period_days: int =
         pairs = {}
         tickers = list(corr_matrix.columns)
         for i, t1 in enumerate(tickers):
-            for t2 in tickers[i + 1:]:
+            for t2 in tickers[i + 1 :]:
                 pairs[f"{t1}-{t2}"] = round(corr_matrix.loc[t1, t2], 3)
 
         return CorrelationMatrix(pairs=pairs, period_days=period_days)
@@ -790,9 +814,11 @@ class CryptoDataCollector:
         intel.btc_open_interest = fetch_open_interest("BTCUSDT")
         intel.eth_open_interest = fetch_open_interest("ETHUSDT")
 
-        logger.info("Core metrics complete: F&G=%s, BTC dom=%.1f%%",
-                     intel.fear_greed.value if intel.fear_greed else "N/A",
-                     intel.dominance.btc_dominance if intel.dominance else 0)
+        logger.info(
+            "Core metrics complete: F&G=%s, BTC dom=%.1f%%",
+            intel.fear_greed.value if intel.fear_greed else "N/A",
+            intel.dominance.btc_dominance if intel.dominance else 0,
+        )
         return intel
 
     def collect_tier2(self, intel: CryptoIntelligence | None = None) -> CryptoIntelligence:
@@ -805,13 +831,16 @@ class CryptoDataCollector:
         intel.hash_rate = fetch_hash_rate()
         intel.liquidation_estimate = estimate_liquidation_levels("BTCUSDT")
 
-        logger.info("Advanced metrics complete: stablecoin cap=$%.0fB, hash rate=%s TH/s",
-                     (intel.stablecoin_supply.total_stablecoin_cap / 1e9) if intel.stablecoin_supply else 0,
-                     intel.hash_rate.hash_rate if intel.hash_rate else "N/A")
+        logger.info(
+            "Advanced metrics complete: stablecoin cap=$%.0fB, hash rate=%s TH/s",
+            (intel.stablecoin_supply.total_stablecoin_cap / 1e9) if intel.stablecoin_supply else 0,
+            intel.hash_rate.hash_rate if intel.hash_rate else "N/A",
+        )
         return intel
 
     def collect_tier3(
-        self, intel: CryptoIntelligence | None = None,
+        self,
+        intel: CryptoIntelligence | None = None,
         price_data: dict[str, pd.DataFrame] | None = None,
     ) -> CryptoIntelligence:
         """Collect ecosystem data: DeFi, Gas, Whales, Correlations."""
@@ -826,9 +855,11 @@ class CryptoDataCollector:
         if price_data:
             intel.correlations = compute_correlations(price_data)
 
-        logger.info("Ecosystem metrics complete: DeFi TVL=$%.0fB, gas=%.3f gwei",
-                     (intel.defi.total_tvl / 1e9) if intel.defi else 0,
-                     intel.gas.gas_price_gwei if intel.gas else 0)
+        logger.info(
+            "Ecosystem metrics complete: DeFi TVL=$%.0fB, gas=%.3f gwei",
+            (intel.defi.total_tvl / 1e9) if intel.defi else 0,
+            intel.gas.gas_price_gwei if intel.gas else 0,
+        )
         return intel
 
     def collect_all(self, price_data: dict[str, pd.DataFrame] | None = None) -> CryptoIntelligence:
@@ -841,6 +872,7 @@ class CryptoDataCollector:
     def to_dict(self, intel: CryptoIntelligence) -> dict:
         """Convert intelligence to a JSON-serializable dict."""
         from dataclasses import asdict
+
         result = {}
 
         if intel.fear_greed:
@@ -905,18 +937,24 @@ class CryptoDataCollector:
 
         if intel.btc_open_interest:
             oi = intel.btc_open_interest
-            lines.append(f"- **BTC Open Interest:** ${oi.open_interest_usd / 1e9:,.2f}B ({oi.change_24h_pct:+.1f}% 24h)")
+            lines.append(
+                f"- **BTC Open Interest:** ${oi.open_interest_usd / 1e9:,.2f}B ({oi.change_24h_pct:+.1f}% 24h)"
+            )
 
         if intel.eth_open_interest:
             oi = intel.eth_open_interest
-            lines.append(f"- **ETH Open Interest:** ${oi.open_interest_usd / 1e9:,.2f}B ({oi.change_24h_pct:+.1f}% 24h)")
+            lines.append(
+                f"- **ETH Open Interest:** ${oi.open_interest_usd / 1e9:,.2f}B ({oi.change_24h_pct:+.1f}% 24h)"
+            )
 
         # Advanced
         lines.append("")
         lines.append("### Advanced Metrics")
         if intel.stablecoin_supply:
             s = intel.stablecoin_supply
-            lines.append(f"- **Stablecoin Supply:** ${s.total_stablecoin_cap / 1e9:,.1f}B (USDT dominance: {s.usdt_dominance:.1f}%)")
+            lines.append(
+                f"- **Stablecoin Supply:** ${s.total_stablecoin_cap / 1e9:,.1f}B (USDT dominance: {s.usdt_dominance:.1f}%)"
+            )
 
         if intel.hash_rate:
             h = intel.hash_rate
@@ -924,7 +962,9 @@ class CryptoDataCollector:
 
         if intel.liquidation_estimate:
             liq = intel.liquidation_estimate
-            lines.append(f"- **Liquidation Risk:** {liq.get('risk_level', 'unknown')} | Bias: {liq.get('bias', 'unknown')}")
+            lines.append(
+                f"- **Liquidation Risk:** {liq.get('risk_level', 'unknown')} | Bias: {liq.get('bias', 'unknown')}"
+            )
 
         # Ecosystem
         lines.append("")
@@ -934,13 +974,17 @@ class CryptoDataCollector:
             lines.append(f"- **DeFi TVL:** ${d.total_tvl / 1e9:,.1f}B | ETH TVL: ${d.eth_tvl / 1e9:,.1f}B")
             if d.top_protocols:
                 top = d.top_protocols[0]
-                lines.append(f"- **Top Protocol:** {top['name']} (${top['tvl'] / 1e9:,.1f}B, {top['change_1d']:+.1f}% 1d)")
+                lines.append(
+                    f"- **Top Protocol:** {top['name']} (${top['tvl'] / 1e9:,.1f}B, {top['change_1d']:+.1f}% 1d)"
+                )
 
         if intel.gas:
             g = intel.gas
             # Use dynamic precision — show more decimals when gas is very low
             fmt = ".1f" if g.gas_price_gwei >= 1 else ".3f"
-            lines.append(f"- **ETH Gas:** {g.gas_price_gwei:{fmt}} Gwei (base: {g.base_fee_gwei:{fmt}}, tip: {g.priority_fee_gwei:{fmt}})")
+            lines.append(
+                f"- **ETH Gas:** {g.gas_price_gwei:{fmt}} Gwei (base: {g.base_fee_gwei:{fmt}}, tip: {g.priority_fee_gwei:{fmt}})"
+            )
 
         if intel.whale_activity:
             w = intel.whale_activity

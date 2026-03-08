@@ -17,7 +17,6 @@ Usage:
 """
 
 import argparse
-import csv
 import json
 import logging
 import os
@@ -25,7 +24,7 @@ import signal
 import sys
 import tempfile
 import time
-from datetime import datetime, date, timedelta
+from datetime import date, datetime, timedelta
 from pathlib import Path
 
 import yaml
@@ -36,12 +35,11 @@ load_dotenv()
 sys.path.insert(0, str(Path(__file__).parent))
 
 from agent.alerts import AlertManager
-from agent.models import Broker, Instrument, MarketRegime, RegimeAssessment, SECTOR_MAP
+from agent.models import SECTOR_MAP, Broker, Instrument, MarketRegime, RegimeAssessment
 from agent.paper_trader import PaperTrader
 from agent.risk_profiler import RiskProfiler
 from agent.scorer import ScoringEngine
 from agent.strategy import StrategyEngine
-
 from brokers.capital_client import CapitalClient
 from brokers.ibkr_client import IBKRClient
 
@@ -85,6 +83,7 @@ signal.signal(signal.SIGTERM, _signal_handler)
 def _get_et_now():
     """Get current time in US/Eastern."""
     import pytz
+
     et = pytz.timezone("US/Eastern")
     return datetime.now(et)
 
@@ -99,8 +98,15 @@ def is_market_open() -> bool:
 
     # US market holidays (major ones for 2026)
     holidays = {
-        (1, 1), (1, 19), (2, 16), (4, 3), (5, 25),
-        (7, 3), (9, 7), (11, 26), (12, 25),
+        (1, 1),
+        (1, 19),
+        (2, 16),
+        (4, 3),
+        (5, 25),
+        (7, 3),
+        (9, 7),
+        (11, 26),
+        (12, 25),
     }
     if (now.month, now.day) in holidays:
         return False
@@ -115,7 +121,6 @@ def is_prime_session() -> bool:
     now = _get_et_now()
     t = now.time()
 
-    import pytz
     from datetime import time as dtime
 
     morning_start = dtime(9, 30)
@@ -131,6 +136,7 @@ def is_opening_range_window() -> bool:
     now = _get_et_now()
     t = now.time()
     from datetime import time as dtime
+
     return dtime(9, 30) <= t <= dtime(9, 45)
 
 
@@ -139,6 +145,7 @@ def is_opening_range_complete() -> bool:
     now = _get_et_now()
     t = now.time()
     from datetime import time as dtime
+
     return t > dtime(9, 45)
 
 
@@ -147,6 +154,7 @@ def is_eod_close_time() -> bool:
     now = _get_et_now()
     t = now.time()
     from datetime import time as dtime
+
     return t >= dtime(15, 55)
 
 
@@ -269,8 +277,7 @@ def check_daily_limits(state: dict, pt_config: dict, alert_manager: AlertManager
 
     if gain_target > 0 and state["today_pnl"] >= gain_target:
         if state.get("session_active", True):
-            logger.info("Daily target hit: $%.2f >= $%.2f — stopping new entries",
-                        state["today_pnl"], gain_target)
+            logger.info("Daily target hit: $%.2f >= $%.2f — stopping new entries", state["today_pnl"], gain_target)
             state["session_active"] = False
             save_session_state(state)
             if alert_manager.available:
@@ -284,8 +291,9 @@ def check_daily_limits(state: dict, pt_config: dict, alert_manager: AlertManager
 
     if loss_limit > 0 and state["today_pnl"] <= -loss_limit:
         if state.get("session_active", True):
-            logger.warning("Daily loss limit hit: $%.2f <= -$%.2f — stopping new entries",
-                           state["today_pnl"], loss_limit)
+            logger.warning(
+                "Daily loss limit hit: $%.2f <= -$%.2f — stopping new entries", state["today_pnl"], loss_limit
+            )
             state["session_active"] = False
             save_session_state(state)
             if alert_manager.available:
@@ -327,8 +335,7 @@ def check_circuit_breaker(state: dict, alert_manager: AlertManager) -> bool:
         pause_until = datetime.now() + timedelta(minutes=30)
         state["paused_until"] = pause_until.isoformat()
         save_session_state(state)
-        logger.warning("3 consecutive losses — cooling down for 30 min (until %s)",
-                        pause_until.strftime("%H:%M"))
+        logger.warning("3 consecutive losses — cooling down for 30 min (until %s)", pause_until.strftime("%H:%M"))
         if alert_manager.available:
             alert_manager.send_system_alert(
                 "Circuit Breaker Triggered",
@@ -590,7 +597,10 @@ def check_time_decay_exit(pos, bar: dict) -> bool:
     if profit_in_atr < 0.3:
         logger.info(
             "Time decay exit: %s %s — %.0f min elapsed, profit %.2f ATR (< 0.3)",
-            pos.direction, pos.ticker, elapsed_minutes, profit_in_atr,
+            pos.direction,
+            pos.ticker,
+            elapsed_minutes,
+            profit_in_atr,
         )
         return True
 
@@ -666,10 +676,7 @@ def scan_for_entries(
     )
 
     # Filter to day_trade entries only
-    day_trade_entries = [
-        s for s in signals
-        if s.strategy_name == "day_trade" and s.action == "enter_now"
-    ]
+    day_trade_entries = [s for s in signals if s.strategy_name == "day_trade" and s.action == "enter_now"]
 
     if not day_trade_entries:
         return []
@@ -677,9 +684,7 @@ def scan_for_entries(
     # Risk-profile each signal (same flow as main.py)
     approved = []
     for sig in day_trade_entries:
-        trade_risk = risk_profiler.assess_trade(
-            sig, paper_trader.positions, paper_trader.performance, regime
-        )
+        trade_risk = risk_profiler.assess_trade(sig, paper_trader.positions, paper_trader.performance, regime)
         sig.risk_assessment = trade_risk
         if trade_risk.recommendation == "blocked":
             logger.warning("BLOCKED %s: %s", sig.instrument.ticker, trade_risk.recommendation_reason)
@@ -697,7 +702,8 @@ def scan_for_entries(
         if spread_pct > 0.005:
             logger.warning(
                 "SKIP %s: spread too wide (%.2f%% > 0.5%%)",
-                sig.instrument.ticker, spread_pct * 100,
+                sig.instrument.ticker,
+                spread_pct * 100,
             )
             continue
 
@@ -710,8 +716,11 @@ def scan_for_entries(
         for sig in approved:
             logger.info(
                 "[DRY RUN] Would enter %s %s @ %.2f (SL: %.2f, TP: %.2f)",
-                sig.direction, sig.instrument.ticker,
-                sig.entry_price, sig.stop_loss, sig.take_profit,
+                sig.direction,
+                sig.instrument.ticker,
+                sig.entry_price,
+                sig.stop_loss,
+                sig.take_profit,
             )
         return []
 
@@ -732,11 +741,18 @@ def scan_for_entries(
 
     # Alert on new entries
     for pos in new_positions:
-        logger.info("NEW ENTRY: %s %s @ %.2f [day_trade] (spread: $%.4f)",
-                     pos.direction, pos.ticker, pos.entry_price, pos.spread_cost)
+        logger.info(
+            "NEW ENTRY: %s %s @ %.2f [day_trade] (spread: $%.4f)",
+            pos.direction,
+            pos.ticker,
+            pos.entry_price,
+            pos.spread_cost,
+        )
         if alert_manager.available:
             alert_manager.send_position_alert(
-                ticker=pos.ticker, event="opened", direction=pos.direction,
+                ticker=pos.ticker,
+                event="opened",
+                direction=pos.direction,
             )
 
     return new_positions
@@ -759,10 +775,7 @@ def auto_close_eod(
     if session_state.get("eod_closed"):
         return []
 
-    stock_positions = [
-        p for p in paper_trader.positions
-        if p.ticker not in CRYPTO_INSTRUMENTS
-    ]
+    stock_positions = [p for p in paper_trader.positions if p.ticker not in CRYPTO_INSTRUMENTS]
 
     if not stock_positions:
         session_state["eod_closed"] = True
@@ -800,10 +813,7 @@ def auto_close_eod(
         logger.info("EOD CLOSE: %s %s — P&L: $%.2f", pos.direction, pos.ticker, pnl)
 
     # Remove closed positions (keep crypto)
-    paper_trader.positions = [
-        p for p in paper_trader.positions
-        if p.ticker in CRYPTO_INSTRUMENTS
-    ]
+    paper_trader.positions = [p for p in paper_trader.positions if p.ticker in CRYPTO_INSTRUMENTS]
     paper_trader._save_positions()
     paper_trader._update_performance_metrics()
     paper_trader._save_performance()
@@ -861,7 +871,8 @@ def run_cycle(
             elapsed = time.time() - cycle_start
             logger.info(
                 "EOD cycle complete in %.1fs — %d exits (EOD close)",
-                elapsed, len(summary["exits"]),
+                elapsed,
+                len(summary["exits"]),
             )
             return summary
 
@@ -903,8 +914,10 @@ def run_cycle(
                     logger.info("TIME DECAY EXIT: %s %s — P&L: $%.2f", pos.direction, pos.ticker, pnl)
                     if alert_manager.available:
                         alert_manager.send_position_alert(
-                            ticker=pos.ticker, event="time_decay",
-                            pnl=pnl, direction=pos.direction,
+                            ticker=pos.ticker,
+                            event="time_decay",
+                            pnl=pnl,
+                            direction=pos.direction,
                         )
 
             # Remove time-decay closed positions before normal exit checks
@@ -925,8 +938,10 @@ def run_cycle(
             for closed in result.get("closed", []):
                 logger.info(
                     "EXIT: %s %s — %s, P&L: $%.2f",
-                    closed["direction"], closed["ticker"],
-                    closed["reason"], closed["pnl"],
+                    closed["direction"],
+                    closed["ticker"],
+                    closed["reason"],
+                    closed["pnl"],
                 )
                 summary["exits"].append(closed)
                 update_session_after_close(session_state, closed["pnl"])
@@ -943,8 +958,10 @@ def run_cycle(
                 if pos.ticker in prices:
                     logger.info(
                         "  %s %s: $%.2f P&L (price: %.2f)",
-                        pos.direction, pos.ticker,
-                        pos.unrealized_pnl, prices[pos.ticker]["close"],
+                        pos.direction,
+                        pos.ticker,
+                        pos.unrealized_pnl,
+                        prices[pos.ticker]["close"],
                     )
         else:
             logger.warning("No prices fetched for open positions")
@@ -976,12 +993,10 @@ def run_cycle(
             if defensive:
                 logger.info("Defensive mode active — skipping entry scan")
             elif at_max:
-                logger.info("At max positions (%d/%d) — skipping entry scan",
-                            len(paper_trader.positions), max_pos)
+                logger.info("At max positions (%d/%d) — skipping entry scan", len(paper_trader.positions), max_pos)
             else:
                 open_tickers = {p.ticker for p in paper_trader.positions}
-                instruments = fetch_day_trade_instruments(ibkr, capital, open_tickers,
-                                                          crypto_only=crypto_only)
+                instruments = fetch_day_trade_instruments(ibkr, capital, open_tickers, crypto_only=crypto_only)
                 logger.info("Fetched %d day-trade instruments for scanning", len(instruments))
 
                 # Apply session window filter (midday chop requires higher volume)
@@ -993,22 +1008,33 @@ def run_cycle(
                     scorer = ScoringEngine()
                     risk_profiler = RiskProfiler()
                     new_positions = scan_for_entries(
-                        instruments, regime, paper_trader,
-                        scorer, strategy_engine, risk_profiler,
-                        alert_manager, dry_run=dry_run,
+                        instruments,
+                        regime,
+                        paper_trader,
+                        scorer,
+                        strategy_engine,
+                        risk_profiler,
+                        alert_manager,
+                        dry_run=dry_run,
                     )
                     for pos in new_positions:
-                        summary["entries"].append({
-                            "ticker": pos.ticker,
-                            "direction": pos.direction,
-                            "entry_price": pos.entry_price,
-                        })
+                        summary["entries"].append(
+                            {
+                                "ticker": pos.ticker,
+                                "direction": pos.direction,
+                                "entry_price": pos.entry_price,
+                            }
+                        )
 
     elapsed = time.time() - cycle_start
     logger.info(
         "Cycle complete in %.1fs — %d exits, %d entries | Today P&L: $%.2f (%dW/%dL)",
-        elapsed, len(summary["exits"]), len(summary["entries"]),
-        session_state["today_pnl"], session_state["today_wins"], session_state["today_losses"],
+        elapsed,
+        len(summary["exits"]),
+        len(summary["entries"]),
+        session_state["today_pnl"],
+        session_state["today_wins"],
+        session_state["today_losses"],
     )
     return summary
 
@@ -1024,8 +1050,13 @@ def main():
 
     logger.info("=" * 50)
     logger.info("Joe AI Intraday Trading Engine")
-    logger.info("Interval: %d min | Broker: %s | Dry-run: %s | Crypto-only: %s",
-                args.interval, args.broker or "all", args.dry_run, args.crypto_only)
+    logger.info(
+        "Interval: %d min | Broker: %s | Dry-run: %s | Crypto-only: %s",
+        args.interval,
+        args.broker or "all",
+        args.dry_run,
+        args.crypto_only,
+    )
     logger.info("=" * 50)
 
     # Connect brokers
@@ -1045,6 +1076,7 @@ def main():
             run_cycle(ibkr, capital, dry_run=args.dry_run, crypto_only=args.crypto_only)
         except Exception as exc:
             import traceback
+
             tb = traceback.format_exc()[-1000:]
             logger.critical("Monitor failed: %s", exc)
             try:

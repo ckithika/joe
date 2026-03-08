@@ -45,14 +45,32 @@ def make_scored(
     composite=0.7,
 ) -> ScoredInstrument:
     tech = TechnicalScore(
-        ticker=ticker, rsi=rsi, macd_signal=macd_signal, macd_histogram=0.5,
-        sma_cross=1, ema_trend=ema_trend, bb_squeeze=bb_squeeze, bb_position=0,
-        volume_ratio=volume_ratio, atr=atr, close=close, sma_50=148, sma_200=145,
-        ema_20=149, adx=25, composite=composite,
+        ticker=ticker,
+        rsi=rsi,
+        macd_signal=macd_signal,
+        macd_histogram=0.5,
+        sma_cross=1,
+        ema_trend=ema_trend,
+        bb_squeeze=bb_squeeze,
+        bb_position=0,
+        volume_ratio=volume_ratio,
+        atr=atr,
+        close=close,
+        sma_50=148,
+        sma_200=145,
+        ema_20=149,
+        adx=25,
+        composite=composite,
     )
     return ScoredInstrument(
-        rank=1, ticker=ticker, broker=Broker.IBKR, composite_score=composite,
-        signal=signal, technical=tech, sentiment=None, reasoning="test",
+        rank=1,
+        ticker=ticker,
+        broker=Broker.IBKR,
+        composite_score=composite,
+        signal=signal,
+        technical=tech,
+        sentiment=None,
+        reasoning="test",
     )
 
 
@@ -129,10 +147,7 @@ class TestMatchStrategies:
         assert len(signals) == 0
 
     def test_respects_max_positions(self, engine):
-        instruments = [
-            make_scored(f"T{i}", signal=Signal.STRONG_BUY)
-            for i in range(5)
-        ]
+        instruments = [make_scored(f"T{i}", signal=Signal.STRONG_BUY) for i in range(5)]
         regime = make_regime()
         signals = engine.match_strategies(instruments, regime, max_positions=2)
         enter_count = sum(1 for s in signals if s.action == "enter_now")

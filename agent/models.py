@@ -52,17 +52,38 @@ class AlertSeverity(Enum):
 
 
 SECTOR_MAP = {
-    "VOO": "broad_market", "SPY": "broad_market", "IWM": "broad_market", "DIA": "broad_market",
-    "QQQ": "technology", "SCHD": "dividends",
-    "AAPL": "technology", "MSFT": "technology", "GOOGL": "technology", "AMZN": "technology",
-    "NVDA": "technology", "META": "technology", "TSLA": "consumer_cyclical",
-    "JPM": "financials", "BAC": "financials", "GS": "financials",
-    "JNJ": "healthcare", "UNH": "healthcare", "PFE": "healthcare",
-    "XOM": "energy", "CVX": "energy",
-    "US500": "broad_market", "US100": "technology", "UK100": "broad_market", "DE40": "broad_market",
-    "EURUSD": "forex", "GBPUSD": "forex", "USDJPY": "forex",
-    "BTCUSD": "crypto", "ETHUSD": "crypto",
-    "GOLD": "commodities", "OIL_CRUDE": "commodities",
+    "VOO": "broad_market",
+    "SPY": "broad_market",
+    "IWM": "broad_market",
+    "DIA": "broad_market",
+    "QQQ": "technology",
+    "SCHD": "dividends",
+    "AAPL": "technology",
+    "MSFT": "technology",
+    "GOOGL": "technology",
+    "AMZN": "technology",
+    "NVDA": "technology",
+    "META": "technology",
+    "TSLA": "consumer_cyclical",
+    "JPM": "financials",
+    "BAC": "financials",
+    "GS": "financials",
+    "JNJ": "healthcare",
+    "UNH": "healthcare",
+    "PFE": "healthcare",
+    "XOM": "energy",
+    "CVX": "energy",
+    "US500": "broad_market",
+    "US100": "technology",
+    "UK100": "broad_market",
+    "DE40": "broad_market",
+    "EURUSD": "forex",
+    "GBPUSD": "forex",
+    "USDJPY": "forex",
+    "BTCUSD": "crypto",
+    "ETHUSD": "crypto",
+    "GOLD": "commodities",
+    "OIL_CRUDE": "commodities",
 }
 
 
@@ -81,27 +102,27 @@ class Instrument:
 class TechnicalScore:
     ticker: str
     rsi: float
-    macd_signal: int            # -1, 0, 1
+    macd_signal: int  # -1, 0, 1
     macd_histogram: float
-    sma_cross: int              # -1 (death), 0, 1 (golden)
-    ema_trend: int              # -1 (below), 1 (above)
+    sma_cross: int  # -1 (death), 0, 1 (golden)
+    ema_trend: int  # -1 (below), 1 (above)
     bb_squeeze: bool
-    bb_position: float          # where price is relative to bands (-1 to 1)
-    volume_ratio: float         # current vol / 20d avg
+    bb_position: float  # where price is relative to bands (-1 to 1)
+    volume_ratio: float  # current vol / 20d avg
     atr: float
-    close: float                # latest close price
+    close: float  # latest close price
     sma_50: float
     sma_200: float
     ema_20: float
     adx: float
-    composite: float            # normalized -1 to +1
+    composite: float  # normalized -1 to +1
     strategy_matches: list[str] = field(default_factory=list)
 
 
 @dataclass
 class NewsSentiment:
     ticker: str
-    mean_score: float           # -1 to +1
+    mean_score: float  # -1 to +1
     classification: SentimentClass
     article_count: int
     top_headline: str
@@ -145,8 +166,8 @@ class StrategySignal:
     instrument: ScoredInstrument
     strategy_name: str
     strategy_label: str
-    action: str                 # "enter_now", "watchlist", "skip"
-    direction: str              # "LONG" or "SHORT"
+    action: str  # "enter_now", "watchlist", "skip"
+    direction: str  # "LONG" or "SHORT"
     entry_price: float
     stop_loss: float
     take_profit: float
@@ -186,10 +207,10 @@ class MockPosition:
     trailing_stop_atr: float = 0.0
     highest_price: float = 0.0
     lowest_price: float = 0.0
-    entry_time: str = ""          # ISO timestamp for time-based exits
-    spread_cost: float = 0.0      # Estimated spread cost at entry
-    atr_at_entry: float = 0.0     # ATR when position was opened
-    setup_type: str = ""          # Which pattern triggered entry (day_trade, orb, vwap_bounce, breakout)
+    entry_time: str = ""  # ISO timestamp for time-based exits
+    spread_cost: float = 0.0  # Estimated spread cost at entry
+    atr_at_entry: float = 0.0  # ATR when position was opened
+    setup_type: str = ""  # Which pattern triggered entry (day_trade, orb, vwap_bounce, breakout)
 
 
 @dataclass

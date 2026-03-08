@@ -136,33 +136,57 @@ class TestCheckExit:
 class TestCalculatePnl:
     def test_long_profit(self, trader):
         pos = MockPosition(
-            id="t", ticker="X", broker="ibkr", direction="LONG",
-            entry_price=100, entry_date="2026-01-01", position_size=2.0,
-            stop_loss=95, take_profit=110,
+            id="t",
+            ticker="X",
+            broker="ibkr",
+            direction="LONG",
+            entry_price=100,
+            entry_date="2026-01-01",
+            position_size=2.0,
+            stop_loss=95,
+            take_profit=110,
         )
         assert trader._calculate_pnl(pos, 105) == 10.0
 
     def test_long_loss(self, trader):
         pos = MockPosition(
-            id="t", ticker="X", broker="ibkr", direction="LONG",
-            entry_price=100, entry_date="2026-01-01", position_size=2.0,
-            stop_loss=95, take_profit=110,
+            id="t",
+            ticker="X",
+            broker="ibkr",
+            direction="LONG",
+            entry_price=100,
+            entry_date="2026-01-01",
+            position_size=2.0,
+            stop_loss=95,
+            take_profit=110,
         )
         assert trader._calculate_pnl(pos, 95) == -10.0
 
     def test_short_profit(self, trader):
         pos = MockPosition(
-            id="t", ticker="X", broker="ibkr", direction="SHORT",
-            entry_price=100, entry_date="2026-01-01", position_size=2.0,
-            stop_loss=105, take_profit=90,
+            id="t",
+            ticker="X",
+            broker="ibkr",
+            direction="SHORT",
+            entry_price=100,
+            entry_date="2026-01-01",
+            position_size=2.0,
+            stop_loss=105,
+            take_profit=90,
         )
         assert trader._calculate_pnl(pos, 95) == 10.0
 
     def test_short_loss(self, trader):
         pos = MockPosition(
-            id="t", ticker="X", broker="ibkr", direction="SHORT",
-            entry_price=100, entry_date="2026-01-01", position_size=2.0,
-            stop_loss=105, take_profit=90,
+            id="t",
+            ticker="X",
+            broker="ibkr",
+            direction="SHORT",
+            entry_price=100,
+            entry_date="2026-01-01",
+            position_size=2.0,
+            stop_loss=105,
+            take_profit=90,
         )
         assert trader._calculate_pnl(pos, 105) == -10.0
 
@@ -170,9 +194,15 @@ class TestCalculatePnl:
 class TestUpdatePositions:
     def test_closes_stopped_position(self, trader):
         pos = MockPosition(
-            id="test-1", ticker="AAPL", broker="ibkr", direction="LONG",
-            entry_price=150.0, entry_date="2026-01-01", position_size=1.0,
-            stop_loss=145.0, take_profit=160.0,
+            id="test-1",
+            ticker="AAPL",
+            broker="ibkr",
+            direction="LONG",
+            entry_price=150.0,
+            entry_date="2026-01-01",
+            position_size=1.0,
+            stop_loss=145.0,
+            take_profit=160.0,
         )
         trader.positions = [pos]
         prices = {"AAPL": {"open": 146, "high": 147, "low": 144, "close": 145}}
@@ -183,9 +213,15 @@ class TestUpdatePositions:
 
     def test_keeps_open_position(self, trader):
         pos = MockPosition(
-            id="test-1", ticker="AAPL", broker="ibkr", direction="LONG",
-            entry_price=150.0, entry_date="2026-01-01", position_size=1.0,
-            stop_loss=145.0, take_profit=160.0,
+            id="test-1",
+            ticker="AAPL",
+            broker="ibkr",
+            direction="LONG",
+            entry_price=150.0,
+            entry_date="2026-01-01",
+            position_size=1.0,
+            stop_loss=145.0,
+            take_profit=160.0,
         )
         trader.positions = [pos]
         prices = {"AAPL": {"open": 151, "high": 153, "low": 149, "close": 152}}
@@ -196,9 +232,15 @@ class TestUpdatePositions:
 
     def test_updates_balance_on_close(self, trader):
         pos = MockPosition(
-            id="test-1", ticker="AAPL", broker="ibkr", direction="LONG",
-            entry_price=150.0, entry_date="2026-01-01", position_size=2.0,
-            stop_loss=145.0, take_profit=160.0,
+            id="test-1",
+            ticker="AAPL",
+            broker="ibkr",
+            direction="LONG",
+            entry_price=150.0,
+            entry_date="2026-01-01",
+            position_size=2.0,
+            stop_loss=145.0,
+            take_profit=160.0,
         )
         trader.positions = [pos]
         prices = {"AAPL": {"open": 159, "high": 161, "low": 158, "close": 160}}
@@ -210,10 +252,18 @@ class TestUpdatePositions:
 class TestTrailingStop:
     def test_trailing_stop_activates_in_profit(self, trader):
         pos = MockPosition(
-            id="test-1", ticker="AAPL", broker="ibkr", direction="LONG",
-            entry_price=150.0, entry_date="2026-01-01", position_size=1.0,
-            stop_loss=145.0, take_profit=170.0, trailing_stop_atr=2.0,
-            highest_price=150.0, lowest_price=150.0,
+            id="test-1",
+            ticker="AAPL",
+            broker="ibkr",
+            direction="LONG",
+            entry_price=150.0,
+            entry_date="2026-01-01",
+            position_size=1.0,
+            stop_loss=145.0,
+            take_profit=170.0,
+            trailing_stop_atr=2.0,
+            highest_price=150.0,
+            lowest_price=150.0,
         )
         # Price moves up — trailing stop should activate
         bar = {"open": 158, "high": 160, "low": 157, "close": 159}
@@ -225,10 +275,19 @@ class TestTrailingStop:
 
     def test_trailing_stop_only_moves_up_for_long(self, trader):
         pos = MockPosition(
-            id="test-1", ticker="AAPL", broker="ibkr", direction="LONG",
-            entry_price=150.0, entry_date="2026-01-01", position_size=1.0,
-            stop_loss=145.0, take_profit=170.0, trailing_stop_atr=2.0,
-            highest_price=160.0, lowest_price=150.0, trailing_stop=155.0,
+            id="test-1",
+            ticker="AAPL",
+            broker="ibkr",
+            direction="LONG",
+            entry_price=150.0,
+            entry_date="2026-01-01",
+            position_size=1.0,
+            stop_loss=145.0,
+            take_profit=170.0,
+            trailing_stop_atr=2.0,
+            highest_price=160.0,
+            lowest_price=150.0,
+            trailing_stop=155.0,
         )
         # Price dips — trailing stop should NOT move down
         bar = {"open": 156, "high": 157, "low": 154, "close": 155}
@@ -238,20 +297,37 @@ class TestTrailingStop:
 
     def test_trailing_stop_triggers_exit(self, trader):
         pos = MockPosition(
-            id="test-1", ticker="AAPL", broker="ibkr", direction="LONG",
-            entry_price=150.0, entry_date="2026-01-01", position_size=1.0,
-            stop_loss=145.0, take_profit=170.0, trailing_stop=155.0,
-            trailing_stop_atr=2.0, highest_price=160.0, lowest_price=150.0,
+            id="test-1",
+            ticker="AAPL",
+            broker="ibkr",
+            direction="LONG",
+            entry_price=150.0,
+            entry_date="2026-01-01",
+            position_size=1.0,
+            stop_loss=145.0,
+            take_profit=170.0,
+            trailing_stop=155.0,
+            trailing_stop_atr=2.0,
+            highest_price=160.0,
+            lowest_price=150.0,
         )
         bar = {"open": 156, "high": 156, "low": 154, "close": 154}
         assert trader._check_exit(pos, bar) == "trailing_stopped"
 
     def test_short_trailing_stop(self, trader):
         pos = MockPosition(
-            id="test-1", ticker="AAPL", broker="ibkr", direction="SHORT",
-            entry_price=150.0, entry_date="2026-01-01", position_size=1.0,
-            stop_loss=155.0, take_profit=140.0, trailing_stop_atr=2.0,
-            highest_price=150.0, lowest_price=142.0,
+            id="test-1",
+            ticker="AAPL",
+            broker="ibkr",
+            direction="SHORT",
+            entry_price=150.0,
+            entry_date="2026-01-01",
+            position_size=1.0,
+            stop_loss=155.0,
+            take_profit=140.0,
+            trailing_stop_atr=2.0,
+            highest_price=150.0,
+            lowest_price=142.0,
         )
         bar = {"open": 143, "high": 144, "low": 141, "close": 142}
         pos.lowest_price = min(pos.lowest_price, bar["low"])
@@ -263,6 +339,7 @@ class TestTrailingStop:
 class TestPDTSimulation:
     def test_pdt_blocks_when_limit_reached(self, tmp_data_dir):
         import csv
+
         config = {
             "starting_balance": 500.0,
             "pdt_simulation": True,
@@ -271,23 +348,52 @@ class TestPDTSimulation:
         trader = PaperTrader(config, data_dir=tmp_data_dir)
         # Write 3 same-day trades to history
         from datetime import date
+
         today = date.today().isoformat()
         with open(trader.history_file, "w", newline="") as f:
-            writer = csv.DictWriter(f, fieldnames=[
-                "id", "ticker", "broker", "direction", "entry_price",
-                "entry_date", "exit_price", "exit_date", "exit_reason",
-                "position_size", "pnl", "pnl_pct", "r_multiple",
-                "signal_score", "days_held", "strategy",
-            ])
+            writer = csv.DictWriter(
+                f,
+                fieldnames=[
+                    "id",
+                    "ticker",
+                    "broker",
+                    "direction",
+                    "entry_price",
+                    "entry_date",
+                    "exit_price",
+                    "exit_date",
+                    "exit_reason",
+                    "position_size",
+                    "pnl",
+                    "pnl_pct",
+                    "r_multiple",
+                    "signal_score",
+                    "days_held",
+                    "strategy",
+                ],
+            )
             writer.writeheader()
             for i in range(3):
-                writer.writerow({
-                    "id": f"PT-{i}", "ticker": f"T{i}", "broker": "ibkr",
-                    "direction": "LONG", "entry_price": 100, "entry_date": today,
-                    "exit_price": 101, "exit_date": today, "exit_reason": "target_hit",
-                    "position_size": 1, "pnl": 1, "pnl_pct": 1, "r_multiple": 0.5,
-                    "signal_score": 0.8, "days_held": 0, "strategy": "test",
-                })
+                writer.writerow(
+                    {
+                        "id": f"PT-{i}",
+                        "ticker": f"T{i}",
+                        "broker": "ibkr",
+                        "direction": "LONG",
+                        "entry_price": 100,
+                        "entry_date": today,
+                        "exit_price": 101,
+                        "exit_date": today,
+                        "exit_reason": "target_hit",
+                        "position_size": 1,
+                        "pnl": 1,
+                        "pnl_pct": 1,
+                        "r_multiple": 0.5,
+                        "signal_score": 0.8,
+                        "days_held": 0,
+                        "strategy": "test",
+                    }
+                )
         assert trader._would_violate_pdt("AAPL") is True
 
     def test_pdt_allows_when_under_limit(self, tmp_data_dir):
@@ -306,9 +412,15 @@ class TestPersistence:
         config = {"starting_balance": 500.0}
         trader1 = PaperTrader(config, data_dir=tmp_data_dir)
         pos = MockPosition(
-            id="test-1", ticker="AAPL", broker="ibkr", direction="LONG",
-            entry_price=150.0, entry_date="2026-01-01", position_size=1.0,
-            stop_loss=145.0, take_profit=160.0,
+            id="test-1",
+            ticker="AAPL",
+            broker="ibkr",
+            direction="LONG",
+            entry_price=150.0,
+            entry_date="2026-01-01",
+            position_size=1.0,
+            stop_loss=145.0,
+            take_profit=160.0,
         )
         trader1.positions = [pos]
         trader1._save_positions()

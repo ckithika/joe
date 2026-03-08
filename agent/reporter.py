@@ -1,7 +1,7 @@
 import csv
 import json
 import logging
-from datetime import date, datetime
+from datetime import date
 from pathlib import Path
 
 from agent.models import (
@@ -64,12 +64,8 @@ class ReportGenerator:
         lines.append(
             f"  SPY: {regime.spy_trend} | ADX: {regime.adx:.1f} | VIX: {regime.vix:.1f} | Breadth: {regime.breadth:.0f}%"
         )
-        lines.append(
-            f"  Active strategies: {', '.join(s.replace('_', ' ').title() for s in regime.active_strategies)}"
-        )
-        lines.append(
-            f"  Position sizing: {regime.position_size_modifier:.0%}"
-        )
+        lines.append(f"  Active strategies: {', '.join(s.replace('_', ' ').title() for s in regime.active_strategies)}")
+        lines.append(f"  Position sizing: {regime.position_size_modifier:.0%}")
 
         if defensive_mode:
             lines.append("")
@@ -94,18 +90,14 @@ class ReportGenerator:
             f"Avg R: {perf.get('avg_r_multiple', 0):.2f} | "
             f"Max Drawdown: {perf.get('max_drawdown_pct', 0):.1f}%"
         )
-        lines.append(
-            f"  Open: {len(positions)}/3 slots"
-        )
+        lines.append(f"  Open: {len(positions)}/3 slots")
 
         if positions:
             lines.append("")
             lines.append("  Open Positions:")
             for pos in positions:
                 emoji = "+" if pos.get("unrealized_pnl", 0) >= 0 else "-"
-                lines.append(
-                    f"    [{emoji}] {pos['ticker']} ({pos['direction']}) — {pos.get('strategy', '')}"
-                )
+                lines.append(f"    [{emoji}] {pos['ticker']} ({pos['direction']}) — {pos.get('strategy', '')}")
                 lines.append(
                     f"        Entry: ${pos['entry_price']:.2f} | "
                     f"P&L: ${pos.get('unrealized_pnl', 0):+.2f} | "
@@ -114,9 +106,7 @@ class ReportGenerator:
                 trail_info = ""
                 if pos.get("trailing_stop", 0) > 0:
                     trail_info = f" | Trail: ${pos['trailing_stop']:.4f}"
-                lines.append(
-                    f"        SL: ${pos['stop_loss']:.4f} | TP: ${pos['take_profit']:.4f}{trail_info}"
-                )
+                lines.append(f"        SL: ${pos['stop_loss']:.4f} | TP: ${pos['take_profit']:.4f}{trail_info}")
 
         # Signals section
         lines.append("")
@@ -129,8 +119,7 @@ class ReportGenerator:
             inst = sig.instrument
             stars = SIGNAL_STARS.get(inst.signal.value, "★★☆☆☆")
             lines.append(
-                f"  #{inst.rank}  {inst.ticker}  {stars}  "
-                f"Score: {inst.composite_score:.2f}  [{inst.signal.value}]"
+                f"  #{inst.rank}  {inst.ticker}  {stars}  " f"Score: {inst.composite_score:.2f}  [{inst.signal.value}]"
             )
             lines.append(f"      STRATEGY: {sig.strategy_label}")
             lines.append(f"      {sig.setup_description}")
@@ -148,9 +137,7 @@ class ReportGenerator:
                 # Per-signal risk grade
                 if sig.risk_assessment:
                     ra = sig.risk_assessment
-                    lines.append(
-                        f"      RISK GRADE: {ra.composite_score:.1f}/10 — {ra.risk_level.value.upper()}"
-                    )
+                    lines.append(f"      RISK GRADE: {ra.composite_score:.1f}/10 — {ra.risk_level.value.upper()}")
                 lines.append("      >> DECISION REQUIRED: Take this trade?")
             elif sig.action == "watchlist":
                 lines.append("      >> Added to watchlist — not yet triggered")
@@ -163,9 +150,7 @@ class ReportGenerator:
         if portfolio_risk:
             lines.append("-" * 60)
             rl = portfolio_risk.risk_level.value.upper()
-            lines.append(
-                f"  RISK GRADE: {portfolio_risk.composite_score:.1f}/10 — {rl}"
-            )
+            lines.append(f"  RISK GRADE: {portfolio_risk.composite_score:.1f}/10 — {rl}")
             lines.append(
                 f"    Position: {portfolio_risk.position_risk.score:.1f} | "
                 f"Portfolio: {portfolio_risk.portfolio_risk.score:.1f} | "
@@ -189,9 +174,7 @@ class ReportGenerator:
                 wr = m.get("win_rate", 0) * 100
                 total = m.get("total_trades", 0)
                 pnl_val = m.get("pnl", 0)
-                lines.append(
-                    f"    {name}: {total} trades | {wr:.0f}% win | ${pnl_val:+.2f}"
-                )
+                lines.append(f"    {name}: {total} trades | {wr:.0f}% win | ${pnl_val:+.2f}")
             lines.append("")
 
         # Tomorrow's Prep section
@@ -228,13 +211,9 @@ class ReportGenerator:
             if sig.action == "watchlist":
                 inst = sig.instrument
                 if inst.technical.bb_squeeze:
-                    items.append(
-                        f"{inst.ticker} breakout setup may trigger (BB squeeze active)"
-                    )
+                    items.append(f"{inst.ticker} breakout setup may trigger (BB squeeze active)")
                 else:
-                    items.append(
-                        f"{inst.ticker} on watchlist — {sig.strategy_label}"
-                    )
+                    items.append(f"{inst.ticker} on watchlist — {sig.strategy_label}")
 
         # Positions approaching TP
         for pos in positions:
@@ -251,9 +230,7 @@ class ReportGenerator:
 
         # Regime warnings
         if regime.regime_age_days > 25:
-            items.append(
-                f"Regime ({regime.regime.value}) persisted {regime.regime_age_days}d — watch for transition"
-            )
+            items.append(f"Regime ({regime.regime.value}) persisted {regime.regime_age_days}d — watch for transition")
 
         if regime.vix > 22:
             items.append(f"VIX elevated at {regime.vix:.1f} — monitor for defensive trigger")
@@ -261,7 +238,14 @@ class ReportGenerator:
         return items
 
     def _write_markdown(
-        self, today: str, regime, signals, paper_data, portfolio_risk, defensive_mode, tomorrow_items,
+        self,
+        today: str,
+        regime,
+        signals,
+        paper_data,
+        portfolio_risk,
+        defensive_mode,
+        tomorrow_items,
     ):
         """Write Obsidian-compatible Markdown report."""
         path = self.output_dir / f"{today}.md"
@@ -270,14 +254,18 @@ class ReportGenerator:
 
         md = []
         md.append(f"# Daily Research Briefing — {today}")
-        md.append(f"*Agent: Joe AI v0.1*\n")
+        md.append("*Agent: Joe AI v0.1*\n")
 
         # Regime
         md.append("## Market Regime")
         md.append(f"- **Regime:** {regime.regime.value.replace('_', ' ').title()}")
         md.append(f"- **Confidence:** {regime.confidence:.0%}")
-        md.append(f"- **SPY Trend:** {regime.spy_trend} | ADX: {regime.adx:.1f} | VIX: {regime.vix:.1f} | Breadth: {regime.breadth:.0f}%")
-        md.append(f"- **Active strategies:** {', '.join(s.replace('_', ' ').title() for s in regime.active_strategies)}")
+        md.append(
+            f"- **SPY Trend:** {regime.spy_trend} | ADX: {regime.adx:.1f} | VIX: {regime.vix:.1f} | Breadth: {regime.breadth:.0f}%"
+        )
+        md.append(
+            f"- **Active strategies:** {', '.join(s.replace('_', ' ').title() for s in regime.active_strategies)}"
+        )
         md.append(f"- **Position sizing:** {regime.position_size_modifier:.0%}")
         if defensive_mode:
             md.append("\n> **DEFENSIVE MODE ACTIVE** — No new entries. Tightening stops.\n")
@@ -289,8 +277,12 @@ class ReportGenerator:
         pnl = balance - starting
         md.append("## Paper Portfolio")
         md.append(f"- **Balance:** ${balance:.2f} ({'+' if pnl >= 0 else ''}${pnl:.2f})")
-        md.append(f"- **Win Rate:** {perf.get('win_rate', 0) * 100:.1f}% | **PF:** {perf.get('profit_factor', 0):.2f} | **Expectancy:** ${perf.get('expectancy', 0):.2f}")
-        md.append(f"- **Sharpe:** {perf.get('sharpe_ratio', 0):.2f} | **Avg R:** {perf.get('avg_r_multiple', 0):.2f} | **Max DD:** {perf.get('max_drawdown_pct', 0):.1f}%")
+        md.append(
+            f"- **Win Rate:** {perf.get('win_rate', 0) * 100:.1f}% | **PF:** {perf.get('profit_factor', 0):.2f} | **Expectancy:** ${perf.get('expectancy', 0):.2f}"
+        )
+        md.append(
+            f"- **Sharpe:** {perf.get('sharpe_ratio', 0):.2f} | **Avg R:** {perf.get('avg_r_multiple', 0):.2f} | **Max DD:** {perf.get('max_drawdown_pct', 0):.1f}%"
+        )
         md.append(f"- **Open positions:** {len(positions)}/3\n")
 
         if positions:
@@ -313,17 +305,23 @@ class ReportGenerator:
         for sig in signals:
             inst = sig.instrument
             stars = SIGNAL_STARS.get(inst.signal.value, "★★☆☆☆")
-            md.append(f"### #{inst.rank} {inst.ticker} — {stars} Score: {inst.composite_score:.2f} [{inst.signal.value}]")
+            md.append(
+                f"### #{inst.rank} {inst.ticker} — {stars} Score: {inst.composite_score:.2f} [{inst.signal.value}]"
+            )
             md.append(f"- **Strategy:** {sig.strategy_label}")
             md.append(f"- **Setup:** {sig.setup_description}")
 
             if sig.action == "enter_now":
-                md.append(f"- **Plan:** {sig.direction} @ ${sig.entry_price:.2f} | SL: ${sig.stop_loss:.2f} | TP: ${sig.take_profit:.2f}")
-                md.append(f"- **Risk:** ${sig.risk_per_share:.2f}/share | Reward: ${sig.reward_per_share:.2f} | R:R = 1:{sig.risk_reward_ratio:.1f}")
+                md.append(
+                    f"- **Plan:** {sig.direction} @ ${sig.entry_price:.2f} | SL: ${sig.stop_loss:.2f} | TP: ${sig.take_profit:.2f}"
+                )
+                md.append(
+                    f"- **Risk:** ${sig.risk_per_share:.2f}/share | Reward: ${sig.reward_per_share:.2f} | R:R = 1:{sig.risk_reward_ratio:.1f}"
+                )
                 if sig.risk_assessment:
                     ra = sig.risk_assessment
                     md.append(f"- **Risk Grade:** {ra.composite_score:.1f}/10 — {ra.risk_level.value.upper()}")
-                md.append(f"- **Decision:** Take this trade?\n")
+                md.append("- **Decision:** Take this trade?\n")
             elif sig.action == "watchlist":
                 md.append("- *Watching — not yet triggered*\n")
             elif sig.skip_reason:
@@ -332,8 +330,12 @@ class ReportGenerator:
         # Risk Dashboard
         if portfolio_risk:
             md.append("## Risk Dashboard")
-            md.append(f"- **Composite:** {portfolio_risk.composite_score:.1f}/10 — {portfolio_risk.risk_level.value.upper()}")
-            md.append(f"- Position: {portfolio_risk.position_risk.score:.1f} | Portfolio: {portfolio_risk.portfolio_risk.score:.1f} | Market: {portfolio_risk.market_risk.score:.1f} | Behavioral: {portfolio_risk.behavioral_risk.score:.1f} | Strategy: {portfolio_risk.strategy_risk.score:.1f}")
+            md.append(
+                f"- **Composite:** {portfolio_risk.composite_score:.1f}/10 — {portfolio_risk.risk_level.value.upper()}"
+            )
+            md.append(
+                f"- Position: {portfolio_risk.position_risk.score:.1f} | Portfolio: {portfolio_risk.portfolio_risk.score:.1f} | Market: {portfolio_risk.market_risk.score:.1f} | Behavioral: {portfolio_risk.behavioral_risk.score:.1f} | Strategy: {portfolio_risk.strategy_risk.score:.1f}"
+            )
             if portfolio_risk.all_alerts:
                 md.append("\n**Alerts:**")
                 for alert in portfolio_risk.all_alerts[:5]:
@@ -348,7 +350,9 @@ class ReportGenerator:
             md.append("|----------|--------|----------|-----|")
             for strat, m in strat_metrics.items():
                 name = strat.replace("_", " ").title()
-                md.append(f"| {name} | {m.get('total_trades', 0)} | {m.get('win_rate', 0) * 100:.0f}% | ${m.get('pnl', 0):+.2f} |")
+                md.append(
+                    f"| {name} | {m.get('total_trades', 0)} | {m.get('win_rate', 0) * 100:.0f}% | ${m.get('pnl', 0):+.2f} |"
+                )
             md.append("")
 
         # Tomorrow's Prep
@@ -367,10 +371,25 @@ class ReportGenerator:
             return
 
         fieldnames = [
-            "date", "rank", "ticker", "source", "composite_score", "signal",
-            "strategy", "action", "direction", "entry_price", "stop_loss",
-            "take_profit", "risk_grade", "rsi", "macd_signal", "sma_cross",
-            "volume_ratio", "sentiment_score", "sentiment_class",
+            "date",
+            "rank",
+            "ticker",
+            "source",
+            "composite_score",
+            "signal",
+            "strategy",
+            "action",
+            "direction",
+            "entry_price",
+            "stop_loss",
+            "take_profit",
+            "risk_grade",
+            "rsi",
+            "macd_signal",
+            "sma_cross",
+            "volume_ratio",
+            "sentiment_score",
+            "sentiment_class",
         ]
 
         with open(path, "w", newline="") as f:
@@ -407,8 +426,12 @@ class ReportGenerator:
         logger.info("CSV report written to %s", path)
 
     def _write_json(
-        self, today: str, regime: RegimeAssessment, signals: list[StrategySignal],
-        paper_data: dict, portfolio_risk: RiskAssessment | None = None,
+        self,
+        today: str,
+        regime: RegimeAssessment,
+        signals: list[StrategySignal],
+        paper_data: dict,
+        portfolio_risk: RiskAssessment | None = None,
         tomorrow_items: list[str] | None = None,
     ):
         path = self.output_dir / f"{today}.json"
@@ -446,17 +469,21 @@ class ReportGenerator:
             ],
             "portfolio": paper_data.get("performance", {}),
             "positions": paper_data.get("positions", []),
-            "portfolio_risk": {
-                "composite_score": portfolio_risk.composite_score,
-                "risk_level": portfolio_risk.risk_level.value,
-                "dimensions": {
-                    "position": portfolio_risk.position_risk.score,
-                    "portfolio": portfolio_risk.portfolio_risk.score,
-                    "market": portfolio_risk.market_risk.score,
-                    "behavioral": portfolio_risk.behavioral_risk.score,
-                    "strategy": portfolio_risk.strategy_risk.score,
-                },
-            } if portfolio_risk else None,
+            "portfolio_risk": (
+                {
+                    "composite_score": portfolio_risk.composite_score,
+                    "risk_level": portfolio_risk.risk_level.value,
+                    "dimensions": {
+                        "position": portfolio_risk.position_risk.score,
+                        "portfolio": portfolio_risk.portfolio_risk.score,
+                        "market": portfolio_risk.market_risk.score,
+                        "behavioral": portfolio_risk.behavioral_risk.score,
+                        "strategy": portfolio_risk.strategy_risk.score,
+                    },
+                }
+                if portfolio_risk
+                else None
+            ),
             "tomorrow_prep": tomorrow_items or [],
         }
         path.write_text(json.dumps(data, indent=2, default=str))

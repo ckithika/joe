@@ -4,7 +4,7 @@ import csv
 import json
 import logging
 from collections import defaultdict
-from datetime import date, datetime, timedelta
+from datetime import date, timedelta
 from pathlib import Path
 
 from agent.alerts import Alert, AlertManager
@@ -77,6 +77,7 @@ def _format_pct(val: float) -> str:
 def _load_paper_trader_config() -> dict:
     """Load paper_trader config from YAML."""
     import yaml
+
     path = Path("config/paper_trader.yaml")
     if path.exists():
         try:
@@ -197,16 +198,10 @@ def send_daily_pnl_alert(alert_manager: AlertManager) -> bool:
         # Best / worst trade
         if best_trade and float(best_trade.get("pnl", 0)) != 0:
             bp = float(best_trade.get("pnl", 0))
-            lines.append(
-                f"   🏆 Best: {best_trade['ticker']} {best_trade['direction']} "
-                f"{_format_pnl(bp)}"
-            )
+            lines.append(f"   🏆 Best: {best_trade['ticker']} {best_trade['direction']} " f"{_format_pnl(bp)}")
         if worst_trade and float(worst_trade.get("pnl", 0)) != 0:
             wp = float(worst_trade.get("pnl", 0))
-            lines.append(
-                f"   💀 Worst: {worst_trade['ticker']} {worst_trade['direction']} "
-                f"{_format_pnl(wp)}"
-            )
+            lines.append(f"   💀 Worst: {worst_trade['ticker']} {worst_trade['direction']} " f"{_format_pnl(wp)}")
 
         # Individual trades
         for t in closed_today:
@@ -219,10 +214,7 @@ def send_daily_pnl_alert(alert_manager: AlertManager) -> bool:
                     duration_str = f" {float(t['time_held_minutes']):.0f}m"
                 except (ValueError, TypeError):
                     pass
-            lines.append(
-                f"   {icon} {t['ticker']} {t['direction']} "
-                f"{_format_pnl(pnl)} ({exit_type}{duration_str})"
-            )
+            lines.append(f"   {icon} {t['ticker']} {t['direction']} " f"{_format_pnl(pnl)} ({exit_type}{duration_str})")
         lines.append("")
 
         # Setup type breakdown
@@ -230,9 +222,7 @@ def send_daily_pnl_alert(alert_manager: AlertManager) -> bool:
             lines.append("📋 <b>Setup Breakdown:</b>")
             for setup, stats in sorted(setup_stats.items()):
                 setup_display = setup.upper().replace("_", " ")
-                lines.append(
-                    f"   {setup_display}: {stats['wins']}W/{stats['losses']}L"
-                )
+                lines.append(f"   {setup_display}: {stats['wins']}W/{stats['losses']}L")
             lines.append("")
 
         # Session window performance
@@ -243,9 +233,7 @@ def send_daily_pnl_alert(alert_manager: AlertManager) -> bool:
                 if session in session_stats:
                     stats = session_stats[session]
                     display = session.replace("_", " ").title()
-                    lines.append(
-                        f"   {display}: {stats['wins']}W/{stats['losses']}L"
-                    )
+                    lines.append(f"   {display}: {stats['wins']}W/{stats['losses']}L")
             # Include unknown if present
             if "unknown" in session_stats:
                 stats = session_stats["unknown"]
@@ -264,10 +252,7 @@ def send_daily_pnl_alert(alert_manager: AlertManager) -> bool:
             upnl = float(p.get("unrealized_pnl", 0))
             icon = "🟢" if upnl >= 0 else "🔴"
             days = p.get("days_held", 0)
-            lines.append(
-                f"   {icon} {p['ticker']} {p['direction']} "
-                f"{_format_pnl(upnl)} (day {days})"
-            )
+            lines.append(f"   {icon} {p['ticker']} {p['direction']} " f"{_format_pnl(upnl)} (day {days})")
         lines.append("")
     else:
         lines.append("📭 No open positions\n")
@@ -324,8 +309,11 @@ def get_session_performance(days: int = 30) -> dict[str, dict]:
         session = t.get("session_window", "unknown") or "unknown"
         if session not in sessions:
             sessions[session] = {
-                "total_trades": 0, "wins": 0, "losses": 0,
-                "total_pnl": 0.0, "durations": [],
+                "total_trades": 0,
+                "wins": 0,
+                "losses": 0,
+                "total_pnl": 0.0,
+                "durations": [],
             }
         s = sessions[session]
         pnl = float(t.get("pnl", 0))
@@ -353,10 +341,7 @@ def get_session_performance(days: int = 30) -> dict[str, dict]:
             "win_rate": round(s["wins"] / total * 100, 1) if total > 0 else 0,
             "total_pnl": round(s["total_pnl"], 2),
             "avg_pnl": round(s["total_pnl"] / total, 2) if total > 0 else 0,
-            "avg_duration_minutes": (
-                round(sum(s["durations"]) / len(s["durations"]), 1)
-                if s["durations"] else 0
-            ),
+            "avg_duration_minutes": (round(sum(s["durations"]) / len(s["durations"]), 1) if s["durations"] else 0),
         }
     return result
 
@@ -440,7 +425,6 @@ def send_weekly_digest(alert_manager: AlertManager, regime: str = "") -> bool:
 
     # Win rate for the week
     week_wins = [p for p in week_pnls if p > 0]
-    week_losses = [p for p in week_pnls if p < 0]
     week_win_rate = (len(week_wins) / len(week_trades) * 100) if week_trades else 0
 
     # Best and worst trades
@@ -519,14 +503,12 @@ def send_weekly_digest(alert_manager: AlertManager, regime: str = "") -> bool:
     if best_trade:
         best_pnl = float(best_trade.get("pnl", 0))
         lines.append(
-            f"🏆 <b>Best Trade:</b> {best_trade['ticker']} {best_trade['direction']} "
-            f"{_format_pnl(best_pnl)}"
+            f"🏆 <b>Best Trade:</b> {best_trade['ticker']} {best_trade['direction']} " f"{_format_pnl(best_pnl)}"
         )
     if worst_trade:
         worst_pnl = float(worst_trade.get("pnl", 0))
         lines.append(
-            f"💀 <b>Worst Trade:</b> {worst_trade['ticker']} {worst_trade['direction']} "
-            f"{_format_pnl(worst_pnl)}"
+            f"💀 <b>Worst Trade:</b> {worst_trade['ticker']} {worst_trade['direction']} " f"{_format_pnl(worst_pnl)}"
         )
     if best_trade or worst_trade:
         lines.append("")
@@ -575,8 +557,7 @@ def send_weekly_digest(alert_manager: AlertManager, regime: str = "") -> bool:
             wr = (stats["wins"] / stats["trades"] * 100) if stats["trades"] > 0 else 0
             icon = "✅" if stats["pnl"] >= 0 else "❌"
             lines.append(
-                f"   {icon} {strat_name}: {_format_pnl(stats['pnl'])} "
-                f"({stats['trades']} trades, {wr:.0f}% WR)"
+                f"   {icon} {strat_name}: {_format_pnl(stats['pnl'])} " f"({stats['trades']} trades, {wr:.0f}% WR)"
             )
         lines.append("")
 
@@ -599,9 +580,7 @@ def send_weekly_digest(alert_manager: AlertManager, regime: str = "") -> bool:
         for p in positions:
             upnl = float(p.get("unrealized_pnl", 0))
             icon = "🟢" if upnl >= 0 else "🔴"
-            lines.append(
-                f"      {icon} {p['ticker']} {p['direction']} {_format_pnl(upnl)}"
-            )
+            lines.append(f"      {icon} {p['ticker']} {p['direction']} {_format_pnl(upnl)}")
     lines.append("")
 
     # Drawdown
@@ -655,8 +634,14 @@ def is_sunday() -> bool:
 
 # Tickers considered crypto (for separating into crypto vs stocks sections)
 _CRYPTO_TICKERS = {
-    "BTCUSD", "ETHUSD", "SOLUSD", "XRPUSD", "DOGEUSD", "ADAUSD",
-    "BTCUSDT", "ETHUSDT",
+    "BTCUSD",
+    "ETHUSD",
+    "SOLUSD",
+    "XRPUSD",
+    "DOGEUSD",
+    "ADAUSD",
+    "BTCUSDT",
+    "ETHUSDT",
 }
 
 

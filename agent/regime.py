@@ -7,8 +7,8 @@ from pathlib import Path
 import pandas as pd
 import yaml
 
-from agent.models import MarketRegime, RegimeAssessment
 from agent import analyzer
+from agent.models import MarketRegime, RegimeAssessment
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +29,15 @@ class RegimeDetector:
         if config_file.exists():
             data = yaml.safe_load(config_file.read_text())
             return data.get("regime", {})
-        return {"thresholds": {"adx_trending": 25, "adx_ranging": 20, "vix_high": 28, "vix_normal": 22, "atr_expansion": 1.3}}
+        return {
+            "thresholds": {
+                "adx_trending": 25,
+                "adx_ranging": 20,
+                "vix_high": 28,
+                "vix_normal": 22,
+                "atr_expansion": 1.3,
+            }
+        }
 
     def _load_history(self):
         if self._regime_history_file.exists():
@@ -80,11 +88,17 @@ class RegimeDetector:
         above_20ema = latest.get("close", 0) > latest.get("ema_20", 0) if pd.notna(latest.get("ema_20")) else False
         above_50sma = latest.get("close", 0) > latest.get("sma_50", 0) if pd.notna(latest.get("sma_50")) else False
         above_200sma = latest.get("close", 0) > latest.get("sma_200", 0) if pd.notna(latest.get("sma_200")) else False
-        golden_cross = latest.get("sma_50", 0) > latest.get("sma_200", 0) if pd.notna(latest.get("sma_50")) and pd.notna(latest.get("sma_200")) else False
+        golden_cross = (
+            latest.get("sma_50", 0) > latest.get("sma_200", 0)
+            if pd.notna(latest.get("sma_50")) and pd.notna(latest.get("sma_200"))
+            else False
+        )
 
         adx = float(latest.get("adx", 0)) if pd.notna(latest.get("adx")) else 0
         atr = float(latest.get("atr", 0)) if pd.notna(latest.get("atr")) else 0
-        atr_avg = float(spy["atr"].rolling(20).mean().iloc[-1]) if pd.notna(spy["atr"].rolling(20).mean().iloc[-1]) else atr
+        atr_avg = (
+            float(spy["atr"].rolling(20).mean().iloc[-1]) if pd.notna(spy["atr"].rolling(20).mean().iloc[-1]) else atr
+        )
         atr_expanding = atr > atr_avg * atr_expansion_mult if atr_avg > 0 else False
 
         # VIX
@@ -183,10 +197,7 @@ class RegimeDetector:
         if "sma_50" not in spy_df.columns:
             return 50.0
         recent = spy_df.tail(20)
-        above = sum(
-            1 for _, row in recent.iterrows()
-            if pd.notna(row.get("sma_50")) and row["close"] > row["sma_50"]
-        )
+        above = sum(1 for _, row in recent.iterrows() if pd.notna(row.get("sma_50")) and row["close"] > row["sma_50"])
         return (above / len(recent)) * 100 if len(recent) > 0 else 50.0
 
     def _default_assessment(self) -> RegimeAssessment:
@@ -203,7 +214,8 @@ class RegimeDetector:
         )
 
     def _save_assessment(
-        self, assessment: RegimeAssessment,
+        self,
+        assessment: RegimeAssessment,
         vix_history: list[float] | None = None,
         adx_history: list[float] | None = None,
     ):
@@ -226,15 +238,17 @@ class RegimeDetector:
         today = datetime.now().strftime("%Y-%m-%d")
         # Replace today's entry if already present
         log = [e for e in log if e.get("date") != today]
-        log.append({
-            "date": today,
-            "regime": assessment.regime.value,
-            "confidence": assessment.confidence,
-            "adx": assessment.adx,
-            "vix": assessment.vix,
-            "breadth": assessment.breadth,
-            "spy_trend": assessment.spy_trend,
-        })
+        log.append(
+            {
+                "date": today,
+                "regime": assessment.regime.value,
+                "confidence": assessment.confidence,
+                "adx": assessment.adx,
+                "vix": assessment.vix,
+                "breadth": assessment.breadth,
+                "spy_trend": assessment.spy_trend,
+            }
+        )
 
         # Keep last 90 days
         log = log[-90:]

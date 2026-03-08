@@ -31,9 +31,10 @@ def _rate_limit(api_name: str):
 @dataclass
 class EarningsEvent:
     """Upcoming earnings for a ticker."""
+
     ticker: str
-    date: str                   # YYYY-MM-DD
-    time: str                   # "bmo" (before market open), "amc" (after market close), ""
+    date: str  # YYYY-MM-DD
+    time: str  # "bmo" (before market open), "amc" (after market close), ""
     estimate_eps: float | None  # consensus EPS estimate
     days_until: int
 
@@ -41,10 +42,11 @@ class EarningsEvent:
 @dataclass
 class InsiderTrade:
     """SEC insider transaction."""
+
     ticker: str
     insider_name: str
-    title: str                  # CEO, CFO, Director, etc.
-    transaction_type: str       # "buy" or "sell"
+    title: str  # CEO, CFO, Director, etc.
+    transaction_type: str  # "buy" or "sell"
     shares: int
     price: float
     value: float
@@ -54,45 +56,50 @@ class InsiderTrade:
 @dataclass
 class SectorPerformance:
     """Performance data for a market sector."""
+
     sector: str
     change_1d: float
     change_1w: float
     change_1m: float
-    relative_strength: float    # vs SPY benchmark
+    relative_strength: float  # vs SPY benchmark
 
 
 @dataclass
 class ShortInterestData:
     """Short interest and days-to-cover for a ticker."""
+
     ticker: str
     short_percent_float: float  # % of float sold short
-    short_ratio: float          # days to cover
-    short_interest: int         # total shares short
+    short_ratio: float  # days to cover
+    short_interest: int  # total shares short
 
 
 @dataclass
 class MarketBreadth:
     """Market breadth indicators for overall health."""
-    advance_decline_ratio: float    # advancing stocks / declining stocks
+
+    advance_decline_ratio: float  # advancing stocks / declining stocks
     new_highs: int
     new_lows: int
-    pct_above_200sma: float         # % of stocks above 200-day SMA
-    pct_above_50sma: float          # % of stocks above 50-day SMA
-    mcclellan_oscillator: float     # breadth momentum indicator
+    pct_above_200sma: float  # % of stocks above 200-day SMA
+    pct_above_50sma: float  # % of stocks above 50-day SMA
+    mcclellan_oscillator: float  # breadth momentum indicator
 
 
 @dataclass
 class OptionsFlow:
     """Aggregated options market data."""
-    put_call_ratio: float           # total put volume / call volume
-    vix: float                      # current VIX value
-    vix_term_structure: str         # "contango" or "backwardation"
-    skew: str                       # "normal", "high_put_demand", "high_call_demand"
+
+    put_call_ratio: float  # total put volume / call volume
+    vix: float  # current VIX value
+    vix_term_structure: str  # "contango" or "backwardation"
+    skew: str  # "normal", "high_put_demand", "high_call_demand"
 
 
 @dataclass
 class StockIntelligence:
     """Combined stock intelligence report."""
+
     upcoming_earnings: list[EarningsEvent] = field(default_factory=list)
     insider_trades: list[InsiderTrade] = field(default_factory=list)
     sector_performance: list[SectorPerformance] = field(default_factory=list)
@@ -107,9 +114,7 @@ class StockIntelligence:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
-def fetch_earnings_calendar(
-    tickers: list[str], finnhub_key: str = ""
-) -> list[EarningsEvent]:
+def fetch_earnings_calendar(tickers: list[str], finnhub_key: str = "") -> list[EarningsEvent]:
     """Fetch upcoming earnings dates from Finnhub (free tier: 60 req/min).
 
     Earnings reports are quarterly announcements where companies reveal their
@@ -159,13 +164,15 @@ def fetch_earnings_calendar(
                 except ValueError:
                     days_until = 99
 
-                events.append(EarningsEvent(
-                    ticker=symbol,
-                    date=ear_date,
-                    time=e.get("hour", ""),
-                    estimate_eps=e.get("epsEstimate"),
-                    days_until=days_until,
-                ))
+                events.append(
+                    EarningsEvent(
+                        ticker=symbol,
+                        date=ear_date,
+                        time=e.get("hour", ""),
+                        estimate_eps=e.get("epsEstimate"),
+                        days_until=days_until,
+                    )
+                )
 
     except Exception as e:
         logger.warning("Earnings calendar fetch failed: %s", e)
@@ -178,9 +185,7 @@ def fetch_earnings_calendar(
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
-def fetch_insider_trades(
-    ticker: str, finnhub_key: str = ""
-) -> list[InsiderTrade]:
+def fetch_insider_trades(ticker: str, finnhub_key: str = "") -> list[InsiderTrade]:
     """Fetch recent insider transactions from Finnhub (free tier).
 
     Insider trading (the legal kind) is when company executives, directors,
@@ -221,16 +226,18 @@ def fetch_insider_trades(
             shares = abs(t.get("share", 0))
             price = t.get("transactionPrice", 0) or 0
 
-            trades.append(InsiderTrade(
-                ticker=ticker,
-                insider_name=t.get("name", "Unknown"),
-                title=t.get("filingDate", ""),
-                transaction_type=tx_type,
-                shares=shares,
-                price=price,
-                value=round(shares * price, 2),
-                date=t.get("transactionDate", ""),
-            ))
+            trades.append(
+                InsiderTrade(
+                    ticker=ticker,
+                    insider_name=t.get("name", "Unknown"),
+                    title=t.get("filingDate", ""),
+                    transaction_type=tx_type,
+                    shares=shares,
+                    price=price,
+                    value=round(shares * price, 2),
+                    date=t.get("transactionDate", ""),
+                )
+            )
 
         return trades
     except Exception as e:
@@ -271,9 +278,14 @@ def compute_sector_performance(
     """
     # Sector ETF mapping
     sector_etfs = {
-        "VOO": "broad_market", "SPY": "broad_market", "QQQ": "technology",
-        "IWM": "small_cap", "DIA": "dow_30", "SCHD": "dividends",
-        "US500": "broad_market", "US100": "technology",
+        "VOO": "broad_market",
+        "SPY": "broad_market",
+        "QQQ": "technology",
+        "IWM": "small_cap",
+        "DIA": "dow_30",
+        "SCHD": "dividends",
+        "US500": "broad_market",
+        "US100": "technology",
     }
 
     results = []
@@ -293,13 +305,15 @@ def compute_sector_performance(
         if spy_returns and "1m" in spy_returns and "1m" in returns:
             rel_strength = returns["1m"] - spy_returns["1m"]
 
-        results.append(SectorPerformance(
-            sector=sector,
-            change_1d=returns.get("1d", 0),
-            change_1w=returns.get("1w", 0),
-            change_1m=returns.get("1m", 0),
-            relative_strength=round(rel_strength, 4),
-        ))
+        results.append(
+            SectorPerformance(
+                sector=sector,
+                change_1d=returns.get("1d", 0),
+                change_1w=returns.get("1w", 0),
+                change_1m=returns.get("1m", 0),
+                relative_strength=round(rel_strength, 4),
+            )
+        )
 
     return sorted(results, key=lambda x: x.change_1w, reverse=True)
 
@@ -519,9 +533,7 @@ def estimate_options_flow(vix_value: float = 0) -> OptionsFlow | None:
 # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 
-def fetch_short_interest(
-    ticker: str, finnhub_key: str = ""
-) -> ShortInterestData | None:
+def fetch_short_interest(ticker: str, finnhub_key: str = "") -> ShortInterestData | None:
     """Fetch short interest data from Finnhub.
 
     Short selling is borrowing shares to sell them, hoping to buy back cheaper.
@@ -642,6 +654,7 @@ class StockDataCollector:
     def to_dict(self, intel: StockIntelligence) -> dict:
         """Convert intelligence to a JSON-serializable dict."""
         from dataclasses import asdict
+
         result = {"timestamp": intel.timestamp}
 
         if intel.upcoming_earnings:
@@ -694,7 +707,9 @@ class StockDataCollector:
         if intel.market_breadth:
             b = intel.market_breadth
             lines.append("### Market Breadth")
-            lines.append(f"- A/D Ratio: {b.advance_decline_ratio:.2f} | New Highs: {b.new_highs} | New Lows: {b.new_lows}")
+            lines.append(
+                f"- A/D Ratio: {b.advance_decline_ratio:.2f} | New Highs: {b.new_highs} | New Lows: {b.new_lows}"
+            )
             lines.append(f"- Above 200 SMA: {b.pct_above_200sma:.0f}% | Above 50 SMA: {b.pct_above_50sma:.0f}%")
             lines.append(f"- McClellan: {b.mcclellan_oscillator:+.1f}")
             lines.append("")
@@ -712,7 +727,9 @@ class StockDataCollector:
             lines.append("### Short Interest")
             for s in intel.short_interest:
                 squeeze = " (SQUEEZE POTENTIAL)" if s.short_percent_float > 20 else ""
-                lines.append(f"- **{s.ticker}**: {s.short_percent_float:.1f}% float short, {s.short_ratio:.1f} days to cover{squeeze}")
+                lines.append(
+                    f"- **{s.ticker}**: {s.short_percent_float:.1f}% float short, {s.short_ratio:.1f} days to cover{squeeze}"
+                )
             lines.append("")
 
         return "\n".join(lines)

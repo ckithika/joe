@@ -98,8 +98,13 @@ class TestAlertManager:
         manager.discord = MagicMock(available=False)
 
         result = manager.send_signal_alert(
-            ticker="AAPL", direction="LONG", strategy="trend_following",
-            confidence=0.85, entry_price=185.0, stop_loss=180.0, take_profit=195.0,
+            ticker="AAPL",
+            direction="LONG",
+            strategy="trend_following",
+            confidence=0.85,
+            entry_price=185.0,
+            stop_loss=180.0,
+            take_profit=195.0,
         )
         assert result is True
         manager.telegram.send.assert_called_once()
@@ -110,7 +115,10 @@ class TestAlertManager:
         manager.discord = MagicMock(available=False)
 
         result = manager.send_position_alert(
-            ticker="AAPL", event="target_hit", pnl=12.50, direction="LONG",
+            ticker="AAPL",
+            event="target_hit",
+            pnl=12.50,
+            direction="LONG",
         )
         assert result is True
 
@@ -120,7 +128,10 @@ class TestAlertManager:
         manager.discord = MagicMock(available=False)
 
         result = manager.send_position_alert(
-            ticker="MSFT", event="stopped_out", pnl=-5.00, direction="SHORT",
+            ticker="MSFT",
+            event="stopped_out",
+            pnl=-5.00,
+            direction="SHORT",
         )
         assert result is True
 
@@ -138,8 +149,12 @@ class TestAlertManager:
         manager.discord = MagicMock(available=False)
 
         result = manager.send_daily_summary(
-            regime="trending_up", confidence=0.85, balance=523.50,
-            open_positions=2, signals_count=5, win_rate=0.6,
+            regime="trending_up",
+            confidence=0.85,
+            balance=523.50,
+            open_positions=2,
+            signals_count=5,
+            win_rate=0.6,
             ai_summary="Market looks bullish.",
         )
         assert result is True

@@ -67,9 +67,7 @@ class TestAlphaVantage:
 
     @patch("agent.news.requests.get")
     def test_handles_no_feed(self, mock_get):
-        mock_get.return_value = MagicMock(
-            json=lambda: {"Note": "Rate limit reached"}
-        )
+        mock_get.return_value = MagicMock(json=lambda: {"Note": "Rate limit reached"})
         av = NewsSentinelAlphaVantage("test-key")
         result = av.get_sentiment("AAPL")
         assert result is None

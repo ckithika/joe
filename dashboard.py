@@ -3,9 +3,8 @@
 Run with: streamlit run dashboard.py
 """
 
-import csv
 import json
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from pathlib import Path
 
 import pandas as pd
@@ -97,9 +96,18 @@ def load_trade_history() -> pd.DataFrame:
             df = pd.read_csv(path)
             if not df.empty:
                 # Ensure numeric columns
-                for col in ["pnl", "pnl_pct", "entry_price", "exit_price",
-                            "position_size", "r_multiple", "signal_score",
-                            "days_held", "time_held_minutes", "spread_cost"]:
+                for col in [
+                    "pnl",
+                    "pnl_pct",
+                    "entry_price",
+                    "exit_price",
+                    "position_size",
+                    "r_multiple",
+                    "signal_score",
+                    "days_held",
+                    "time_held_minutes",
+                    "spread_cost",
+                ]:
                     if col in df.columns:
                         df[col] = pd.to_numeric(df[col], errors="coerce").fillna(0)
                 return df
@@ -135,7 +143,6 @@ def page_overview():
     analytics = load_portfolio_analytics()
     positions = load_open_positions()
     session = load_session_state()
-    trades_df = load_trade_history()
     pt_config = _load_paper_trader_config()
 
     # Top metrics
@@ -161,7 +168,9 @@ def page_overview():
         eq_df = pd.DataFrame(equity_data)
         if not eq_df.empty and "date" in eq_df.columns and "balance" in eq_df.columns:
             fig = px.line(
-                eq_df, x="date", y="balance",
+                eq_df,
+                x="date",
+                y="balance",
                 title="Equity Curve",
                 labels={"date": "Date", "balance": "Balance ($)"},
             )
@@ -196,16 +205,18 @@ def page_overview():
                 except (ValueError, TypeError):
                     time_held = f"{p.get('days_held', 0)}d"
 
-            rows.append({
-                "Ticker": p.get("ticker", ""),
-                "Direction": direction,
-                "Strategy": p.get("strategy", ""),
-                "Entry Price": f"${entry:.2f}",
-                "Unrealized P&L": fmt_pnl(upnl),
-                "Time Held": time_held,
-                "Stop Loss": f"${p.get('stop_loss', 0):.2f}",
-                "Take Profit": f"${p.get('take_profit', 0):.2f}",
-            })
+            rows.append(
+                {
+                    "Ticker": p.get("ticker", ""),
+                    "Direction": direction,
+                    "Strategy": p.get("strategy", ""),
+                    "Entry Price": f"${entry:.2f}",
+                    "Unrealized P&L": fmt_pnl(upnl),
+                    "Time Held": time_held,
+                    "Stop Loss": f"${p.get('stop_loss', 0):.2f}",
+                    "Take Profit": f"${p.get('take_profit', 0):.2f}",
+                }
+            )
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
     else:
         st.info("No open positions.")
@@ -275,7 +286,9 @@ def page_trade_history():
             date_range = None
 
     with fcol2:
-        strategies = ["All"] + sorted(df["strategy"].dropna().unique().tolist()) if "strategy" in df.columns else ["All"]
+        strategies = (
+            ["All"] + sorted(df["strategy"].dropna().unique().tolist()) if "strategy" in df.columns else ["All"]
+        )
         strategy_filter = st.selectbox("Strategy", strategies)
 
     with fcol3:
@@ -292,9 +305,7 @@ def page_trade_history():
         start_str = date_range[0].isoformat()
         end_str = date_range[1].isoformat()
         if "exit_date" in filtered.columns:
-            filtered = filtered[
-                (filtered["exit_date"] >= start_str) & (filtered["exit_date"] <= end_str)
-            ]
+            filtered = filtered[(filtered["exit_date"] >= start_str) & (filtered["exit_date"] <= end_str)]
 
     if strategy_filter != "All" and "strategy" in filtered.columns:
         filtered = filtered[filtered["strategy"] == strategy_filter]
@@ -312,11 +323,24 @@ def page_trade_history():
 
     # Display columns
     display_cols = [
-        c for c in [
-            "exit_date", "ticker", "direction", "setup_type", "strategy",
-            "entry_price", "exit_price", "pnl", "pnl_pct", "days_held",
-            "time_held_minutes", "session_window", "exit_type", "exit_reason",
-        ] if c in filtered.columns
+        c
+        for c in [
+            "exit_date",
+            "ticker",
+            "direction",
+            "setup_type",
+            "strategy",
+            "entry_price",
+            "exit_price",
+            "pnl",
+            "pnl_pct",
+            "days_held",
+            "time_held_minutes",
+            "session_window",
+            "exit_type",
+            "exit_reason",
+        ]
+        if c in filtered.columns
     ]
 
     st.subheader(f"Trades ({len(filtered)})")
@@ -369,13 +393,15 @@ def page_strategy_analysis():
         if not strat_df.empty and "name" in strat_df.columns:
             st.subheader("P&L by Strategy")
             colors = ["green" if v >= 0 else "red" for v in strat_df.get("total_pnl", [])]
-            fig = go.Figure(go.Bar(
-                x=strat_df["name"],
-                y=strat_df["total_pnl"],
-                marker_color=colors,
-                text=[fmt_pnl(v) for v in strat_df["total_pnl"]],
-                textposition="outside",
-            ))
+            fig = go.Figure(
+                go.Bar(
+                    x=strat_df["name"],
+                    y=strat_df["total_pnl"],
+                    marker_color=colors,
+                    text=[fmt_pnl(v) for v in strat_df["total_pnl"]],
+                    textposition="outside",
+                )
+            )
             fig.update_layout(
                 title="Total P&L by Strategy",
                 xaxis_title="Strategy",
@@ -386,13 +412,19 @@ def page_strategy_analysis():
 
             # Win rate by strategy
             st.subheader("Win Rate by Strategy")
-            fig2 = go.Figure(go.Bar(
-                x=strat_df["name"],
-                y=strat_df.get("win_rate", [0] * len(strat_df)) if "win_rate" in strat_df.columns else [0] * len(strat_df),
-                marker_color="#1f77b4",
-                text=[f"{v:.0%}" if isinstance(v, float) else str(v) for v in strat_df.get("win_rate", [])],
-                textposition="outside",
-            ))
+            fig2 = go.Figure(
+                go.Bar(
+                    x=strat_df["name"],
+                    y=(
+                        strat_df.get("win_rate", [0] * len(strat_df))
+                        if "win_rate" in strat_df.columns
+                        else [0] * len(strat_df)
+                    ),
+                    marker_color="#1f77b4",
+                    text=[f"{v:.0%}" if isinstance(v, float) else str(v) for v in strat_df.get("win_rate", [])],
+                    textposition="outside",
+                )
+            )
             fig2.update_layout(
                 title="Win Rate by Strategy",
                 xaxis_title="Strategy",
@@ -405,11 +437,15 @@ def page_strategy_analysis():
     # Session performance
     st.subheader("Session Performance")
     if not df.empty and "session_window" in df.columns:
-        session_groups = df.groupby("session_window").agg(
-            total_pnl=("pnl", "sum"),
-            trades=("pnl", "count"),
-            wins=("pnl", lambda x: (x > 0).sum()),
-        ).reset_index()
+        session_groups = (
+            df.groupby("session_window")
+            .agg(
+                total_pnl=("pnl", "sum"),
+                trades=("pnl", "count"),
+                wins=("pnl", lambda x: (x > 0).sum()),
+            )
+            .reset_index()
+        )
         session_groups["win_rate"] = session_groups["wins"] / session_groups["trades"]
 
         session_order = ["pre_market", "opening", "midday", "closing", "after_hours", "crypto_overnight", "unknown"]
@@ -419,13 +455,15 @@ def page_strategy_analysis():
         session_groups = session_groups.sort_values("order")
 
         colors = ["green" if v >= 0 else "red" for v in session_groups["total_pnl"]]
-        fig3 = go.Figure(go.Bar(
-            x=session_groups["session_window"],
-            y=session_groups["total_pnl"],
-            marker_color=colors,
-            text=[fmt_pnl(v) for v in session_groups["total_pnl"]],
-            textposition="outside",
-        ))
+        fig3 = go.Figure(
+            go.Bar(
+                x=session_groups["session_window"],
+                y=session_groups["total_pnl"],
+                marker_color=colors,
+                text=[fmt_pnl(v) for v in session_groups["total_pnl"]],
+                textposition="outside",
+            )
+        )
         fig3.update_layout(
             title="P&L by Session Window",
             xaxis_title="Session",
@@ -496,13 +534,15 @@ def page_risk_controls():
         for p in positions:
             sector = p.get("sector", "") or "Unknown"
             notional = abs(p.get("entry_price", 0) * p.get("position_size", 0))
-            exposure_rows.append({
-                "Ticker": p.get("ticker", ""),
-                "Direction": p.get("direction", ""),
-                "Sector": sector,
-                "Strategy": p.get("strategy", ""),
-                "Notional": f"${notional:,.2f}",
-            })
+            exposure_rows.append(
+                {
+                    "Ticker": p.get("ticker", ""),
+                    "Direction": p.get("direction", ""),
+                    "Sector": sector,
+                    "Strategy": p.get("strategy", ""),
+                    "Notional": f"${notional:,.2f}",
+                }
+            )
         st.dataframe(pd.DataFrame(exposure_rows), use_container_width=True, hide_index=True)
     else:
         st.info("No open positions.")
@@ -516,7 +556,9 @@ def page_risk_controls():
         eq_df = pd.DataFrame(equity_data)
         if not eq_df.empty and "drawdown_pct" in eq_df.columns:
             fig = px.area(
-                eq_df, x="date", y="drawdown_pct",
+                eq_df,
+                x="date",
+                y="drawdown_pct",
                 title="Drawdown (%)",
                 labels={"date": "Date", "drawdown_pct": "Drawdown (%)"},
             )

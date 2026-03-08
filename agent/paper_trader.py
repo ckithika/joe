@@ -4,7 +4,6 @@ import logging
 import math
 import os
 import tempfile
-from collections import defaultdict
 from dataclasses import asdict
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -47,9 +46,7 @@ class PaperTrader:
 
     # ── Position Entry ──────────────────────────────────────────
 
-    def evaluate_entries_from_signals(
-        self, signals: list[StrategySignal]
-    ) -> list[MockPosition]:
+    def evaluate_entries_from_signals(self, signals: list[StrategySignal]) -> list[MockPosition]:
         """Open mock positions from strategy signals."""
         new_positions = []
 
@@ -88,8 +85,11 @@ class PaperTrader:
 
             # Strategy-specific take profit
             take_profit = self._compute_strategy_tp(
-                sig.strategy_name, sig.direction, sig.entry_price,
-                sig.instrument.technical, sig.take_profit,
+                sig.strategy_name,
+                sig.direction,
+                sig.entry_price,
+                sig.instrument.technical,
+                sig.take_profit,
             )
 
             # Determine trailing stop ATR if strategy uses it
@@ -135,9 +135,7 @@ class PaperTrader:
         self._save_positions()
         return new_positions
 
-    def evaluate_entries_from_scored(
-        self, instruments: list[ScoredInstrument]
-    ) -> list[MockPosition]:
+    def evaluate_entries_from_scored(self, instruments: list[ScoredInstrument]) -> list[MockPosition]:
         """Legacy: open positions directly from scored instruments."""
         new_positions = []
         entry_signals = self.config.get("entry_signals", ["STRONG_BUY", "STRONG_SELL"])
@@ -212,8 +210,12 @@ class PaperTrader:
     # ── Strategy-Specific Exits ──────────────────────────────────
 
     def _compute_strategy_tp(
-        self, strategy_name: str, direction: str,
-        entry_price: float, technical, fallback_tp: float,
+        self,
+        strategy_name: str,
+        direction: str,
+        entry_price: float,
+        technical,
+        fallback_tp: float,
     ) -> float:
         """Compute strategy-aware take profit target."""
         strat = self._strategy_configs.get(strategy_name, {})
@@ -287,19 +289,19 @@ class PaperTrader:
         minute = ts.minute
         t = hour * 60 + minute  # minutes since midnight
 
-        if t < 4 * 60:          # 00:00 - 04:00 ET
+        if t < 4 * 60:  # 00:00 - 04:00 ET
             return "crypto_overnight"
-        elif t < 9 * 60 + 30:   # 04:00 - 09:30 ET
+        elif t < 9 * 60 + 30:  # 04:00 - 09:30 ET
             return "pre_market"
         elif t < 10 * 60 + 30:  # 09:30 - 10:30 ET
             return "opening"
-        elif t < 14 * 60:       # 10:30 - 14:00 ET
+        elif t < 14 * 60:  # 10:30 - 14:00 ET
             return "midday"
-        elif t < 16 * 60:       # 14:00 - 16:00 ET
+        elif t < 16 * 60:  # 14:00 - 16:00 ET
             return "closing"
-        elif t < 20 * 60:       # 16:00 - 20:00 ET
+        elif t < 20 * 60:  # 16:00 - 20:00 ET
             return "after_hours"
-        else:                    # 20:00+ ET
+        else:  # 20:00+ ET
             return "crypto_overnight"
 
     @staticmethod
@@ -345,7 +347,9 @@ class PaperTrader:
                     )
                     logger.info(
                         "Paper trade expired (no price data): %s %s after %d days",
-                        pos.direction, pos.ticker, pos.days_held,
+                        pos.direction,
+                        pos.ticker,
+                        pos.days_held,
                     )
                 else:
                     still_open.append(pos)
@@ -364,13 +368,9 @@ class PaperTrader:
 
             if result == "open":
                 if pos.direction == "LONG":
-                    pos.unrealized_pnl = round(
-                        (bar["close"] - pos.entry_price) * pos.position_size, 2
-                    )
+                    pos.unrealized_pnl = round((bar["close"] - pos.entry_price) * pos.position_size, 2)
                 else:
-                    pos.unrealized_pnl = round(
-                        (pos.entry_price - bar["close"]) * pos.position_size, 2
-                    )
+                    pos.unrealized_pnl = round((pos.entry_price - bar["close"]) * pos.position_size, 2)
                 still_open.append(pos)
             else:
                 if result == "stopped_out":
@@ -384,9 +384,7 @@ class PaperTrader:
 
                 pnl = self._calculate_pnl(pos, exit_price)
                 self._log_closed_trade(pos, exit_price, result, pnl)
-                self.performance["virtual_balance"] = round(
-                    self.performance.get("virtual_balance", 500.0) + pnl, 2
-                )
+                self.performance["virtual_balance"] = round(self.performance.get("virtual_balance", 500.0) + pnl, 2)
                 closed.append(
                     {
                         "ticker": pos.ticker,
@@ -446,9 +444,12 @@ class PaperTrader:
             if new_trail > pos.entry_price:  # Only activate once in profit
                 if pos.trailing_stop == 0 or new_trail > pos.trailing_stop:
                     pos.trailing_stop = round(new_trail, 4)
-                    logger.debug("Trailing stop for %s updated to %.4f%s",
-                                 pos.ticker, pos.trailing_stop,
-                                 " (day trade tight)" if is_day_trade else "")
+                    logger.debug(
+                        "Trailing stop for %s updated to %.4f%s",
+                        pos.ticker,
+                        pos.trailing_stop,
+                        " (day trade tight)" if is_day_trade else "",
+                    )
         else:
             # SHORT: trail down, never up
             profit_move = pos.entry_price - pos.lowest_price
@@ -458,9 +459,12 @@ class PaperTrader:
             if new_trail < pos.entry_price:  # Only activate once in profit
                 if pos.trailing_stop == 0 or new_trail < pos.trailing_stop:
                     pos.trailing_stop = round(new_trail, 4)
-                    logger.debug("Trailing stop for %s updated to %.4f%s",
-                                 pos.ticker, pos.trailing_stop,
-                                 " (day trade tight)" if is_day_trade else "")
+                    logger.debug(
+                        "Trailing stop for %s updated to %.4f%s",
+                        pos.ticker,
+                        pos.trailing_stop,
+                        " (day trade tight)" if is_day_trade else "",
+                    )
 
     def _check_exit(self, pos: MockPosition, bar: dict) -> str:
         # Check expiry first — avoids stale positions lingering forever
@@ -530,9 +534,7 @@ class PaperTrader:
         max_notional = balance * max_exposure_mult
 
         # Sum notional of all open positions
-        total_notional = sum(
-            abs(p.entry_price * p.position_size) for p in self.positions
-        )
+        total_notional = sum(abs(p.entry_price * p.position_size) for p in self.positions)
         # Add the proposed new position
         new_notional = abs(sig.entry_price * sig.position_size)
         total_notional += new_notional
@@ -540,7 +542,9 @@ class PaperTrader:
         if total_notional > max_notional:
             logger.info(
                 "Exposure check: $%.2f would exceed %.0fx balance ($%.2f max)",
-                total_notional, max_exposure_mult, max_notional,
+                total_notional,
+                max_exposure_mult,
+                max_notional,
             )
             return True
         return False
@@ -562,7 +566,9 @@ class PaperTrader:
         if ticker_pnl < -daily_loss_limit:
             logger.info(
                 "Instrument %s daily P&L: $%.2f (limit: -$%.2f)",
-                ticker, ticker_pnl, daily_loss_limit,
+                ticker,
+                ticker_pnl,
+                daily_loss_limit,
             )
             return True
         return False
@@ -646,14 +652,8 @@ class PaperTrader:
     def _save_performance(self):
         self._atomic_write_json(self.perf_file, self.performance)
 
-    def _log_closed_trade(
-        self, pos: MockPosition, exit_price: float, reason: str, pnl: float
-    ):
-        pnl_pct = (
-            round((pnl / (pos.entry_price * pos.position_size)) * 100, 2)
-            if pos.position_size
-            else 0
-        )
+    def _log_closed_trade(self, pos: MockPosition, exit_price: float, reason: str, pnl: float):
+        pnl_pct = round((pnl / (pos.entry_price * pos.position_size)) * 100, 2) if pos.position_size else 0
         risk_amount = abs(pos.entry_price - pos.stop_loss) * pos.position_size
         r_multiple = round(pnl / risk_amount, 2) if risk_amount > 0 else 0
 
@@ -734,6 +734,7 @@ class PaperTrader:
         # Sharpe Ratio (annualized, assuming daily returns)
         if len(pnls) >= 2:
             import statistics
+
             mean_pnl = statistics.mean(pnls)
             std_pnl = statistics.stdev(pnls)
             sharpe_ratio = round((mean_pnl / std_pnl) * math.sqrt(252), 2) if std_pnl > 0 else 0
@@ -761,15 +762,9 @@ class PaperTrader:
                 "open_positions": len(self.positions),
                 "wins": len(wins),
                 "losses": len(losses),
-                "expired": len(
-                    [t for t in trades if t["exit_reason"] == "expired"]
-                ),
+                "expired": len([t for t in trades if t["exit_reason"] == "expired"]),
                 "win_rate": round(len(wins) / len(trades), 3) if trades else 0,
-                "profit_factor": (
-                    round(sum(wins) / abs(sum(losses)), 2)
-                    if losses
-                    else float("inf")
-                ),
+                "profit_factor": (round(sum(wins) / abs(sum(losses)), 2) if losses else float("inf")),
                 "expectancy": round(sum(pnls) / len(pnls), 2) if pnls else 0,
                 "sharpe_ratio": sharpe_ratio,
                 "avg_r_multiple": round(sum(r_multiples) / len(r_multiples), 2) if r_multiples else 0,

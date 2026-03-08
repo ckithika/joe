@@ -1,6 +1,5 @@
 """Alerting system — Telegram and Discord notifications for trading signals."""
 
-import json
 import logging
 import os
 from dataclasses import dataclass
@@ -14,9 +13,10 @@ logger = logging.getLogger(__name__)
 @dataclass
 class Alert:
     """A single alert to be sent."""
+
     title: str
     message: str
-    level: str = "info"      # "info", "warning", "critical"
+    level: str = "info"  # "info", "warning", "critical"
     category: str = "signal"  # "signal", "position", "earnings", "system", "daily"
     ticker: str = ""
     timestamp: str = ""
@@ -151,11 +151,13 @@ class AlertManager:
             sent = self.discord.send(alert) or sent
 
         if sent:
-            self._sent_today.append({
-                "title": alert.title,
-                "level": alert.level,
-                "timestamp": alert.timestamp,
-            })
+            self._sent_today.append(
+                {
+                    "title": alert.title,
+                    "level": alert.level,
+                    "timestamp": alert.timestamp,
+                }
+            )
 
         return sent
 
@@ -176,18 +178,17 @@ class AlertManager:
             f"Confidence: {confidence:.0%}"
         )
         if entry_price > 0:
-            msg += (
-                f"\nEntry: ${entry_price:.2f}"
-                f"\nSL: ${stop_loss:.2f} | TP: ${take_profit:.2f}"
-            )
+            msg += f"\nEntry: ${entry_price:.2f}" f"\nSL: ${stop_loss:.2f} | TP: ${take_profit:.2f}"
 
-        return self._send(Alert(
-            title=f"Signal: {ticker} {direction}",
-            message=msg,
-            level="info",
-            category="signal",
-            ticker=ticker,
-        ))
+        return self._send(
+            Alert(
+                title=f"Signal: {ticker} {direction}",
+                message=msg,
+                level="info",
+                category="signal",
+                ticker=ticker,
+            )
+        )
 
     def send_position_alert(
         self,
@@ -210,24 +211,28 @@ class AlertManager:
         else:
             msg = f"{ticker} closed ({reason}) — P&L: ${pnl:+.2f}"
 
-        return self._send(Alert(
-            title=f"Position: {ticker} {event.replace('_', ' ').title()}",
-            message=msg,
-            level=level,
-            category="position",
-            ticker=ticker,
-        ))
+        return self._send(
+            Alert(
+                title=f"Position: {ticker} {event.replace('_', ' ').title()}",
+                message=msg,
+                level=level,
+                category="position",
+                ticker=ticker,
+            )
+        )
 
     def send_earnings_warning(self, ticker: str, days_until: int) -> bool:
         """Send warning about upcoming earnings for an open position."""
-        return self._send(Alert(
-            title=f"Earnings Warning: {ticker}",
-            message=f"{ticker} reports earnings in {days_until} day{'s' if days_until != 1 else ''}. "
-                    f"Consider closing or reducing position before the report.",
-            level="warning",
-            category="earnings",
-            ticker=ticker,
-        ))
+        return self._send(
+            Alert(
+                title=f"Earnings Warning: {ticker}",
+                message=f"{ticker} reports earnings in {days_until} day{'s' if days_until != 1 else ''}. "
+                f"Consider closing or reducing position before the report.",
+                level="warning",
+                category="earnings",
+                ticker=ticker,
+            )
+        )
 
     def send_daily_summary(
         self,
@@ -252,12 +257,14 @@ class AlertManager:
             summary = ai_summary[:500]
             msg += f"\n\nAI Summary:\n{summary}"
 
-        return self._send(Alert(
-            title="Daily Briefing",
-            message=msg,
-            level="info",
-            category="daily",
-        ))
+        return self._send(
+            Alert(
+                title="Daily Briefing",
+                message=msg,
+                level="info",
+                category="daily",
+            )
+        )
 
     def send_risk_alert(
         self,
@@ -273,12 +280,14 @@ class AlertManager:
         if alerts:
             msg += "\n".join(f"- {a}" for a in alerts[:5])
 
-        return self._send(Alert(
-            title=f"Risk Alert: {risk_level.upper()}",
-            message=msg,
-            level="critical" if risk_level.lower() == "extreme" else "warning",
-            category="system",
-        ))
+        return self._send(
+            Alert(
+                title=f"Risk Alert: {risk_level.upper()}",
+                message=msg,
+                level="critical" if risk_level.lower() == "extreme" else "warning",
+                category="system",
+            )
+        )
 
     def send_crypto_alert(
         self,
@@ -288,22 +297,26 @@ class AlertManager:
         details: str,
     ) -> bool:
         """Send crypto overnight signal alert."""
-        return self._send(Alert(
-            title=f"Crypto: {symbol} {signal_type.replace('_', ' ').title()}",
-            message=f"{direction} signal — {details}",
-            level="info",
-            category="signal",
-            ticker=symbol,
-        ))
+        return self._send(
+            Alert(
+                title=f"Crypto: {symbol} {signal_type.replace('_', ' ').title()}",
+                message=f"{direction} signal — {details}",
+                level="info",
+                category="signal",
+                ticker=symbol,
+            )
+        )
 
     def send_system_alert(self, title: str, message: str, level: str = "warning") -> bool:
         """Send a system-level alert (errors, circuit breaker trips, etc.)."""
-        return self._send(Alert(
-            title=title,
-            message=message,
-            level=level,
-            category="system",
-        ))
+        return self._send(
+            Alert(
+                title=title,
+                message=message,
+                level=level,
+                category="system",
+            )
+        )
 
     def get_sent_today(self) -> list[dict]:
         return self._sent_today

@@ -3,6 +3,7 @@ from pathlib import Path
 
 import yaml
 
+from agent import analyzer
 from agent.models import (
     Instrument,
     NewsSentiment,
@@ -10,7 +11,6 @@ from agent.models import (
     Signal,
     TechnicalScore,
 )
-from agent import analyzer
 
 logger = logging.getLogger(__name__)
 
@@ -127,8 +127,9 @@ class ScoringEngine:
         return "Tech: " + ", ".join(parts)
 
     @staticmethod
-    def _classify_cap_sentiment(score: float) -> "SentimentClass":
+    def _classify_cap_sentiment(score: float):
         from agent.models import SentimentClass
+
         if score > 0.35:
             return SentimentClass.BULLISH
         elif score < -0.15:

@@ -5,9 +5,9 @@ from unittest.mock import patch
 import pytest
 
 from agent.resilience import (
+    APIHealth,
     CircuitBreaker,
     CircuitState,
-    APIHealth,
     resilient_request,
     retry_with_backoff,
 )
@@ -159,6 +159,7 @@ class TestRetryWithBackoff:
 
     def test_skips_when_circuit_open(self):
         from agent.resilience import get_circuit_breaker
+
         breaker = get_circuit_breaker()
 
         # Force circuit open

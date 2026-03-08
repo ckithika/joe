@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime
 
 import pandas as pd
 
@@ -40,9 +39,7 @@ class IBKRClient:
     def connected(self) -> bool:
         return self._connected and self.ib is not None
 
-    def get_historical_bars(
-        self, symbol: str, duration: str = "50 D", bar_size: str = "1 day"
-    ) -> pd.DataFrame | None:
+    def get_historical_bars(self, symbol: str, duration: str = "50 D", bar_size: str = "1 day") -> pd.DataFrame | None:
         if not self.connected:
             logger.warning("IBKR not connected, cannot fetch %s", symbol)
             return None
