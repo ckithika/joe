@@ -3,7 +3,7 @@
 [![Tests](https://github.com/ckithika/joe/actions/workflows/test.yml/badge.svg)](https://github.com/ckithika/joe/actions/workflows/test.yml)
 [![Docker](https://github.com/ckithika/joe/actions/workflows/docker.yml/badge.svg)](https://github.com/ckithika/joe/actions/workflows/docker.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 
 A day-trading-focused AI agent that scans markets every 2 minutes, applies 4 intraday strategies (Breakout, Day Trade, Opening Range Breakout, VWAP Bounce), and manages a $1,000 paper portfolio with a $50 daily gain target. Designed to learn day trading through hands-on simulation with zero risk before trading real money.
 
@@ -87,7 +87,7 @@ The agent runs a $1,000 paper portfolio targeting $50/day through 3 moderate-ris
 
 ### Prerequisites
 
-- **Python 3.11+** (tested with 3.13)
+- **Python 3.12+** (tested with 3.13)
 - **Git** for cloning and data sync
 - A **Capital.com demo account** (free, no real money needed) — [sign up here](https://capital.com)
 - A **Telegram bot** — create one via [@BotFather](https://t.me/BotFather) on Telegram
