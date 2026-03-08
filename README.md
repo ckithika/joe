@@ -5,7 +5,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 
-A day-trading-focused AI agent that scans markets every 2 minutes, applies 4 intraday strategies (Breakout, Day Trade, Opening Range Breakout, VWAP Bounce), and manages a $1,000 paper portfolio with a $50 daily gain target. Designed to learn day trading through hands-on simulation with zero risk before trading real money.
+An **autonomous AI trading agent** that makes all buy/sell decisions without human intervention. It scans markets every 2 minutes, applies 4 intraday strategies (Breakout, Day Trade, Opening Range Breakout, VWAP Bounce), and manages a $1,000 paper portfolio with a $50 daily gain target.
+
+**The AI decides everything:** which instruments to trade, when to enter and exit, position sizing, stop-loss and take-profit levels, and when to stop trading for the day. You configure risk tolerance via a risk profile (conservative/moderate/aggressive) — the agent handles the rest.
 
 **Current mode:** Day trading with focused watchlist (US500, US100, AAPL, NVDA, TSLA, BTCUSD, ETHUSD, GOLD). Stocks trade during US market hours; crypto runs 24/7.
 
@@ -33,11 +35,26 @@ Insights are delivered via Telegram and a Streamlit dashboard. Runs locally or o
 └─────────────┘
 ```
 
+## How the AI Agent Works
+
+Joe AI is a fully autonomous trading agent — **no manual trade decisions required**. Here's what it does on its own:
+
+1. **Market analysis** — Detects the current market regime (trending, ranging, volatile) using SPY/VIX data
+2. **Signal generation** — Scans instruments with 100+ technical indicators, scores them, and identifies trade setups
+3. **Strategy matching** — Matches signals to the best strategy for the current regime (Day Trade, ORB, VWAP Bounce, Breakout)
+4. **Risk assessment** — Evaluates each signal across 5 risk dimensions (position, portfolio, market, behavioral, strategy) and blocks high-risk trades
+5. **Trade execution** — Opens paper positions with calculated position size, stop-loss, and take-profit levels
+6. **Position management** — Monitors open positions every 2 minutes, adjusts trailing stops, and closes at SL/TP/expiry
+7. **Self-tuning** — Weekly auto-tuner analyzes past trades and adjusts strategy parameters within safe bounds
+8. **Risk controls** — Enforces daily loss limits, gain targets, consecutive loss breakers, and correlation checks automatically
+
+You control the risk level by choosing a **risk profile** (conservative, moderate, or aggressive) — the agent handles all trading decisions within those bounds.
+
 ## Who Is This For?
 
 - **New traders** who want to learn how markets work without risking real money
-- **Strategy learners** who want to see how trend following, mean reversion, breakout, momentum, and defensive strategies perform in different market conditions
-- **Anyone curious about trading** who wants daily AI-generated market analysis delivered to their phone
+- **Strategy learners** who want to see how breakout, day trade, ORB, and VWAP bounce strategies perform in different market conditions
+- **Anyone curious about trading** who wants an AI agent autonomously managing a simulated portfolio with daily updates to their phone
 
 The agent runs a $1,000 paper portfolio targeting $50/day through 3 moderate-risk trades (3% risk each, 1:2.5 R:R). After 30 days of simulated results, the dashboard shows a "Go Live Readiness" checklist to help you decide if you're ready for real trading.
 
@@ -48,7 +65,7 @@ The agent runs a $1,000 paper portfolio targeting $50/day through 3 moderate-ris
 - **Go Live Readiness** — 30-day evaluation checklist before committing real money
 - **Market regime detection** — SPY/VIX-based regime classification (trending up, trending down, range-bound, high volatility)
 - **100+ instrument scanning** — stocks, ETFs, indices, forex, crypto, commodities
-- **5 trading strategies** — trend following, mean reversion, breakout, momentum, day trade
+- **4 active intraday strategies** — Day Trade, Opening Range Breakout (ORB), VWAP Bounce, Breakout
 - **Defensive mode** — auto-suspends trading when VIX > 28 or drawdown exceeds -10%
 - **Multi-layer risk profiling** — position, portfolio, market, behavioral, and strategy dimensions
 - **AI analysis** — Gemini-powered daily summaries, trade analysis, and Q&A
@@ -77,7 +94,7 @@ The agent runs a $1,000 paper portfolio targeting $50/day through 3 moderate-ris
 - **Interactive menu** — Daily Briefing, Stocks, Crypto, Portfolio, Ask AI, System
 
 ### Automation
-- **Intraday monitor** — checks positions every 5 minutes during market hours, auto-closes at SL/TP, opens day trades
+- **Intraday monitor** — checks positions every 2 minutes during market hours, auto-closes at SL/TP, opens day trades
 - **Auto-parameter tuning** — weekly backtest (Sunday) analyzes 2 weeks of trades and adjusts strategy parameters within ±20% of baseline
 - **Cloud deployment** — runs 24/7 on Cloud Run with scheduled pipeline executions
 - **Pipeline reminders** — Telegram notification 30 min before runs so you can optionally run locally with IBKR
@@ -165,7 +182,7 @@ Open Telegram, find your bot, and send `/start`. You'll see an interactive menu 
 ### 6. Start the intraday monitor (optional)
 
 ```bash
-python monitor.py                    # Default 5-min loop
+python monitor.py                    # Default 2-min loop
 python monitor.py --interval 3       # 3-min loop
 python monitor.py --once --dry-run   # Single cycle, no trades
 ```
@@ -525,7 +542,7 @@ Pipeline Run (main.py)
     ├── Step 3:  Market Scanning (IBKR scanners + Capital.com watchlist)
     ├── Step 4:  Scoring (technical + sentiment + volume for top 15)
     ├── Step 5:  Check defensive mode + bot state (pause/blacklist)
-    ├── Step 6:  Strategy Matching (5 strategies filtered by regime)
+    ├── Step 6:  Strategy Matching (4 intraday strategies filtered by regime)
     ├── Step 7:  Risk Profiling (5 dimensions, hard blocks at score > 7)
     ├── Step 8:  Trade Entry (risk-approved signals → paper positions)
     ├── Step 9:  Report Generation (text summary)
@@ -649,7 +666,7 @@ ai-trading-agent/
 ├── agent/
 │   ├── scanner.py           # Market scanning (IBKR + Capital.com)
 │   ├── scorer.py            # Technical + sentiment scoring
-│   ├── strategy.py          # 5-strategy matching engine
+│   ├── strategy.py          # 4-strategy intraday matching engine
 │   ├── paper_trader.py      # Virtual portfolio management
 │   ├── risk_profiler.py     # 5-dimension risk assessment
 │   ├── regime.py            # Market regime detection
@@ -666,7 +683,9 @@ ai-trading-agent/
 │   ├── news.py              # Sentiment from news APIs
 │   ├── cache.py             # Instrument data caching
 │   ├── models.py            # Data models and enums
-│   └── backtester.py        # Historical backtesting engine
+│   ├── backtester.py        # Historical backtesting engine
+│   ├── risk_profiles.py     # Conservative/moderate/aggressive risk presets
+│   └── config_validator.py  # Startup config and env validation
 ├── brokers/
 │   ├── ibkr_client.py       # Interactive Brokers TWS client
 │   └── capital_client.py    # Capital.com REST API client
