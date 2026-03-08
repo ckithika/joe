@@ -159,7 +159,9 @@ class PaperTrader:
         self._position_manager._update_daily_instrument_pnl(ticker, pnl)
 
     def _compute_strategy_tp(self, strategy_name, direction, entry_price, technical, fallback_tp):
-        return self._position_manager._compute_strategy_tp(strategy_name, direction, entry_price, technical, fallback_tp)
+        return self._position_manager._compute_strategy_tp(
+            strategy_name, direction, entry_price, technical, fallback_tp
+        )
 
     def _get_trailing_stop_atr(self, strategy_name: str) -> float:
         return self._position_manager._get_trailing_stop_atr(strategy_name)

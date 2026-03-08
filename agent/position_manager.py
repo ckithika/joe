@@ -274,7 +274,9 @@ class PositionManager:
 
     # ── Position Monitoring ─────────────────────────────────────
 
-    def update_positions(self, current_prices: dict, *, update_performance: Callable, save_performance: Callable) -> dict:
+    def update_positions(
+        self, current_prices: dict, *, update_performance: Callable, save_performance: Callable
+    ) -> dict:
         """Check all open positions against current prices.
 
         current_prices: {ticker: {open, high, low, close}}
