@@ -23,6 +23,7 @@ import logging
 import os
 import signal
 import sys
+import tempfile
 import time
 from datetime import datetime, date, timedelta
 from pathlib import Path
@@ -224,10 +225,25 @@ def load_session_state() -> dict:
     return state
 
 
+def _atomic_write_json(path: Path, data):
+    """Write JSON atomically via temp file + os.replace to prevent corruption."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(data, f, indent=2)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
+
+
 def save_session_state(state: dict):
     """Persist session state to disk."""
-    SESSION_STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    SESSION_STATE_FILE.write_text(json.dumps(state, indent=2))
+    _atomic_write_json(SESSION_STATE_FILE, state)
 
 
 def update_session_after_close(state: dict, pnl: float):

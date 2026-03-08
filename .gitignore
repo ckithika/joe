@@ -3,6 +3,8 @@ __pycache__/
 *.pyc
 data/reports/
 data/cache/
+data/paper/
+data/findings/
 config/preferences.yaml
 .venv/
 venv/
@@ -10,3 +12,8 @@ venv/
 dist/
 build/
 .DS_Store
+.coverage
+.pytest_cache/
+htmlcov/
+*.idea/
+.vscode/

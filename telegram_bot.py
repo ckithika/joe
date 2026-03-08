@@ -6,6 +6,7 @@ import csv
 import json
 import logging
 import os
+import re
 import sys
 from datetime import datetime
 from pathlib import Path
@@ -41,6 +42,9 @@ FINDINGS_DIR = DATA_DIR / "findings"
 PAPER_DIR = DATA_DIR / "paper"
 
 CRYPTO_TICKERS = {"BTCUSD", "ETHUSD", "BTCUSDT", "ETHUSDT"}
+
+# Ticker validation: 1-10 uppercase letters/digits, optional underscore
+TICKER_PATTERN = re.compile(r"^[A-Z0-9_]{1,10}$")
 
 TICKER_NAMES = {
     # Mega-cap tech
@@ -1263,6 +1267,12 @@ async def cmd_blacklist(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         return
 
     ticker = context.args[0].upper()
+    if not TICKER_PATTERN.match(ticker):
+        await update.message.reply_text(
+            "Invalid ticker format. Use 1-10 uppercase letters/digits.",
+            parse_mode="HTML",
+        )
+        return
     state = _load_bot_state()
     blacklist = state.get("blacklist", [])
     if ticker in blacklist:
@@ -1293,6 +1303,12 @@ async def cmd_whitelist(update: Update, context: ContextTypes.DEFAULT_TYPE) -> N
         return
 
     ticker = context.args[0].upper()
+    if not TICKER_PATTERN.match(ticker):
+        await update.message.reply_text(
+            "Invalid ticker format. Use 1-10 uppercase letters/digits.",
+            parse_mode="HTML",
+        )
+        return
     state = _load_bot_state()
     blacklist = state.get("blacklist", [])
     if ticker not in blacklist:

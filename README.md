@@ -1,5 +1,10 @@
 # Joe AI
 
+[![Tests](https://github.com/ckithika/joe/actions/workflows/test.yml/badge.svg)](https://github.com/ckithika/joe/actions/workflows/test.yml)
+[![Docker](https://github.com/ckithika/joe/actions/workflows/docker.yml/badge.svg)](https://github.com/ckithika/joe/actions/workflows/docker.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+
 A day-trading-focused AI agent that scans markets every 2 minutes, applies 4 intraday strategies (Breakout, Day Trade, Opening Range Breakout, VWAP Bounce), and manages a $1,000 paper portfolio with a $50 daily gain target. Designed to learn day trading through hands-on simulation with zero risk before trading real money.
 
 **Current mode:** Day trading with focused watchlist (US500, US100, AAPL, NVDA, TSLA, BTCUSD, ETHUSD, GOLD). Stocks trade during US market hours; crypto runs 24/7.
@@ -658,8 +663,37 @@ ai-trading-agent/
 │   ├── cache/               # Price data cache (gitignored)
 │   └── reports/             # Generated reports (gitignored)
 ├── .env.example             # Environment variable template
-└── requirements.txt         # Python dependencies
+├── requirements.txt         # Python dependencies
+├── requirements-dev.txt     # Development dependencies (pytest, ruff, black)
+├── pyproject.toml           # Project metadata and tool config
+├── Makefile                 # Development shortcuts
+├── LICENSE                  # MIT License
+├── CONTRIBUTING.md          # Contribution guidelines
+├── SECURITY.md              # Security policy
+└── CHANGELOG.md             # Version history
 ```
+
+## Development
+
+```bash
+# Install dev dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+make test
+
+# Lint and format
+make lint
+make format
+
+# Run all checks (lint + test)
+make check
+
+# See all available commands
+make help
+```
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on submitting changes.
 
 ## Security
 

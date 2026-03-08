@@ -2,6 +2,8 @@ import csv
 import json
 import logging
 import math
+import os
+import tempfile
 from collections import defaultdict
 from dataclasses import asdict
 from datetime import date, datetime, timedelta
@@ -599,9 +601,25 @@ class PaperTrader:
                 return {}
         return {}
 
+    @staticmethod
+    def _atomic_write_json(path: Path, data):
+        """Write JSON atomically via temp file + os.replace to prevent corruption."""
+        path.parent.mkdir(parents=True, exist_ok=True)
+        fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
+        try:
+            with os.fdopen(fd, "w") as f:
+                json.dump(data, f, indent=2)
+            os.replace(tmp, path)
+        except BaseException:
+            try:
+                os.unlink(tmp)
+            except OSError:
+                pass
+            raise
+
     def _save_session_state(self):
         """Persist session state to disk."""
-        self.session_file.write_text(json.dumps(self.session_state, indent=2))
+        self._atomic_write_json(self.session_file, self.session_state)
 
     def _load_positions(self) -> list[MockPosition]:
         if self.positions_file.exists():
@@ -611,7 +629,7 @@ class PaperTrader:
 
     def _save_positions(self):
         data = [asdict(p) for p in self.positions]
-        self.positions_file.write_text(json.dumps(data, indent=2))
+        self._atomic_write_json(self.positions_file, data)
 
     def _load_performance(self) -> dict:
         if self.perf_file.exists():
@@ -626,7 +644,7 @@ class PaperTrader:
         }
 
     def _save_performance(self):
-        self.perf_file.write_text(json.dumps(self.performance, indent=2))
+        self._atomic_write_json(self.perf_file, self.performance)
 
     def _log_closed_trade(
         self, pos: MockPosition, exit_price: float, reason: str, pnl: float

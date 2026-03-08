@@ -1,0 +1,100 @@
+name: Block AI Bot PRs
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+jobs:
+  check-bot:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Check for AI bot PRs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const author = pr.user.login;
+            const title = (pr.title || '').toLowerCase();
+            const body = (pr.body || '').toLowerCase();
+            const labels = pr.labels.map(l => l.name.toLowerCase());
+
+            const botAccounts = [
+              'dependabot[bot]',
+              'renovate[bot]',
+              'imgbot[bot]',
+              'allcontributors[bot]',
+              'snyk-bot',
+              'deepsource-bot',
+              'codeclimate[bot]',
+              'sonarcloud[bot]',
+              'netlify[bot]',
+              'vercel[bot]',
+              'copilot-bot',
+              'github-actions[bot]'
+            ];
+
+            const botPatterns = [
+              '[bot]',
+              'auto-generated',
+              'automated pr'
+            ];
+
+            const isKnownBot = botAccounts.includes(author);
+            const hasBotPattern = botPatterns.some(p => title.includes(p) || body.includes(p));
+            const isBot = isKnownBot || hasBotPattern;
+
+            if (!isBot) {
+              console.log(`PR author "${author}" is not a bot. Allowing.`);
+              return;
+            }
+
+            // Allow dependabot security updates
+            const isDependabotSecurity =
+              author === 'dependabot[bot]' && (
+                title.includes('security') ||
+                labels.includes('security')
+              );
+
+            if (isDependabotSecurity) {
+              console.log('Dependabot security update detected. Allowing.');
+              return;
+            }
+
+            console.log(`Bot PR detected from "${author}". Closing.`);
+
+            // Add "bot" label
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              labels: ['bot']
+            });
+
+            // Comment explaining the policy
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              body: [
+                '## Automated PR Blocked',
+                '',
+                'This pull request was automatically closed because it was created by an AI bot.',
+                '',
+                '**Policy:** This repository does not accept automated PRs from bots, ',
+                'with the exception of Dependabot security updates.',
+                '',
+                'If you believe this was a mistake, please open a manual PR or contact a maintainer.'
+              ].join('\n')
+            });
+
+            // Close the PR
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              state: 'closed'
+            });

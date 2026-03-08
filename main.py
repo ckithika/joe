@@ -6,6 +6,7 @@ import json
 import logging
 import os
 import sys
+import tempfile
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -61,6 +62,7 @@ from agent.cache import save_instruments, load_cached_instruments
 from agent.models import Broker
 from agent.auto_tuner import run_tuner, should_run_tuner
 from agent.preferences import is_module_enabled, should_push_data
+from agent.config_validator import validate_all
 from brokers.ibkr_client import IBKRClient
 from brokers.capital_client import CapitalClient
 
@@ -70,6 +72,22 @@ logging.basicConfig(
     datefmt="%H:%M:%S",
 )
 logger = logging.getLogger("main")
+
+
+def _atomic_write_json(path: Path, data):
+    """Write JSON atomically via temp file + os.replace to prevent corruption."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w") as f:
+            json.dump(data, f, indent=2, default=str)
+        os.replace(tmp, path)
+    except BaseException:
+        try:
+            os.unlink(tmp)
+        except OSError:
+            pass
+        raise
 
 
 def load_config(name: str) -> dict:
@@ -120,6 +138,15 @@ def run_pipeline(
     logger.info("=" * 50)
     logger.info("Starting Joe AI — %s", datetime.now().strftime("%Y-%m-%d %H:%M"))
     logger.info("=" * 50)
+
+    # Validate configuration at startup
+    try:
+        config_warnings = validate_all()
+        for w in config_warnings:
+            logger.warning("Config: %s", w)
+    except RuntimeError as e:
+        logger.critical("Config validation failed: %s", e)
+        raise
 
     # Initialize components
     pt_config = load_config("paper_trader").get("paper_trader", {})
@@ -473,7 +500,7 @@ def run_pipeline(
         portfolio_report = portfolio_analytics.compute()
         report_dict = portfolio_analytics.to_dict(portfolio_report)
         analytics_path = Path("data/paper/portfolio_analytics.json")
-        analytics_path.write_text(json.dumps(report_dict, indent=2, default=str))
+        _atomic_write_json(analytics_path, report_dict)
         logger.info("Portfolio analytics saved (Sharpe: %.2f, Max DD: %.1f%%)",
                      portfolio_report.sharpe_ratio, portfolio_report.max_drawdown_pct)
     except Exception as e:
@@ -528,7 +555,7 @@ def run_pipeline(
     health_data = breaker.get_all_health()
     if health_data:
         health_path = Path("data/paper/api_health.json")
-        health_path.write_text(json.dumps(health_data, indent=2))
+        _atomic_write_json(health_path, health_data)
 
     _disconnect(ibkr, capital)
     logger.info("Pipeline complete.")
@@ -639,7 +666,7 @@ def _save_daily_findings(
 
     # Save JSON
     json_path = findings_dir / f"{today}.json"
-    json_path.write_text(json.dumps(findings, indent=2, default=str))
+    _atomic_write_json(json_path, findings)
 
     # Save human-readable markdown
     md_path = findings_dir / f"{today}.md"
