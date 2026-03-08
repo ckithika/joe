@@ -225,6 +225,28 @@ Joe AI uses 4 active intraday strategies (swing strategies are disabled but avai
 
 **Defensive mode** triggers automatically when VIX > 28 or portfolio drawdown exceeds -10%, suspending all new entries and tightening stops.
 
+### Risk Profiles
+
+Joe AI ships with three risk profiles. Set `risk_profile` in `config/paper_trader.yaml`:
+
+| Setting | Conservative | Moderate (default) | Aggressive |
+|---------|-------------|-------------------|------------|
+| Risk per trade | 1% ($10) | 3% ($30) | 5% ($50) |
+| Daily gain target | $20 | $50 | $80 |
+| Daily loss limit | $15 | $30 | $50 |
+| Max concurrent positions | 2 | 3 | 5 |
+| Take profit (ATR) | 2.0x | 2.5x | 3.0x |
+| Trailing stop (ATR) | 1.0x | 0.75x | 0.5x |
+| Max daily exposure | 2x balance | 3x balance | 4x balance |
+
+To change profile, edit `config/paper_trader.yaml`:
+
+```yaml
+risk_profile: conservative  # or moderate, aggressive
+```
+
+Individual settings in the config file override the profile defaults — so you can start with a profile and fine-tune specific values.
+
 ### Day Trading Risk Controls
 
 | Control | Setting | Purpose |
@@ -303,7 +325,7 @@ The Crypto menu is hidden when the crypto module is disabled.
 
 The paper trader manages virtual positions with the same logic a real portfolio would use:
 
-- **Position sizing:** 2% risk per trade (configurable), adjusted by regime modifier
+- **Position sizing:** 3% risk per trade (configurable via risk profile), adjusted by regime modifier
 - **Entry:** auto-opens positions when signals pass risk profiler approval
 - **Exit:** stop-loss (ATR-based), take-profit (ATR-based), trailing stops, max hold days, thesis failure
 - **PDT simulation:** limits day trades per week (configurable)
@@ -314,9 +336,10 @@ The paper trader manages virtual positions with the same logic a real portfolio 
 paper_trader:
   enabled: true
   starting_balance: 1000.00   # Virtual starting capital
-  risk_per_trade_pct: 2.0     # Risk 2% of balance per trade
-  max_concurrent_positions: 5  # Max open positions at once
-  max_hold_days: 10            # Default max hold duration
+  risk_profile: moderate       # conservative | moderate | aggressive
+  risk_per_trade_pct: 3.0     # Risk 3% of balance per trade
+  max_concurrent_positions: 3  # Max open positions at once
+  max_hold_days: 1             # Default max hold duration
   auto_enter: true             # Auto-open positions on approved signals
 
   entry_signals:

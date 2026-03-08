@@ -589,7 +589,7 @@ def page_risk_controls():
 
     # Max single trade as % of portfolio
     max_single_trade_pct = 0
-    starting_balance = perf.get("starting_balance", 500)
+    starting_balance = perf.get("starting_balance", 1000)
     if not df.empty and "pnl" in df.columns and starting_balance > 0:
         max_single_trade_pct = abs(df["pnl"].min()) / starting_balance * 100
 

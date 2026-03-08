@@ -165,7 +165,7 @@ class PaperTrader:
             sl_distance = atr * sl_mult
             tp_distance = atr * tp_mult
 
-            balance = self.performance.get("virtual_balance", 500.0)
+            balance = self.performance.get("virtual_balance", 1000.0)
             risk_pct = self.config.get("risk_per_trade_pct", 2.0) / 100
             risk_amount = balance * risk_pct
             position_size = risk_amount / sl_distance
@@ -384,7 +384,7 @@ class PaperTrader:
 
                 pnl = self._calculate_pnl(pos, exit_price)
                 self._log_closed_trade(pos, exit_price, result, pnl)
-                self.performance["virtual_balance"] = round(self.performance.get("virtual_balance", 500.0) + pnl, 2)
+                self.performance["virtual_balance"] = round(self.performance.get("virtual_balance", 1000.0) + pnl, 2)
                 closed.append(
                     {
                         "ticker": pos.ticker,
@@ -530,7 +530,7 @@ class PaperTrader:
     def _exceeds_max_daily_exposure(self, sig: StrategySignal) -> bool:
         """Check if total notional value of all positions would exceed 3x account balance."""
         max_exposure_mult = self.config.get("max_daily_exposure_mult", 3.0)
-        balance = self.performance.get("virtual_balance", 500.0)
+        balance = self.performance.get("virtual_balance", 1000.0)
         max_notional = balance * max_exposure_mult
 
         # Sum notional of all open positions
@@ -641,8 +641,8 @@ class PaperTrader:
         if self.perf_file.exists():
             return json.loads(self.perf_file.read_text())
         return {
-            "virtual_balance": self.config.get("starting_balance", 500.0),
-            "starting_balance": self.config.get("starting_balance", 500.0),
+            "virtual_balance": self.config.get("starting_balance", 1000.0),
+            "starting_balance": self.config.get("starting_balance", 1000.0),
             "total_trades": 0,
             "wins": 0,
             "losses": 0,

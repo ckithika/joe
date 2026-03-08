@@ -8,7 +8,7 @@ A Python-based trading research agent that:
 2. **Scores** them using technical indicators and news sentiment
 3. **Detects** market regime (trending, range-bound, volatile) to pick the right strategy
 4. **Recommends** trades with specific entry, stop-loss, and take-profit levels
-5. **Manages** a virtual $500 paper portfolio with real-time position tracking
+5. **Manages** a virtual $1000 paper portfolio with real-time position tracking
 6. **Collects** crypto on-chain data (Fear & Greed, funding rates, DeFi TVL, whale activity)
 7. **Analyzes** everything with Gemini AI for daily briefings and trade second opinions
 8. **Documents** findings in daily reports for your review and learning
@@ -747,8 +747,8 @@ capital:
 
 ```yaml
 paper_trader:
-  starting_balance: 500.00     # Virtual starting capital
-  risk_per_trade_pct: 2.0      # Risk 2% per trade ($10 on $500)
+  starting_balance: 1000.00    # Virtual starting capital
+  risk_per_trade_pct: 2.0      # Risk 2% per trade ($20 on $1000)
   max_concurrent_positions: 3  # Max open positions at once
   max_hold_days: 10            # Auto-close after this many days
   auto_enter: true             # Auto-open positions for approved signals
@@ -764,7 +764,7 @@ paper_trader:
 | **Bollinger Bands** | Upper/lower volatility bands around a moving average |
 | **Calmar Ratio** | Annualized return divided by max drawdown (>1 = good) |
 | **Circuit Breaker** | Pattern that stops calling a failing API until it recovers |
-| **Drawdown** | Decline from peak portfolio value (e.g., -8% from $500 peak) |
+| **Drawdown** | Decline from peak portfolio value (e.g., -8% from $1000 peak) |
 | **EMA** | Exponential Moving Average — gives more weight to recent prices |
 | **Equity Curve** | Running total of portfolio value over time |
 | **Funding Rate** | Periodic payment between longs and shorts in crypto futures |

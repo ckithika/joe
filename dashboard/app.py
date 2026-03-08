@@ -317,8 +317,8 @@ if page == "Overview":
     st.subheader("Portfolio Snapshot")
 
     if isinstance(performance, dict) and performance:
-        balance = performance.get("virtual_balance", 500)
-        starting = performance.get("starting_balance", 500)
+        balance = performance.get("virtual_balance", 1000)
+        starting = performance.get("starting_balance", 1000)
         pnl = balance - starting
 
         m1, m2, m3, m4, m5 = st.columns(5)
@@ -770,14 +770,14 @@ elif page == "Crypto":
 elif page == "Portfolio":
     st.title("💼 Paper Trading Simulation")
     st.caption(
-        "Track your $500 paper portfolio in real time. The agent recommends trades daily "
+        "Track your $1000 paper portfolio in real time. The agent recommends trades daily "
         "using 5 strategies — this page shows how those recommendations perform so you can "
         "evaluate results before committing real money."
     )
 
     if isinstance(performance, dict) and performance:
-        balance = performance.get("virtual_balance", 500)
-        starting = performance.get("starting_balance", 500)
+        balance = performance.get("virtual_balance", 1000)
+        starting = performance.get("starting_balance", 1000)
         pnl = balance - starting
         total_ret = ((balance - starting) / starting * 100) if starting else 0
         total_trades = performance.get("total_trades", 0)
@@ -1093,7 +1093,7 @@ elif page == "Portfolio":
 - **Sharpe Ratio** — risk-adjusted return. Above 1.0 is acceptable, 2.0+ is excellent
 
 **When you're ready:**
-1. Start with a small real account (same $500)
+1. Start with a small real account (same $1000)
 2. Use the same strategies the paper trader validated
 3. Never risk more than 2% per trade
 4. Keep running paper trading alongside real trading to compare
@@ -1101,7 +1101,7 @@ elif page == "Portfolio":
 
     else:
         st.info(
-            "No portfolio data yet. Run the pipeline to start paper trading with a $500 virtual balance. "
+            "No portfolio data yet. Run the pipeline to start paper trading with a $1000 virtual balance. "
             "The system will automatically enter and exit trades based on its strategy recommendations."
         )
 
@@ -1402,7 +1402,7 @@ bull and bear cases. Market breadth and sector performance give context on the b
 Bitcoin/Ethereum derivatives data (funding rates, open interest), DeFi health, whale activity,
 and any crypto-specific signals.
 
-**Portfolio** — Your paper trading simulation. Tracks a $500 virtual balance across all trades.
+**Portfolio** — Your paper trading simulation. Tracks a $1000 virtual balance across all trades.
 Shows daily P&L progression, strategy accuracy, open positions, and a "Go Live Readiness"
 checklist for when you're considering real money.
 
@@ -1478,7 +1478,7 @@ history. Check here if data looks stale or something seems wrong.
             ),
             (
                 "ROI (Return on Investment)",
-                "The percentage gain or loss on your starting capital. A 10% ROI on $500 means you've made $50.",
+                "The percentage gain or loss on your starting capital. A 10% ROI on $1000 means you've made $100.",
             ),
             (
                 "Sharpe Ratio",

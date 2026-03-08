@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class BacktestConfig:
-    starting_balance: float = 500.0
+    starting_balance: float = 1000.0
     risk_per_trade_pct: float = 2.0
     max_concurrent_positions: int = 3
     max_hold_days: int = 10

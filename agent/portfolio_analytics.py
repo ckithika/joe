@@ -48,8 +48,8 @@ class PortfolioReport:
     """Complete portfolio analytics report."""
 
     # Overall metrics
-    starting_balance: float = 500.0
-    current_balance: float = 500.0
+    starting_balance: float = 1000.0
+    current_balance: float = 1000.0
     total_return_pct: float = 0.0
     total_trades: int = 0
     win_rate: float = 0.0
@@ -120,8 +120,8 @@ class PortfolioAnalytics:
         perf = self._load_performance()
 
         report = PortfolioReport(
-            starting_balance=perf.get("starting_balance", 500.0),
-            current_balance=perf.get("virtual_balance", 500.0),
+            starting_balance=perf.get("starting_balance", 1000.0),
+            current_balance=perf.get("virtual_balance", 1000.0),
             timestamp=datetime.now().isoformat(),
         )
 

@@ -671,7 +671,7 @@ def scan_for_entries(
     signals = strategy_engine.match_strategies(
         scored,
         regime,
-        virtual_balance=paper_trader.performance.get("virtual_balance", 500),
+        virtual_balance=paper_trader.performance.get("virtual_balance", 1000),
         open_position_count=len(paper_trader.positions),
     )
 
@@ -795,7 +795,7 @@ def auto_close_eod(
         pnl = paper_trader._calculate_pnl(pos, exit_price)
         paper_trader._log_closed_trade(pos, exit_price, "eod_close", pnl)
         paper_trader.performance["virtual_balance"] = round(
-            paper_trader.performance.get("virtual_balance", 500.0) + pnl, 2
+            paper_trader.performance.get("virtual_balance", 1000.0) + pnl, 2
         )
 
         closed_info = {
@@ -850,6 +850,9 @@ def run_cycle(
 
     # Reload PaperTrader from disk each cycle (handles concurrent writes)
     pt_config = load_config("paper_trader").get("paper_trader", {})
+    from agent.risk_profiles import apply_profile
+
+    pt_config = apply_profile(pt_config, pt_config.get("risk_profile", "moderate"))
     paper_trader = PaperTrader(pt_config)
     alert_manager = AlertManager()
 
@@ -897,7 +900,7 @@ def run_cycle(
                     pnl = paper_trader._calculate_pnl(pos, exit_price)
                     paper_trader._log_closed_trade(pos, exit_price, "time_decay", pnl)
                     paper_trader.performance["virtual_balance"] = round(
-                        paper_trader.performance.get("virtual_balance", 500.0) + pnl, 2
+                        paper_trader.performance.get("virtual_balance", 1000.0) + pnl, 2
                     )
                     closed_info = {
                         "ticker": pos.ticker,

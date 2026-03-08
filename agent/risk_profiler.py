@@ -190,7 +190,7 @@ class RiskProfiler:
             )
             return DimensionScore("portfolio", 10, alerts, details)
 
-        balance = performance.get("virtual_balance", 500)
+        balance = performance.get("virtual_balance", 1000)
         if balance > 0 and positions:
             total_risk_pct = sum(abs(p.entry_price - p.stop_loss) * p.position_size / balance * 100 for p in positions)
             details["total_risk_pct"] = round(total_risk_pct, 1)

@@ -1,6 +1,13 @@
 paper_trader:
   enabled: true
   starting_balance: 1000.00
+
+  # Risk Profile: conservative | moderate | aggressive
+  # Conservative: 1% risk, $20 target, $15 loss limit, 2 trades, 1:2 R:R
+  # Moderate:     3% risk, $50 target, $30 loss limit, 3 trades, 1:2.5 R:R  (current)
+  # Aggressive:   5% risk, $80 target, $50 loss limit, 5 trades, 1:3 R:R
+  risk_profile: moderate
+
   risk_per_trade_pct: 3.0
   max_concurrent_positions: 3
   max_hold_days: 1

@@ -146,7 +146,7 @@ GUIDE_PAGES = [
         "1/6 — What is Joe AI?",
         "🤖 <b>What is Joe AI?</b>\n\n"
         "Joe AI is a <b>paper trading agent</b> that learns to trade alongside you.\n\n"
-        "• Starts with <b>$500 virtual capital</b> — no real money at risk\n"
+        "• Starts with <b>$1000 virtual capital</b> — no real money at risk\n"
         "• Scans US stocks, indices, forex, crypto, and commodities\n"
         "• Uses AI analysis (Gemini) to grade every signal\n"
         "• Manages positions with stop-losses and take-profits\n"
@@ -1170,7 +1170,7 @@ async def cmd_status(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         return
 
     balance = perf.get("virtual_balance", 0)
-    starting = perf.get("starting_balance", 500)
+    starting = perf.get("starting_balance", 1000)
     total_return = ((balance - starting) / starting * 100) if starting else 0
 
     # Today's P&L: sum unrealized from open positions
@@ -1350,7 +1350,7 @@ async def cmd_performance(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
         return
 
     balance = perf.get("virtual_balance", 0)
-    starting = perf.get("starting_balance", 500)
+    starting = perf.get("starting_balance", 1000)
     total_return = ((balance - starting) / starting * 100) if starting else 0
     total_trades = perf.get("total_trades", 0)
     wins = perf.get("wins", 0)

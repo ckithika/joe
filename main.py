@@ -152,6 +152,9 @@ def run_pipeline(
 
     # Initialize components
     pt_config = load_config("paper_trader").get("paper_trader", {})
+    from agent.risk_profiles import apply_profile
+
+    pt_config = apply_profile(pt_config, pt_config.get("risk_profile", "moderate"))
     paper_trader = PaperTrader(pt_config)
     regime_detector = RegimeDetector()
     strategy_engine = StrategyEngine()
@@ -214,7 +217,7 @@ def run_pipeline(
     if paper_update_only:
         paper_data = paper_trader.get_report_data()
         perf = paper_data["performance"]
-        print(f"\nPaper Portfolio: ${perf.get('virtual_balance', 500):.2f}")
+        print(f"\nPaper Portfolio: ${perf.get('virtual_balance', 1000):.2f}")
         print(f"Open positions: {len(paper_trader.positions)}")
         _disconnect(ibkr, capital)
         return
@@ -282,7 +285,7 @@ def run_pipeline(
         strategy_signals = strategy_engine.match_strategies(
             scored,
             regime,
-            virtual_balance=paper_trader.performance.get("virtual_balance", 500),
+            virtual_balance=paper_trader.performance.get("virtual_balance", 1000),
             open_position_count=len(paper_trader.positions),
         )
 
@@ -512,7 +515,7 @@ def run_pipeline(
         alert_manager.send_daily_summary(
             regime=regime.regime.value,
             confidence=regime.confidence,
-            balance=paper_perf.get("virtual_balance", 500),
+            balance=paper_perf.get("virtual_balance", 1000),
             open_positions=len(paper_trader.positions),
             signals_count=len(strategy_signals),
             win_rate=paper_perf.get("win_rate", 0),
@@ -694,7 +697,7 @@ def _save_daily_findings(
         f"- **Defensive Mode:** {'YES' if defensive else 'No'}",
         "",
         "## Portfolio",
-        f"- **Balance:** ${paper_data['performance'].get('virtual_balance', 500):.2f}",
+        f"- **Balance:** ${paper_data['performance'].get('virtual_balance', 1000):.2f}",
         f"- **Open Positions:** {len(paper_data['positions'])}",
         f"- **Win Rate:** {paper_data['performance'].get('win_rate', 0) * 100:.1f}%",
         f"- **Total Trades:** {paper_data['performance'].get('total_trades', 0)}",

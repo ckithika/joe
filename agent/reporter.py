@@ -75,8 +75,8 @@ class ReportGenerator:
         # Paper portfolio section
         lines.append("")
         lines.append("-" * 60)
-        balance = perf.get("virtual_balance", 500)
-        starting = perf.get("starting_balance", 500)
+        balance = perf.get("virtual_balance", 1000)
+        starting = perf.get("starting_balance", 1000)
         pnl = balance - starting
         arrow = "+" if pnl >= 0 else ""
         lines.append(f"  PAPER PORTFOLIO — ${balance:.2f} ({arrow}${pnl:.2f})")
@@ -272,8 +272,8 @@ class ReportGenerator:
         md.append("")
 
         # Portfolio
-        balance = perf.get("virtual_balance", 500)
-        starting = perf.get("starting_balance", 500)
+        balance = perf.get("virtual_balance", 1000)
+        starting = perf.get("starting_balance", 1000)
         pnl = balance - starting
         md.append("## Paper Portfolio")
         md.append(f"- **Balance:** ${balance:.2f} ({'+' if pnl >= 0 else ''}${pnl:.2f})")

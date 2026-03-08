@@ -207,7 +207,7 @@ Respond in JSON:
         for p in positions:
             positions_text += f"- {p.get('ticker')} {p.get('direction')} @ ${p.get('entry_price', 0):.2f}, P&L: ${p.get('unrealized_pnl', 0):.2f}, day {p.get('days_held', 0)}/{p.get('max_hold_days', 10)}\n"
 
-        balance = performance.get("virtual_balance", 500)
+        balance = performance.get("virtual_balance", 1000)
         win_rate = performance.get("win_rate", 0)
         total_trades = performance.get("total_trades", 0)
 

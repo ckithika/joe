@@ -33,7 +33,7 @@ class StrategyEngine:
         self,
         scored_instruments: list[ScoredInstrument],
         regime: RegimeAssessment,
-        virtual_balance: float = 500.0,
+        virtual_balance: float = 1000.0,
         open_position_count: int = 0,
         max_positions: int = 3,
     ) -> list[StrategySignal]:

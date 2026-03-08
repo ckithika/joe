@@ -37,7 +37,7 @@ class TestEmptyPortfolio:
     def test_no_trades(self, analytics):
         report = analytics.compute()
         assert report.total_trades == 0
-        assert report.current_balance == 500.0
+        assert report.current_balance == 1000.0
 
     def test_format_summary_empty(self, analytics):
         report = analytics.compute()
