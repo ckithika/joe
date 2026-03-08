@@ -1,6 +1,8 @@
 # Joe AI
 
-A learn-by-doing trading education tool. An AI agent scans 100+ instruments daily, applies 5 real strategies, and manages a $1,000 paper portfolio — so you can study how markets work and validate strategies with zero risk before trading real money. Built for beginners who want to understand trading through hands-on simulation rather than theory alone.
+A day-trading-focused AI agent that scans markets every 2 minutes, applies 4 intraday strategies (Breakout, Day Trade, Opening Range Breakout, VWAP Bounce), and manages a $1,000 paper portfolio with a $50 daily gain target. Designed to learn day trading through hands-on simulation with zero risk before trading real money.
+
+**Current mode:** Day trading with focused watchlist (US500, US100, AAPL, NVDA, TSLA, BTCUSD, ETHUSD, GOLD). Stocks trade during US market hours; crypto runs 24/7.
 
 Insights are delivered via Telegram and a Streamlit dashboard. Runs locally or on Google Cloud Run.
 
@@ -32,7 +34,7 @@ Insights are delivered via Telegram and a Streamlit dashboard. Runs locally or o
 - **Strategy learners** who want to see how trend following, mean reversion, breakout, momentum, and defensive strategies perform in different market conditions
 - **Anyone curious about trading** who wants daily AI-generated market analysis delivered to their phone
 
-The agent runs a $1,000 paper portfolio automatically. After 30 days of simulated results, the dashboard shows a "Go Live Readiness" checklist to help you decide if you're ready for real trading.
+The agent runs a $1,000 paper portfolio targeting $50/day through 3 moderate-risk trades (3% risk each, 1:2.5 R:R). After 30 days of simulated results, the dashboard shows a "Go Live Readiness" checklist to help you decide if you're ready for real trading.
 
 ## Features
 
@@ -205,17 +207,35 @@ git pull
 
 ## Trading Strategies
 
-Joe AI uses 5 strategies, each activated in specific market regimes:
+Joe AI uses 4 active intraday strategies (swing strategies are disabled but available for re-enabling):
 
 | Strategy | Active Regimes | Entry Logic | Exit Logic | Max Hold |
 |----------|---------------|-------------|------------|----------|
-| **Trend Following** | Trending up/down | RSI 40-55, EMA bounce, MACD positive, low volume on pullback | Close below 50-SMA or swing-low stop, trailing stop at 2 ATR | 10 days |
-| **Mean Reversion** | Range-bound, trending up | RSI ≤ 38, Bollinger Band touch, bullish candle confirmation | Below support or after 2 thesis-fail days | 5 days |
-| **Breakout** | Range-bound, trending up/down | Bollinger Squeeze, volume surge ≥ 1.5x, strong close | False breakout (1-bar) or measured move target | 7 days |
-| **Momentum** | Trending up only | New 20-period high, RSI 60-75, volume ≥ 2x, MACD increasing | Relative strength exit or trailing stop at 2 ATR | 10 days |
-| **Day Trade** | All regimes | RSI 35-65, MACD histogram, volume ≥ 1.3x, ADX ≥ 15, EMA alignment | 1 ATR stop-loss, 2 ATR take-profit | 1 day |
+| **Day Trade** | All regimes | RSI 35-65, MACD histogram, volume ≥ 1.3x, ADX ≥ 15, EMA alignment | 1 ATR stop, 2.5 ATR take-profit, 0.75 ATR trailing | 1 day |
+| **Opening Range Breakout (ORB)** | All regimes | First 15-min candle high/low as range, breakout with volume ≥ 1.5x, strong close | Opposite range boundary stop, 2x measured move target | 1 day |
+| **VWAP Bounce** | All except high volatility | Price touches VWAP, RSI 35-65, volume confirmation, with-trend bounce | 0.8 ATR stop, 2 ATR take-profit, 0.75 ATR trailing | 1 day |
+| **Breakout** | All regimes | Bollinger Squeeze, volume surge ≥ 1.5x, strong close | False breakout (1-bar) or measured move target | 7 days |
+
+**Disabled (available):** Trend Following, Mean Reversion, Momentum — re-enable in `config/strategies.yaml` if you want swing trading.
 
 **Defensive mode** triggers automatically when VIX > 28 or portfolio drawdown exceeds -10%, suspending all new entries and tightening stops.
+
+### Day Trading Risk Controls
+
+| Control | Setting | Purpose |
+|---------|---------|---------|
+| **Daily gain target** | $50 | Stop trading when hit (protect profits) |
+| **Daily loss limit** | $30 | Stop trading when hit (prevent tilt) |
+| **Risk per trade** | 3% ($30) | Moderate path for $50/day target |
+| **Max concurrent positions** | 3 | Focus over diversification |
+| **Consecutive loss breaker** | 3 losses → 30 min pause | Prevent revenge trading |
+| **Per-instrument loss limit** | $15/day | Don't keep losing on the same ticker |
+| **Max daily exposure** | 3x balance | Leverage cap |
+| **Correlation check** | Same group + direction → 50% size | Avoid doubling bets |
+| **Time decay exit** | 60 min with < 0.3 ATR profit | Free up slots from dead trades |
+| **Spread filter** | Skip if spread > 0.5% | Avoid costly entries |
+| **EOD auto-close** | 3:55 PM ET | No overnight stock positions (crypto stays) |
+| **Session windows** | Prime: 9:30-11:30, 14:30-16:00 | Tighter criteria during midday chop |
 
 ### Auto-Parameter Tuning
 
@@ -347,12 +367,14 @@ All alerts are sent via Telegram (and Discord if configured). Here's what you re
 | Schedule | Time (ET) | Days | What |
 |----------|-----------|------|------|
 | Morning reminder | 8:30 AM | Mon–Fri | Telegram: "run locally with IBKR?" |
-| Morning pipeline | 9:00 AM | Mon–Fri | Full scan before US market open |
-| Afternoon reminder | 2:30 PM | Mon–Fri | Telegram: "run locally with IBKR?" |
-| Afternoon pipeline | 3:00 PM | Mon–Fri | Update before US market close |
+| Morning pipeline | 9:00 AM | Mon–Fri | Regime detection + full scan |
+| Opening range capture | 9:45 AM | Mon–Fri | Record first 15-min candle for ORB strategy |
+| **Monitor (stocks + crypto)** | **Every 2 min** | **Mon–Fri (9:30 AM–4:00 PM)** | **Primary trading engine — entries, exits, ORB, VWAP** |
+| EOD auto-close | 3:55 PM | Mon–Fri | Close all stock/index positions |
+| Afternoon pipeline | 3:00 PM | Mon–Fri | End-of-day summary |
+| **Monitor (crypto only)** | **Every 2 min** | **24/7** | **Crypto never sleeps — BTCUSD, ETHUSD monitored round the clock** |
 | Crypto morning | 8:00 AM | Daily | Crypto intelligence update |
 | Crypto evening | 8:00 PM | Daily | Crypto overnight signals |
-| Monitor | Every 5 min | Mon–Fri (market hours) | Position SL/TP checks + day trades |
 | Auto-tuner | Sunday | Weekly | Strategy parameter optimization |
 | Weekly digest | Sunday | Weekly | Performance summary via Telegram |
 
@@ -534,9 +556,10 @@ python main.py --tune                        # Run auto-tuner now (regardless of
 # Backtest
 python main.py --backtest --start 2025-01-01 --end 2025-02-01 --broker capital
 
-# Monitor
-python monitor.py                            # 5-min loop during market hours
-python monitor.py --interval 3               # 3-min loop
+# Monitor (primary day-trading engine)
+python monitor.py                            # 2-min loop, stocks + crypto during market hours
+python monitor.py --crypto-only              # 24/7 crypto monitoring
+python monitor.py --interval 1              # 1-min loop (faster scanning)
 python monitor.py --once --dry-run           # Single cycle, no trades
 
 # Telegram bot
@@ -655,8 +678,19 @@ ai-trading-agent/
 
 ## Changelog
 
-### 2026-03-08
-- **Paper trading reset** — fresh $1,000 starting balance, 5 max concurrent positions
+### 2026-03-08 (Evening) — Day Trading Pivot
+- **Strategy overhaul** — disabled swing strategies, added Opening Range Breakout (ORB) and VWAP Bounce
+- **Day trade config** — 3% risk per trade, $50 daily target, $30 daily loss limit, 3 max positions
+- **Monitor as primary engine** — 2-minute scan interval, opening range capture, session tracking
+- **Crypto 24/7** — `--crypto-only` mode for round-the-clock crypto monitoring
+- **EOD auto-close** — stocks close at 3:55 PM ET, crypto stays open
+- **Execution precision** — time-based exits (60 min), spread tracking/filtering, session windows
+- **Risk tightening** — correlation checks, per-instrument daily loss limits, 3x exposure cap, consecutive loss circuit breaker
+- **Enhanced reporting** — trade journal with setup types, session analysis, `/journal` command, streak tracking
+- **Focused watchlist** — US500, US100, AAPL, NVDA, TSLA, BTCUSD, ETHUSD, GOLD
+
+### 2026-03-08 (Morning) — Autonomy Features
+- **Paper trading reset** — fresh $1,000 starting balance
 - **Telegram bot commands** — `/status`, `/pause`, `/resume`, `/blacklist`, `/whitelist`, `/positions`, `/performance`
 - **Auto-parameter tuning** — weekly strategy optimization with ±20% safe adjustments
 - **Daily P&L alert** — realized + unrealized P&L after each pipeline run
