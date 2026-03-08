@@ -374,8 +374,12 @@ schedule_job "pipeline-afternoon" "0 15 * * 1-5" "$TZ" "Afternoon pipeline (befo
 schedule_job "pipeline-crypto-am" "0 8 * * *" "$TZ" "Crypto morning update"
 schedule_job "pipeline-crypto-pm" "0 20 * * *" "$TZ" "Crypto evening update"
 
-# Intraday monitor — every 5 min during market hours
-schedule_monitor "monitor-intraday" "*/5 9-16 * * 1-5" "$TZ" "Intraday position monitor (Capital.com)"
+# Intraday monitor — every 2 min during market hours (day trading primary engine)
+schedule_monitor "monitor-intraday" "*/2 9-16 * * 1-5" "$TZ" "Day trading monitor (Capital.com)"
+
+# Crypto monitor — every 5 min outside market hours (24/7 crypto)
+schedule_monitor "monitor-crypto-overnight" "*/5 0-8,17-23 * * 1-5" "$TZ" "Crypto overnight monitor"
+schedule_monitor "monitor-crypto-weekend" "*/5 * * * 0,6" "$TZ" "Crypto weekend monitor"
 
 echo "  Scheduler configured."
 
