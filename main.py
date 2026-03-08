@@ -295,6 +295,8 @@ def run_pipeline(
 
     # Step 8: Per-trade risk assessment and open new paper positions
     if not defensive and not trading_paused and pt_config.get("auto_enter", True):
+        trading_config = load_config("trading").get("trading", {})
+        size_reduction = trading_config.get("size_reduction_factor", 0.5)
         entry_signals = [s for s in strategy_signals if s.action == "enter_now"]
         approved_signals = []
         for sig in entry_signals:
@@ -310,16 +312,16 @@ def run_pipeline(
                 sig.skip_reason = trade_risk.recommendation_reason
             elif trade_risk.recommendation == "reduce_size":
                 logger.info("REDUCE SIZE %s: %s", sig.instrument.ticker, trade_risk.recommendation_reason)
-                sig.position_size = round(sig.position_size * 0.5, 4)
-                sig.dollar_risk = round(sig.dollar_risk * 0.5, 2)
+                sig.position_size = round(sig.position_size * size_reduction, 4)
+                sig.dollar_risk = round(sig.dollar_risk * size_reduction, 2)
                 approved_signals.append(sig)
             else:
-                # Correlation check — reduce size by 50% if correlated
+                # Correlation check — reduce size if correlated
                 corr = risk_profiler.check_correlation(sig, paper_trader.positions)
                 if corr["correlated"]:
-                    logger.info("CORRELATION: %s — reducing size 50%%", corr["reason"])
-                    sig.position_size = round(sig.position_size * 0.5, 4)
-                    sig.dollar_risk = round(sig.dollar_risk * 0.5, 2)
+                    logger.info("CORRELATION: %s — reducing size %.0f%%", corr["reason"], size_reduction * 100)
+                    sig.position_size = round(sig.position_size * size_reduction, 4)
+                    sig.dollar_risk = round(sig.dollar_risk * size_reduction, 2)
                 approved_signals.append(sig)
 
         if approved_signals:
@@ -1008,8 +1010,8 @@ def main():
                     f"{exc}\n\n{tb}",
                     level="critical",
                 )
-            except Exception:
-                pass
+            except Exception as alert_err:
+                logger.error("Failed to send crash alert: %s", alert_err)
             raise
 
     # Push data to GitHub if requested

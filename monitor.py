@@ -50,19 +50,32 @@ logging.basicConfig(
 )
 logger = logging.getLogger("monitor")
 
-# Curated day-trade watchlist — liquid instruments on Capital.com
-DAY_TRADE_TICKERS = {
-    "capital": ["US500", "US100", "GOLD", "AAPL", "NVDA", "TSLA"],
-    "ibkr": ["SPY", "QQQ", "AAPL", "NVDA", "TSLA", "GLD"],
-}
 
-# Crypto tickers (24/7 monitoring)
-CRYPTO_TICKERS = {
-    "capital": ["BTCUSD", "ETHUSD"],
-}
+def _load_trading_config() -> dict:
+    """Load trading session configuration from config/trading.yaml."""
+    return load_config("trading").get("trading", {})
 
-# Instruments that are crypto — exempt from EOD close
-CRYPTO_INSTRUMENTS = {"BTCUSD", "ETHUSD"}
+
+def _get_day_trade_tickers() -> dict:
+    tc = _load_trading_config()
+    return tc.get(
+        "day_trade_tickers",
+        {
+            "capital": ["US500", "US100", "GOLD", "AAPL", "NVDA", "TSLA"],
+            "ibkr": ["SPY", "QQQ", "AAPL", "NVDA", "TSLA", "GLD"],
+        },
+    )
+
+
+def _get_crypto_tickers() -> dict:
+    tc = _load_trading_config()
+    return tc.get("crypto_tickers", {"capital": ["BTCUSD", "ETHUSD"]})
+
+
+def _get_crypto_instruments() -> set:
+    tc = _load_trading_config()
+    return set(tc.get("crypto_instruments", ["BTCUSD", "ETHUSD"]))
+
 
 # Graceful shutdown flag
 _shutdown = False
@@ -96,23 +109,23 @@ def is_market_open() -> bool:
     if now.weekday() >= 5:
         return False
 
-    # US market holidays (major ones for 2026)
-    holidays = {
-        (1, 1),
-        (1, 19),
-        (2, 16),
-        (4, 3),
-        (5, 25),
-        (7, 3),
-        (9, 7),
-        (11, 26),
-        (12, 25),
-    }
+    tc = _load_trading_config()
+
+    # US market holidays
+    holiday_list = tc.get("holidays", [[1, 1], [1, 19], [2, 16], [4, 3], [5, 25], [7, 3], [9, 7], [11, 26], [12, 25]])
+    holidays = {tuple(h) for h in holiday_list}
     if (now.month, now.day) in holidays:
         return False
 
-    market_open = now.replace(hour=9, minute=30, second=0, microsecond=0)
-    market_close = now.replace(hour=16, minute=0, second=0, microsecond=0)
+    # Market hours from config
+    market_hours = tc.get("market_hours", {})
+    open_str = market_hours.get("open", "09:30")
+    close_str = market_hours.get("close", "16:00")
+    open_h, open_m = (int(x) for x in open_str.split(":"))
+    close_h, close_m = (int(x) for x in close_str.split(":"))
+
+    market_open = now.replace(hour=open_h, minute=open_m, second=0, microsecond=0)
+    market_close = now.replace(hour=close_h, minute=close_m, second=0, microsecond=0)
     return market_open <= now <= market_close
 
 
@@ -331,11 +344,19 @@ def check_circuit_breaker(state: dict, alert_manager: AlertManager) -> bool:
             return False
 
     # Check if we need to trigger the breaker
-    if state.get("consecutive_losses", 0) >= 3:
-        pause_until = datetime.now() + timedelta(minutes=30)
+    tc = _load_trading_config()
+    breaker_threshold = tc.get("consecutive_loss_breaker", 3)
+    cooldown_minutes = tc.get("breaker_cooldown_minutes", 30)
+    if state.get("consecutive_losses", 0) >= breaker_threshold:
+        pause_until = datetime.now() + timedelta(minutes=cooldown_minutes)
         state["paused_until"] = pause_until.isoformat()
         save_session_state(state)
-        logger.warning("3 consecutive losses — cooling down for 30 min (until %s)", pause_until.strftime("%H:%M"))
+        logger.warning(
+            "%d consecutive losses — cooling down for %d min (until %s)",
+            breaker_threshold,
+            cooldown_minutes,
+            pause_until.strftime("%H:%M"),
+        )
         if alert_manager.available:
             alert_manager.send_system_alert(
                 "Circuit Breaker Triggered",
@@ -379,7 +400,7 @@ def capture_opening_range(
     # Window is complete — capture the range from 15-min bars
     logger.info("Capturing opening range for %s", today)
     ranges = {}
-    all_tickers = DAY_TRADE_TICKERS.get("capital", []) + list(CRYPTO_TICKERS.get("capital", []))
+    all_tickers = _get_day_trade_tickers().get("capital", []) + list(_get_crypto_tickers().get("capital", []))
 
     if capital and capital.connected:
         for epic in all_tickers:
@@ -395,7 +416,7 @@ def capture_opening_range(
                 }
 
     if ibkr and ibkr.connected:
-        for ticker in DAY_TRADE_TICKERS.get("ibkr", []):
+        for ticker in _get_day_trade_tickers().get("ibkr", []):
             if ticker in ranges:
                 continue
             df = ibkr.get_historical_bars(ticker, duration="1 D", bar_size="15 mins")
@@ -479,12 +500,12 @@ def fetch_day_trade_instruments(
 
     # Determine which tickers to scan
     if crypto_only:
-        capital_tickers = CRYPTO_TICKERS.get("capital", [])
+        capital_tickers = _get_crypto_tickers().get("capital", [])
         ibkr_tickers = []
     else:
         # During market hours: scan everything (stocks + crypto)
-        capital_tickers = DAY_TRADE_TICKERS["capital"] + CRYPTO_TICKERS.get("capital", [])
-        ibkr_tickers = DAY_TRADE_TICKERS["ibkr"]
+        capital_tickers = _get_day_trade_tickers().get("capital", []) + _get_crypto_tickers().get("capital", [])
+        ibkr_tickers = _get_day_trade_tickers().get("ibkr", [])
 
     if capital and capital.connected:
         for epic in capital_tickers:
@@ -575,8 +596,12 @@ def check_time_decay_exit(pos, bar: dict) -> bool:
     except (ValueError, TypeError):
         return False
 
+    tc = _load_trading_config()
+    decay_minutes = tc.get("time_decay_minutes", 60)
+    decay_atr_threshold = tc.get("time_decay_atr_threshold", 0.3)
+
     elapsed_minutes = (datetime.now() - entry_dt).total_seconds() / 60
-    if elapsed_minutes < 60:
+    if elapsed_minutes < decay_minutes:
         return False
 
     # Calculate profit in ATR terms
@@ -594,7 +619,7 @@ def check_time_decay_exit(pos, bar: dict) -> bool:
 
     profit_in_atr = profit / atr if atr > 0 else 0
 
-    if profit_in_atr < 0.3:
+    if profit_in_atr < decay_atr_threshold:
         logger.info(
             "Time decay exit: %s %s — %.0f min elapsed, profit %.2f ATR (< 0.3)",
             pos.direction,
@@ -620,7 +645,9 @@ def apply_session_filter(instruments: list[Instrument]) -> list[Instrument]:
         return instruments
 
     # Midday chop — require higher bar for entry
-    logger.info("Midday session — applying stricter volume filters")
+    tc = _load_trading_config()
+    midday_vol_surge = tc.get("midday_volume_surge", 2.0)
+    logger.info("Midday session — applying stricter volume filters (%.1fx)", midday_vol_surge)
     filtered = []
     for inst in instruments:
         if inst.ohlcv is not None and len(inst.ohlcv) >= 20:
@@ -630,12 +657,11 @@ def apply_session_filter(instruments: list[Instrument]) -> list[Instrument]:
                 recent_vol = inst.ohlcv["volume"].iloc[-20:].mean()
                 current_vol = float(latest.get("volume", 0))
                 vol_ratio = current_vol / recent_vol if recent_vol > 0 else 0
-                # Midday requires 2x volume surge instead of 1.3x
-                if vol_ratio >= 2.0:
+                if vol_ratio >= midday_vol_surge:
                     filtered.append(inst)
                     continue
             # Crypto instruments get a pass during midday
-            if inst.ticker in CRYPTO_INSTRUMENTS:
+            if inst.ticker in _get_crypto_instruments():
                 filtered.append(inst)
                 continue
             logger.debug("Midday filter: skipping %s (insufficient volume surge)", inst.ticker)
@@ -694,12 +720,16 @@ def scan_for_entries(
             continue
         elif trade_risk.recommendation == "reduce_size":
             logger.info("REDUCE SIZE %s: %s", sig.instrument.ticker, trade_risk.recommendation_reason)
-            sig.position_size = round(sig.position_size * 0.5, 4)
-            sig.dollar_risk = round(sig.dollar_risk * 0.5, 2)
+            tc = _load_trading_config()
+            size_reduction = tc.get("size_reduction_factor", 0.5)
+            sig.position_size = round(sig.position_size * size_reduction, 4)
+            sig.dollar_risk = round(sig.dollar_risk * size_reduction, 2)
 
-        # Phase 4: Spread check — skip if spread > 0.5% of entry price
+        # Spread check — skip if spread exceeds configured threshold
         spread_pct = estimate_spread(sig.instrument.ohlcv)
-        if spread_pct > 0.005:
+        tc = _load_trading_config()
+        max_spread = tc.get("max_spread_pct", 0.005)
+        if spread_pct > max_spread:
             logger.warning(
                 "SKIP %s: spread too wide (%.2f%% > 0.5%%)",
                 sig.instrument.ticker,
@@ -775,7 +805,7 @@ def auto_close_eod(
     if session_state.get("eod_closed"):
         return []
 
-    stock_positions = [p for p in paper_trader.positions if p.ticker not in CRYPTO_INSTRUMENTS]
+    stock_positions = [p for p in paper_trader.positions if p.ticker not in _get_crypto_instruments()]
 
     if not stock_positions:
         session_state["eod_closed"] = True
@@ -813,7 +843,7 @@ def auto_close_eod(
         logger.info("EOD CLOSE: %s %s — P&L: $%.2f", pos.direction, pos.ticker, pnl)
 
     # Remove closed positions (keep crypto)
-    paper_trader.positions = [p for p in paper_trader.positions if p.ticker in CRYPTO_INSTRUMENTS]
+    paper_trader.positions = [p for p in paper_trader.positions if p.ticker in _get_crypto_instruments()]
     paper_trader._save_positions()
     paper_trader._update_performance_metrics()
     paper_trader._save_performance()
@@ -882,7 +912,7 @@ def run_cycle(
     # ── Job 1: Exit monitoring ──────────────────────────────────
     positions_to_check = paper_trader.positions
     if crypto_only:
-        positions_to_check = [p for p in paper_trader.positions if p.ticker in CRYPTO_INSTRUMENTS]
+        positions_to_check = [p for p in paper_trader.positions if p.ticker in _get_crypto_instruments()]
 
     if positions_to_check:
         logger.info("Checking %d open position(s)...", len(positions_to_check))
@@ -1088,8 +1118,8 @@ def main():
                     f"{exc}\n\n{tb}",
                     level="critical",
                 )
-            except Exception:
-                pass
+            except Exception as alert_err:
+                logger.error("Failed to send failure alert: %s", alert_err)
             raise
         finally:
             if ibkr:
@@ -1136,8 +1166,8 @@ def main():
                             str(e),
                             level="error",
                         )
-                    except Exception:
-                        pass
+                    except Exception as alert_err:
+                        logger.error("Failed to send cycle alert: %s", alert_err)
 
             # Sleep in 1-second increments for responsive shutdown
             for _ in range(args.interval * 60):

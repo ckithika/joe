@@ -1,0 +1,54 @@
+# Trading session configuration
+trading:
+  # Market hours (US Eastern)
+  market_hours:
+    open: "09:30"
+    close: "16:00"
+
+  # Prime trading windows (entries use normal criteria)
+  prime_windows:
+    - start: "09:30"
+      end: "11:30"
+    - start: "14:30"
+      end: "16:00"
+
+  # Opening range breakout
+  opening_range_minutes: 15
+
+  # EOD auto-close time
+  eod_close_time: "15:55"
+
+  # US market holidays (month, day) for 2026
+  holidays:
+    - [1, 1]    # New Year
+    - [1, 19]   # MLK Day
+    - [2, 16]   # Presidents Day
+    - [4, 3]    # Good Friday
+    - [5, 25]   # Memorial Day
+    - [7, 3]    # Independence Day observed
+    - [9, 7]    # Labor Day
+    - [11, 26]  # Thanksgiving
+    - [12, 25]  # Christmas
+
+  # Risk controls
+  consecutive_loss_breaker: 3        # Trigger cooldown after N consecutive losses
+  breaker_cooldown_minutes: 30       # How long to pause after breaker triggers
+  max_spread_pct: 0.005              # Skip entry if spread > 0.5%
+  time_decay_minutes: 60             # Close position if held this long with < 0.3 ATR profit
+  time_decay_atr_threshold: 0.3      # Minimum ATR profit to keep position
+  size_reduction_factor: 0.5         # Reduce position size by this factor when risk says "reduce"
+
+  # Midday session filter
+  midday_volume_surge: 2.0           # Required volume ratio during midday (vs 1.3x in prime)
+
+  # Day trade watchlist
+  day_trade_tickers:
+    capital: ["US500", "US100", "GOLD", "AAPL", "NVDA", "TSLA"]
+    ibkr: ["SPY", "QQQ", "AAPL", "NVDA", "TSLA", "GLD"]
+
+  # Crypto tickers (24/7)
+  crypto_tickers:
+    capital: ["BTCUSD", "ETHUSD"]
+
+  # Crypto instruments exempt from EOD close
+  crypto_instruments: ["BTCUSD", "ETHUSD"]

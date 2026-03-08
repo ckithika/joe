@@ -4,10 +4,12 @@ import time
 import pandas as pd
 import requests
 
+from brokers.base import BaseBroker
+
 logger = logging.getLogger(__name__)
 
 
-class CapitalClient:
+class CapitalClient(BaseBroker):
     """Read-only Capital.com demo API client for research."""
 
     BASE_URL = "https://demo-api-capital.backend-capital.com/api/v1"
@@ -44,6 +46,14 @@ class CapitalClient:
             logger.warning("Capital.com auth failed: %s", e)
             self._connected = False
             return False
+
+    def connect(self) -> bool:
+        """Connect to Capital.com API (alias for authenticate)."""
+        return self.authenticate()
+
+    def disconnect(self) -> None:
+        """No persistent connection to close."""
+        self._connected = False
 
     @property
     def connected(self) -> bool:
@@ -103,6 +113,47 @@ class CapitalClient:
         except Exception as e:
             logger.error("Error fetching %s from Capital.com: %s", epic, e)
             return None
+
+    def get_historical_bars(self, symbol: str, duration: str = "50 D", bar_size: str = "1 day") -> pd.DataFrame | None:
+        """Fetch historical bars via get_prices (BaseBroker interface)."""
+        # Map duration string to max_bars approximation
+        max_bars = 50
+        if duration:
+            parts = duration.strip().split()
+            if len(parts) == 2:
+                try:
+                    num = int(parts[0])
+                    unit = parts[1].upper()
+                    if unit.startswith("D"):
+                        max_bars = num
+                    elif unit.startswith("M"):
+                        max_bars = num * 30
+                    elif unit.startswith("Y"):
+                        max_bars = num * 365
+                except ValueError:
+                    pass
+
+        # Map bar_size to Capital.com resolution
+        resolution = "DAY"
+        if bar_size and "hour" in bar_size.lower():
+            resolution = "HOUR"
+        elif bar_size and "min" in bar_size.lower():
+            resolution = "MINUTE_15"
+
+        return self.get_prices(symbol, resolution=resolution, max_bars=max_bars)
+
+    def get_current_price(self, symbol: str) -> dict | None:
+        """Return {open, high, low, close} for the latest bar, or None."""
+        df = self.get_prices(symbol, max_bars=1)
+        if df is None or len(df) == 0:
+            return None
+        latest = df.iloc[-1]
+        return {
+            "open": float(latest["open"]),
+            "high": float(latest["high"]),
+            "low": float(latest["low"]),
+            "close": float(latest["close"]),
+        }
 
     def search_markets(self, term: str, limit: int = 10) -> list[dict]:
         if not self._ensure_connected():

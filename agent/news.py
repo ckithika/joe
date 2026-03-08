@@ -52,7 +52,9 @@ class NewsSentinelAlphaVantage:
             for article in articles:
                 for ts in article.get("ticker_sentiment", []):
                     if ts["ticker"].upper() == ticker.upper():
-                        sentiments.append(float(ts["ticker_sentiment_score"]))
+                        score = ts.get("ticker_sentiment_score")
+                        if score is not None:
+                            sentiments.append(float(score))
 
             if not sentiments:
                 return NewsSentiment(

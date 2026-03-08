@@ -2,16 +2,19 @@ import logging
 
 import pandas as pd
 
+from brokers.base import BaseBroker
+
 logger = logging.getLogger(__name__)
 
 
-class IBKRClient:
+class IBKRClient(BaseBroker):
     """Read-only IBKR paper trading client for research."""
 
-    def __init__(self, host: str = "127.0.0.1", port: int = 7497, client_id: int = 1):
+    def __init__(self, host: str = "127.0.0.1", port: int = 7497, client_id: int = 1, timeout: int = 30):
         self.host = host
         self.port = port
         self.client_id = client_id
+        self.timeout = timeout
         self.ib = None
         self._connected = False
 
@@ -61,6 +64,7 @@ class IBKRClient:
                 barSizeSetting=bar_size,
                 whatToShow=what_to_show,
                 useRTH=True,
+                timeout=self.timeout,
             )
             if not bars:
                 logger.warning("No bars returned for %s", symbol)
@@ -71,6 +75,25 @@ class IBKRClient:
         except Exception as e:
             logger.error("Error fetching %s from IBKR: %s", symbol, e)
             return None
+
+    def get_current_price(self, symbol: str) -> dict | None:
+        """Return {open, high, low, close} for the latest bar, or None."""
+        df = self.get_historical_bars(symbol, duration="5 D", bar_size="1 day")
+        if df is None or len(df) == 0:
+            return None
+        latest = df.iloc[-1]
+        return {
+            "open": float(latest.get("open", 0)),
+            "high": float(latest.get("high", 0)),
+            "low": float(latest.get("low", 0)),
+            "close": float(latest.get("close", 0)),
+        }
+
+    def ping(self) -> bool:
+        """Check connectivity by attempting to connect if not already connected."""
+        if self.connected:
+            return True
+        return self.connect()
 
     def run_scanner(self, scan_code: str, num_results: int = 25) -> list[str]:
         if not self.connected:
