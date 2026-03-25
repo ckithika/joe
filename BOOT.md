@@ -9,18 +9,18 @@ Run through this once on gateway startup. This verifies the environment is ready
 - [ ] Confirm dependencies are installed: `python -c "import pandas, ib_insync, yaml; print('deps OK')"`
 - [ ] Confirm `.env` exists and has non-placeholder values: `grep -c 'your_' .env` (should be 0 if fully configured)
 
-## 2. Verify IBKR Connectivity
+## 2. Verify IBKR Gateway Connectivity
 
-- [ ] Test socket to TWS:
+- [ ] Test socket to IB Gateway:
 ```bash
 python -c "
 import socket; s = socket.socket(); s.settimeout(5)
-try: s.connect(('host.docker.internal', 7497)); print('TWS reachable')
-except: print('TWS NOT reachable - alert owner')
+try: s.connect(('host.docker.internal', 4002)); print('Gateway reachable')
+except: print('Gateway NOT reachable - IBC may still be starting')
 finally: s.close()
 "
 ```
-- [ ] If TWS is not reachable, note this but continue — the owner needs to log in manually. Alert via Telegram if bot token is configured.
+- [ ] If Gateway is not reachable, wait 60 seconds and retry — IBC may still be starting up. If still unreachable after 3 retries, alert owner via Telegram. IB Gateway is managed by IBC with launchd auto-restart, so it should come up automatically.
 
 ## 3. Verify Data Directories
 

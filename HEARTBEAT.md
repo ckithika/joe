@@ -10,16 +10,16 @@ Run through this checklist on every heartbeat cycle. Report anomalies to the own
 
 ## 2. IBKR Connectivity
 
-- [ ] Can we reach TWS? Run the socket check:
+- [ ] Can we reach IB Gateway? Run the socket check:
 ```bash
 python -c "
 import socket; s = socket.socket(); s.settimeout(3)
-try: s.connect(('host.docker.internal', 7497)); print('OK')
+try: s.connect(('host.docker.internal', 4002)); print('OK')
 except: print('UNREACHABLE')
 finally: s.close()
 "
 ```
-- [ ] If unreachable and it's a trading day during market hours, alert the owner.
+- [ ] If unreachable and it's a trading day during market hours, alert the owner. IBC should auto-recover — check again in 5 minutes before escalating.
 
 ## 3. Data Freshness
 

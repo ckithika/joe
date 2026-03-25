@@ -189,10 +189,11 @@ def connect_brokers(broker_filter: str | None = None) -> tuple:
 
     if broker_filter in (None, "ibkr"):
         host = os.getenv("IBKR_HOST", "127.0.0.1")
-        port = int(os.getenv("IBKR_PORT", "7497"))
-        if port == 7496:
-            logger.error("BLOCKED: Port 7496 is live trading. Use demo port 7497 only.")
-            port = 7497
+        port = int(os.getenv("IBKR_PORT", "4002"))
+        # Safety: never connect to live trading ports (TWS 7496 or Gateway 4001)
+        if port in (7496, 4001):
+            logger.error("BLOCKED: Port %d is live trading. Use paper port (4002 or 7497).", port)
+            port = 4002
         client_id = int(os.getenv("IBKR_CLIENT_ID", "1"))
         ibkr = IBKRClient(host, port, client_id)
         ibkr.connect()

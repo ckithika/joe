@@ -94,46 +94,56 @@ python main.py --once --broker ibkr --push
 
 **Sundays:** The pipeline also runs the weekly auto-tuner and sends the weekly digest. Run it even though markets are closed: `python main.py --once --dry-run`
 
-## IBKR TWS Connectivity
+## IBKR Gateway Connectivity
 
-TWS runs on the host Mac. From inside this container, you connect via `host.docker.internal`.
+**IB Gateway** (not full TWS) runs on the host Mac, managed by **IBC** (auto-login, auto-restart). From inside this container, you connect via `host.docker.internal:4002`.
+
+**Port reference:**
+- `4002` = IB Gateway paper trading (what we use)
+- `4001` = IB Gateway live (blocked in code)
+- `7497` = TWS paper (if someone runs TWS instead — also works)
+- `7496` = TWS live (blocked in code)
 
 **Test connectivity:**
 ```bash
 python -c "
 from brokers.ibkr_client import IBKRClient
-c = IBKRClient('host.docker.internal', 7497, 1)
+c = IBKRClient('host.docker.internal', 4002, 1)
 c.connect()
 print('Connected:', c.connected)
 c.disconnect()
 "
 ```
 
-**Check if TWS API port is reachable:**
+**Check if Gateway API port is reachable:**
 ```bash
 python -c "
-import socket
-s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-s.settimeout(3)
-try:
-    s.connect(('host.docker.internal', 7497))
-    print('TWS port 7497: REACHABLE')
-except Exception as e:
-    print(f'TWS port 7497: UNREACHABLE ({e})')
-finally:
-    s.close()
+import socket; s = socket.socket(); s.settimeout(3)
+try: s.connect(('host.docker.internal', 4002)); print('Gateway port 4002: REACHABLE')
+except Exception as e: print(f'Gateway port 4002: UNREACHABLE ({e})')
+finally: s.close()
 "
 ```
 
-**If TWS is unreachable:**
-You cannot launch or restart TWS from inside Docker — it's a GUI app on the host. Do the following:
-1. Alert the owner via Telegram (if the bot is running) that TWS is disconnected.
+**If Gateway is unreachable:**
+IB Gateway is managed by IBC with auto-restart via launchd — it should recover automatically. If it stays down:
+1. Alert the owner via Telegram that Gateway is disconnected.
 2. Fall back to Capital.com broker if configured: `python main.py --once --broker capital`
-3. Wait and retry connectivity checks every 5 minutes until TWS is back.
-4. Do **not** keep running pipeline/monitor against a dead connection — it will just produce errors.
+3. Retry connectivity checks every 5 minutes.
+4. Do **not** keep running pipeline/monitor against a dead connection.
 
-**IBKR daily server reset (~11:45 PM ET):**
-IBKR briefly disconnects all sessions around 11:45 PM ET. This is normal. If the monitor is running, it will log transient errors and reconnect on the next cycle. No action needed.
+**IBC handles these automatically:**
+- **Daily restart (~11:45 PM ET):** IBC auto-restarts Gateway without re-authentication. Transient errors during this window are normal.
+- **Weekly cold restart (Sunday 07:05):** IBC fully restarts Gateway with fresh login. The owner will get a 2FA push notification on their phone.
+- **Crash recovery:** launchd keeps IBC alive with `KeepAlive` — if the process dies, it restarts within 10 seconds.
+
+**IBC setup on the host Mac:**
+```
+~/ibc/program/          # IBC installation (scripts, JAR)
+~/ibc/config.ini        # IBC config (credentials, paper mode, auto-restart)
+~/ibc/logs/             # IBC + Gateway logs
+~/Library/LaunchAgents/local.ibc-gateway.plist  # Auto-start on login
+```
 
 ## Market Research & Intelligence
 
@@ -214,7 +224,7 @@ All in `config/`:
 
 ## Safety Rules
 
-1. **Paper trading only.** Port 7496 (live) is blocked in code. Never change this.
+1. **Paper trading only.** Live ports (4001, 7496) are blocked in code. Never change this.
 2. **Never commit `.env`** — contains API keys.
 3. **Never force-push to master.**
 4. **Never delete `data/paper/positions.json`** while the monitor is running.
