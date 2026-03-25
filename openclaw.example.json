@@ -1,0 +1,79 @@
+// OpenClaw configuration for Joe AI trading agent
+// Copy to ~/.openclaw/openclaw.json and fill in your keys.
+//
+// Docs: https://docs.openclaw.ai
+{
+  // Model provider — Claude recommended for code-heavy agent work
+  "providers": {
+    "anthropic": {
+      "apiKey": "${ANTHROPIC_API_KEY}"
+    }
+  },
+
+  "agents": {
+    "defaults": {
+      "model": "anthropic/claude-sonnet-4-6",
+      "workspace": "/app",
+      "timeoutSeconds": 600,
+
+      // Heartbeat: run the HEARTBEAT.md checklist every 30 minutes
+      "heartbeat": {
+        "intervalMinutes": 30,
+        "activeHours": {
+          "start": "08:00",
+          "end": "22:00",
+          "timezone": "US/Eastern"
+        }
+      }
+    }
+  },
+
+  // Cron jobs for the trading schedule (US Eastern)
+  "cron": {
+    "timezone": "US/Eastern",
+    "jobs": [
+      {
+        "name": "morning-pipeline",
+        "description": "Run the daily trading pipeline before market open",
+        "schedule": { "kind": "cron", "expression": "0 9 * * 1-5" },
+        "prompt": "Run the morning pipeline: execute `python main.py --once --broker ibkr`. After it completes, read today's findings file at data/findings/ and summarize the market regime, top signals, and portfolio status.",
+        "delivery": { "mode": "announce" }
+      },
+      {
+        "name": "start-monitor",
+        "description": "Start the intraday monitor at market open",
+        "schedule": { "kind": "cron", "expression": "30 9 * * 1-5" },
+        "prompt": "Start the intraday monitor: execute `python monitor.py --broker ibkr` in the background. Verify it started successfully.",
+        "delivery": { "mode": "announce" }
+      },
+      {
+        "name": "stop-monitor",
+        "description": "Stop the intraday monitor after market close",
+        "schedule": { "kind": "cron", "expression": "5 16 * * 1-5" },
+        "prompt": "Stop the monitor process (send SIGTERM to any running monitor.py). Then read today's trade history and summarize the daily P&L and any positions that were closed.",
+        "delivery": { "mode": "announce" }
+      },
+      {
+        "name": "post-close-review",
+        "description": "Review trading performance after market close",
+        "schedule": { "kind": "cron", "expression": "15 16 * * 1-5" },
+        "prompt": "Post-close review: Read data/paper/performance.json and data/paper/trade_history.csv. Summarize today's trades (entries, exits, P&L). Read data/paper/portfolio_analytics.json for overall metrics. Note any concerns (losing streak, strategy underperformance, drawdown).",
+        "delivery": { "mode": "announce" }
+      },
+      {
+        "name": "sunday-review",
+        "description": "Weekly review and auto-tuner run on Sundays",
+        "schedule": { "kind": "cron", "expression": "0 10 * * 0" },
+        "prompt": "Weekly review: Run `python main.py --once --dry-run` to trigger the weekly auto-tuner and digest. Then read data/paper/tuning_log.json for parameter changes and data/paper/portfolio_analytics.json for weekly metrics. Summarize the week's performance.",
+        "delivery": { "mode": "announce" }
+      }
+    ]
+  },
+
+  // Telegram channel for alerts and owner communication
+  "channels": {
+    "telegram": {
+      "botToken": "${TELEGRAM_BOT_TOKEN}"
+    }
+  }
+}

@@ -1,0 +1,39 @@
+# Docker Compose for OpenClaw agent operating Joe AI
+#
+# The OpenClaw gateway runs in a container with the Joe project mounted at /app.
+# IBKR TWS runs on the host Mac — the agent connects via host.docker.internal:7497.
+#
+# Setup:
+#   1. Configure ~/.openclaw/openclaw.json (see openclaw.example.json)
+#   2. Configure .env with API keys
+#   3. docker compose -f docker-compose.openclaw.yml up -d
+#
+# The OpenClaw agent reads AGENTS.md, BOOT.md, HEARTBEAT.md for instructions.
+
+services:
+  openclaw-gateway:
+    image: openclaw/openclaw:latest
+    container_name: joe-openclaw-agent
+    restart: unless-stopped
+    init: true
+    ports:
+      - "3578:3578"
+    environment:
+      - OPENCLAW_BIND=lan
+    env_file:
+      - .env
+    volumes:
+      # OpenClaw config directory
+      - ${OPENCLAW_CONFIG_DIR:-~/.openclaw}:/home/node/.openclaw
+      # Mount the Joe project as the agent's workspace
+      - .:/app
+    extra_hosts:
+      # Allow the container to reach IBKR TWS on the host Mac
+      - "host.docker.internal:host-gateway"
+    working_dir: /app
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3578/healthz"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
