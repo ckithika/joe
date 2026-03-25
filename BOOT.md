@@ -4,7 +4,7 @@ Run through this once on gateway startup. This verifies the environment is ready
 
 ## 1. Verify Environment
 
-- [ ] Confirm working directory is `/app` and project files exist: `ls main.py monitor.py telegram_bot.py`
+- [ ] Confirm project files exist in workspace: `ls main.py monitor.py telegram_bot.py`
 - [ ] Confirm Python works: `python --version` (expect 3.13+)
 - [ ] Confirm dependencies are installed: `python -c "import pandas, ib_insync, yaml; print('deps OK')"`
 - [ ] Confirm `.env` exists and has non-placeholder values: `grep -c 'your_' .env` (should be 0 if fully configured)

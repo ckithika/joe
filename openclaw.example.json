@@ -13,7 +13,7 @@
   "agents": {
     "defaults": {
       "model": "anthropic/claude-sonnet-4-6",
-      "workspace": "/app",
+      "workspace": "/home/node/.openclaw/workspace",
       "timeoutSeconds": 600,
 
       // Heartbeat: run the HEARTBEAT.md checklist every 30 minutes

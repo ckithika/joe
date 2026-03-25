@@ -13,23 +13,23 @@ Your three responsibilities:
 ## Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│  Mac Mini Host                                  │
-│                                                 │
-│  ┌──────────────────────┐   ┌────────────────┐  │
-│  │  IBKR TWS (GUI app)  │   │  OpenClaw      │  │
-│  │  Port 7497 (paper)   │◄──│  Docker        │  │
-│  │  ~/Applications/...  │   │  Container     │  │
-│  └──────────────────────┘   │                │  │
-│                             │  You run here  │  │
-│  ┌──────────────────────┐   │  Python 3.13   │  │
-│  │  ~/code/joe/  (host) │◄──│  /app (mount)  │  │
-│  │  data/, config/      │   │                │  │
-│  └──────────────────────┘   └────────────────┘  │
-└─────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  Mac Mini Host                                               │
+│                                                              │
+│  ┌──────────────────────┐   ┌─────────────────────────────┐  │
+│  │  IBKR TWS (GUI app)  │   │  OpenClaw Docker Container  │  │
+│  │  Port 7497 (paper)   │◄──│                             │  │
+│  │  ~/Applications/...  │   │  You run here.              │  │
+│  └──────────────────────┘   │  Workspace: ~/code/joe/     │  │
+│                             │  mounted at:                │  │
+│  ┌──────────────────────┐   │  ~/.openclaw/workspace/     │  │
+│  │  ~/code/joe/  (host) │◄──│                             │  │
+│  │  data/, config/      │   │  Python + deps installed    │  │
+│  └──────────────────────┘   └─────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────┘
 ```
 
-- **You execute commands inside the Docker container.** The project is mounted at `/app`.
+- **You execute commands inside the Docker container.** The project is your OpenClaw workspace (bind-mounted). All paths in this file are relative to the workspace root.
 - **IBKR TWS runs on the host.** You reach it at `host.docker.internal:7497`.
 - **You cannot launch or interact with TWS GUI directly.** If TWS is down, alert the owner.
 - **Data files** (`data/`, `config/`) are bind-mounted — changes persist on the host.

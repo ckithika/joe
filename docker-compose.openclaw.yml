@@ -1,6 +1,7 @@
 # Docker Compose for OpenClaw agent operating Joe AI
 #
-# The OpenClaw gateway runs in a container with the Joe project mounted at /app.
+# The OpenClaw gateway runs in a container with the Joe project mounted
+# as the agent workspace at /home/node/.openclaw/workspace.
 # IBKR TWS runs on the host Mac — the agent connects via host.docker.internal:7497.
 #
 # Setup:
@@ -26,11 +27,10 @@ services:
       # OpenClaw config directory
       - ${OPENCLAW_CONFIG_DIR:-~/.openclaw}:/home/node/.openclaw
       # Mount the Joe project as the agent's workspace
-      - .:/app
+      - .:/home/node/.openclaw/workspace
     extra_hosts:
       # Allow the container to reach IBKR TWS on the host Mac
       - "host.docker.internal:host-gateway"
-    working_dir: /app
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3578/healthz"]
       interval: 30s
